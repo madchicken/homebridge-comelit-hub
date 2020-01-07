@@ -5,10 +5,10 @@
     "type": "object",
     "properties": {
       "name": {
-        "title": "name",
+        "title": "Installation name",
         "type": "string",
         "required": true,
-        "default": "Home"
+        "default": "My Home"
       },
       "username": {
         "title": "Username",
@@ -34,11 +34,17 @@
         "required": true,
         "default": ""
       },
-      "broker_urr": {
-        "title": "name",
+      "broker_url": {
+        "title": "Broker URL",
         "type": "string",
         "required": true,
-        "default": ""
+        "default": "mqtt://192.168.0.66"
+      },
+      "client_id": {
+        "title": "Client ID",
+        "type": "string",
+        "required": true,
+        "default": "A98FAF87-3348-48E8-A3AB-693D8E53E353"
       }
     }
   }

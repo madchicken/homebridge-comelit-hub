@@ -1,5 +1,4 @@
 import {AsyncMqttClient} from "async-mqtt";
-
 const MQTT = require("async-mqtt");
 import {DeferredMessage, PromiseBasedQueue} from "./promise-queue";
 
@@ -7,14 +6,14 @@ const connectAsync = MQTT.connectAsync;
 const WRITE_TOPIC = 'HSrv/0025291701EC/rx/HSrv_0025291701EC3_0592EF88-AEEE-47BD-A859-9E70017';
 const READ_TOPIC = 'HSrv/0025291701EC/tx/HSrv_0025291701EC3_0592EF88-AEEE-47BD-A859-9E70017';
 
-
 export enum REQUEST_TYPE {
     STRUCTURE = 0,
     ACTION = 1,
-    AGENT_ID = 13,
-    LOGIN = 5,
-    READ_PARAMS = 8,
     SUBSCRIBE = 3,
+    LOGIN = 5,
+    PING = 7,
+    READ_PARAMS = 8,
+    AGENT_ID = 13,
 }
 
 export interface MqttIncomingMessage {
@@ -27,6 +26,7 @@ export interface MqttIncomingMessage {
     sessiontoken?: string;
     uid?: string;
     param_type?: number;
+    obj_id?: string;
     out_data?: any[];
     params_data?: Param[];
     message?: string;
@@ -74,6 +74,10 @@ export interface DeviceInfo {
 }
 
 export interface LightDeviceData extends DeviceData {}
+
+export interface BlindDeviceData extends DeviceData {
+    tempo_uscita: number;
+}
 
 export interface ThermostatDeviceData extends DeviceData {
     num_ingresso: number,
@@ -189,53 +193,71 @@ interface Param {
     param_value: string;
 }
 
-class MqttQueue extends PromiseBasedQueue<MqttMessage, MqttIncomingMessage> {
+export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMessage> {
+    private readonly props: ComelitProps;
+    private homeIndex: HomeIndex;
+    private readonly username: string;
+    private readonly password: string;
+    private readonly onUpdate: (objId: string, device: DeviceData) => void;
+
+    constructor(username: string, password: string, onUpdate?: (objId: string, device: DeviceData) => void) {
+        super();
+        this.props = {
+            client: null,
+            index: 0,
+        };
+        this.username = username;
+        this.password = password;
+        this.onUpdate = onUpdate;
+    }
+
     processResponse(messages: DeferredMessage<MqttMessage, MqttIncomingMessage>[], response: MqttIncomingMessage): void {
-        const deferredMqttMessage = messages.find(message => message.message.seq_id == response.seq_id);
+        const deferredMqttMessage = messages.find(message => message.message.seq_id == response.seq_id && message.message.req_type == response.req_type);
         if (deferredMqttMessage) {
+            messages.splice(messages.indexOf(deferredMqttMessage));
             if (response.req_result === 0) {
                 deferredMqttMessage.promise.resolve(response);
             } else {
                 deferredMqttMessage.promise.reject(response);
             }
         } else {
-            console.error(`Received message for missing request: ${JSON.stringify(response)}`);
+            if (response.obj_id && response.out_data && response.out_data.length) {
+                const datum = response.out_data[0] as DeviceData;
+                const value = this.homeIndex.updateObject(response.obj_id, datum);
+                if (this.onUpdate && value) {
+                    this.onUpdate(response.obj_id, value);
+                }
+            }
         }
-    }
-}
-
-export class ComelitClient {
-    private readonly props: ComelitProps;
-    private readonly queue: PromiseBasedQueue<MqttMessage, MqttIncomingMessage>;
-    private homeIndex: HomeIndex;
-    private readonly username: string;
-    private readonly password: string;
-
-    constructor(username: string, password: string) {
-        this.props = {
-            client: null,
-            index: 0,
-        };
-        this.queue = new MqttQueue();
-        this.username = username;
-        this.password = password;
     }
 
     isLogged(): boolean {
         return !!this.props.sessiontoken;
     }
 
-    async initClient(brokerUrl: string, hub_username: string, hub_password: string): Promise<AsyncMqttClient> {
+    async keepAlive() {
+        setTimeout(async () => {
+            try {
+                await this.ping();
+                this.keepAlive();
+            } catch(e) {
+                console.log(e);
+                await this.login();
+            }
+        }, 30000);
+    }
+
+    async initClient(brokerUrl: string, hub_username: string, hub_password: string, client_id: string): Promise<AsyncMqttClient> {
+        // Register to incoming messages
+        console.log(`Initializing Comelit client: ${brokerUrl}`);
         this.props.client = await connectAsync(brokerUrl, {
             username: hub_username,
             password: hub_password,
-            clientId: 'HomeKit',
+            clientId: client_id,
             keepalive: 120,
         });
-        // Register to incoming messages
-        console.log('Initializing comelit client...');
         await this.props.client.subscribe(READ_TOPIC);
-        await this.props.client.subscribe(WRITE_TOPIC);
+        // await this.props.client.subscribe(WRITE_TOPIC);
         this.props.client.on('message', this.handleIncomingMessage.bind(this));
         this.props.agent_id = await this.retriveAgentId();
         console.log(`...done: client agent id is ${this.props.agent_id}`);
@@ -273,6 +295,7 @@ export class ComelitClient {
         try {
             const msg = await this.publish(packet);
             this.props.sessiontoken = msg.sessiontoken;
+            this.keepAlive();
             return true;
         } catch(e) {
             console.error(e);
@@ -294,13 +317,24 @@ export class ComelitClient {
         return [...msg.params_data];
     }
 
-    private async subscribeObject(id: string): Promise<boolean> {
+    async subscribeObject(id: string): Promise<boolean> {
         const packet: MqttMessage = {
             req_type: REQUEST_TYPE.SUBSCRIBE,
             seq_id: this.props.index++,
             req_sub_type: 5,
             sessiontoken: this.props.sessiontoken,
             obj_id: id,
+        };
+        const msg = await this.publish(packet);
+        return msg.req_result === 0;
+    }
+
+    async ping(): Promise<boolean> {
+        const packet: MqttMessage = {
+            req_type: REQUEST_TYPE.PING,
+            seq_id: this.props.index++,
+            req_sub_type: -1,
+            sessiontoken: this.props.sessiontoken,
         };
         const msg = await this.publish(packet);
         return msg.req_result === 0;
@@ -347,6 +381,34 @@ export class ComelitClient {
         return response.req_result === 0;
     }
 
+    async toggleBlind(id: string, status: number): Promise<boolean> {
+        const packet: MqttMessage = {
+            req_type: REQUEST_TYPE.ACTION,
+            seq_id: this.props.index++,
+            req_sub_type: 3,
+            act_type: 0,
+            sessiontoken: this.props.sessiontoken,
+            obj_id: id,
+            act_params: [status],
+        };
+        const response = await this.publish(packet);
+        return response.req_result === 0;
+    }
+
+    async setTemperature(id: string, temperature: number): Promise<boolean> {
+        const packet: MqttMessage = {
+            req_type: REQUEST_TYPE.ACTION,
+            seq_id: this.props.index++,
+            req_sub_type: 3,
+            act_type: 2,
+            sessiontoken: this.props.sessiontoken,
+            obj_id: id,
+            act_params: [temperature*10],
+        };
+        const response = await this.publish(packet);
+        return response.req_result === 0;
+    }
+
     mapHome(home: DeviceData): HomeIndex {
         this.homeIndex = new HomeIndex(home);
         return this.homeIndex;
@@ -356,12 +418,13 @@ export class ComelitClient {
         console.log('Sending message to HUB ', packet);
         await this.props.client.publish(WRITE_TOPIC, JSON.stringify(packet));
         try {
-            return await this.queue.enqueue(packet);
+            return await this.enqueue(packet);
         } catch(response) {
             if (response.req_result === 1 && response.message === 'invalid token') {
                 await this.login(); // relogin and override invalid token
                 return this.publish(packet); // resend packet
             }
+            throw response;
         }
     }
 
@@ -370,7 +433,7 @@ export class ComelitClient {
         switch (topic) {
             case READ_TOPIC:
                 console.log(`Incoming message`, message.toString());
-                this.queue.processQueue(msg);
+                this.processQueue(msg);
                 break;
             case WRITE_TOPIC:
                 console.log(`Outgoing message`, message.toString());
@@ -387,7 +450,9 @@ class HomeIndex {
     public readonly lightsIndex = new Map<string, LightDeviceData>();
     public readonly roomsIndex = new Map() as DeviceIndex;
     public readonly thermostatsIndex = new Map<string, ThermostatDeviceData>();
-    public readonly blindsIndex = new Map() as DeviceIndex;
+    public readonly blindsIndex = new Map<string, BlindDeviceData>();
+
+    public readonly mainIndex = new Map<string, DeviceData>();
 
     constructor(home: DeviceData) {
         home.elements.forEach((info: DeviceInfo) => {
@@ -395,12 +460,14 @@ class HomeIndex {
         });
     }
 
-    isRoom(objId: string): boolean {
-        return this.roomsIndex.has(objId);
-    }
-
-    isLight(objId: string): boolean {
-        return this.lightsIndex.has(objId);
+    updateObject(id: string, data: DeviceData): DeviceData {
+        if(this.mainIndex.has(id)) {
+            const deviceData = this.mainIndex.get(id);
+            const value = Object.apply(deviceData, data);
+            this.mainIndex.set(id, value);
+            return value;
+        }
+        return null;
     }
 
     private visitElement(element: DeviceInfo) {
@@ -414,8 +481,11 @@ class HomeIndex {
             this.thermostatsIndex.set(element.id, element.data as ThermostatDeviceData);
         }
         if (element.data.type === ELEMENT_TYPE.BLIND) {
-            this.blindsIndex.set(element.id, element.data);
+            this.blindsIndex.set(element.id, element.data as BlindDeviceData);
         }
+
+        this.mainIndex.set(element.id, element.data);
+
         if(element.data.elements) {
             element.data.elements.forEach(value => this.visitElement(value));
         }

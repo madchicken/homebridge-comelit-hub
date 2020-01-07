@@ -33,8 +33,7 @@ export abstract class PromiseBasedQueue<M, R> implements Queue<M, R> {
 
     processQueue(response: R) {
         if (this.queuedMessages.length) {
-            const copy = [...this.queuedMessages];
-            this.processResponse(copy, response);
+            this.processResponse(this.queuedMessages, response);
         }
     }
 

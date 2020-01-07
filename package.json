@@ -7,7 +7,7 @@
     "homebridge-plugin"
   ],
   "engines": {
-    "node": ">11.0.0",
+    "node": ">11.10.0",
     "homebridge": ">=0.2.0"
   },
   "main": "dist/index.js",
@@ -35,19 +35,14 @@
     "async-mqtt": "^2.4.2",
     "typescript": "^3.7.4",
     "lodash": "^4.17.15",
+    "homebridge": "^0.4.50"
+  },
+  "devDependencies": {
     "@types/mqtt": "^2.5.0",
     "@types/node": "^11.15.3",
     "@types/lodash": "^4.14.149",
-    "@babel/core": "^7.4.5",
-    "@babel/polyfill": "^7.4.4"
-  },
-  "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^2.14.0",
     "@typescript-eslint/parser": "^2.14.0",
-    "@babel/plugin-proposal-class-properties": "^7.4.4",
-    "@babel/preset-env": "^7.4.5",
-    "@babel/preset-typescript": "^7.3.3",
-    "@babel/plugin-transform-runtime": "^7.7.6",
     "concurrently": "^5.0.0",
     "eslint": "^6.4.0",
     "ts-node": "^8.4.1",
