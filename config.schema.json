@@ -1,0 +1,45 @@
+{
+  "pluginAlias": "Comelit",
+  "pluginType": "platform",
+  "schema": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "title": "name",
+        "type": "string",
+        "required": true,
+        "default": "Home"
+      },
+      "username": {
+        "title": "Username",
+        "type": "string",
+        "required": true,
+        "default": ""
+      },
+      "password": {
+        "title": "Comelit username",
+        "type": "string",
+        "required": true,
+        "default": ""
+      },
+      "hub_username": {
+        "title": "Comelit HUB username",
+        "type": "string",
+        "required": true,
+        "default": ""
+      },
+      "hub_password": {
+        "title": "Comelit HUB password",
+        "type": "string",
+        "required": true,
+        "default": ""
+      },
+      "broker_urr": {
+        "title": "name",
+        "type": "string",
+        "required": true,
+        "default": ""
+      }
+    }
+  }
+}

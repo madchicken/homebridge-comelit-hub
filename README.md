@@ -1,0 +1,1 @@
+# Comelit HUB integration for Homebridge

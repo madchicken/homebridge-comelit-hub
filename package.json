@@ -1,0 +1,57 @@
+{
+  "name": "homebridge-comelit-hub",
+  "version": "1.0.0",
+  "description": "Comelit hub support for Homebridge: https://github.com/nfarina/homebridge",
+  "license": "MIT",
+  "keywords": [
+    "homebridge-plugin"
+  ],
+  "engines": {
+    "node": ">11.0.0",
+    "homebridge": ">=0.2.0"
+  },
+  "main": "dist/index.js",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "start": "yarn run serve",
+    "build": "yarn run build-ts && yarn run lint",
+    "serve": "node dist/index.js",
+    "watch-node": "nodemon dist/index.js",
+    "watch": "concurrently -k -p \"[{name}]\" -n \"Sass,TypeScript,Node\" -c \"yellow.bold,cyan.bold,green.bold\" \"yarn run watch-ts\" \"yarn run watch-node\"",
+    "test": "jest --forceExit --coverage --verbose",
+    "watch-test": "yarn run test -- --watchAll",
+    "build-ts": "tsc",
+    "watch-ts": "tsc -w",
+    "lint": "tsc --noEmit && eslint \"src/*.{js,ts}\" --quiet --fix",
+    "debug": "yarn run build && yarn run watch-debug",
+    "serve-debug": "nodemon --inspect dist/index.js",
+    "watch-debug": "concurrently -k -p \"[{name}]\" -n \"Sass,TypeScript,Node\" -c \"yellow.bold,cyan.bold,green.bold\" \"yarn run watch-ts\" \"yarn run serve-debug\""
+  },
+  "dependencies": {
+    "mqtt": "^3.0.0",
+    "mqtt-packet": "^6.3.0",
+    "async-mqtt": "^2.4.2",
+    "typescript": "^3.7.4",
+    "lodash": "^4.17.15",
+    "@types/mqtt": "^2.5.0",
+    "@types/node": "^11.15.3",
+    "@types/lodash": "^4.14.149",
+    "@babel/core": "^7.4.5",
+    "@babel/polyfill": "^7.4.4"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^2.14.0",
+    "@typescript-eslint/parser": "^2.14.0",
+    "@babel/plugin-proposal-class-properties": "^7.4.4",
+    "@babel/preset-env": "^7.4.5",
+    "@babel/preset-typescript": "^7.3.3",
+    "@babel/plugin-transform-runtime": "^7.7.6",
+    "concurrently": "^5.0.0",
+    "eslint": "^6.4.0",
+    "ts-node": "^8.4.1",
+    "nodemon": "^2.0.2",
+    "hap-nodejs": "^0.5.4"
+  }
+}
