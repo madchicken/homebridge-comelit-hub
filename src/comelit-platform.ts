@@ -32,10 +32,17 @@ export class ComelitPlatform {
         this.log("homebridge API version: " + homebridge.version);
     }
 
-    async accessories(callback: Function) {
+    async accessories(callback: (array: any[]) => void) {
         if (!this.client) {
-            this.client = new ComelitClient(this.config.username, this.config.password, this.updateAccessory);
-            await this.client.initClient(this.config.broker_url, this.config.hub_username, this.config.hub_password, this.config.client_id);
+            this.client = new ComelitClient(this.updateAccessory);
+            await this.client.init(
+                this.config.broker_url,
+                this.config.hub_username,
+                this.config.username,
+                this.config.password,
+                this.config.hub_password,
+                this.config.client_id
+            );
         }
         let loggedIn = this.client.isLogged();
         if (!loggedIn) {
@@ -83,7 +90,7 @@ export class ComelitPlatform {
     updateAccessory(id: string, data: DeviceData) {
         const accessory = this.mappedAccessories.get(id);
         if (accessory) {
-
+            accessory.update(data);
         }
     }
 }

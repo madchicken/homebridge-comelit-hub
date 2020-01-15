@@ -14,6 +14,7 @@ export declare class PlatformAccessory {
     updateReachability(reachable: boolean): void;
     configureCameraSource(cameraSource: any): void;
 }
+
 export interface Homebridge {
     version: string;
     platformAccessory: typeof PlatformAccessory;

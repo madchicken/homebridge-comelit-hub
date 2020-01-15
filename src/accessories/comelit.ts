@@ -1,19 +1,19 @@
 import {ComelitClient, DeviceData} from "../comelit-client";
-import {Categories, Service} from "hap-nodejs";
+import {Callback, Categories, Characteristic, Service} from "hap-nodejs";
 import {HomebridgeAPI} from "../index";
 
 export abstract class ComelitAccessory<T extends DeviceData> {
-    log: Function;
+    readonly uuid_base: string;
+    readonly log: Function;
+    readonly name: string;
+    readonly category: Categories;
+
     device: T;
     client: ComelitClient;
-    readonly uuid_base: string;
-    name: string;
     services: Service[];
     reachable: boolean;
 
     constructor(log: Function, device: T, name: string, client: ComelitClient, category: Categories) {
-        const a = new HomebridgeAPI.platformAccessory(name, HomebridgeAPI.hap.uuid.generate(`${device.objectId}:${device.descrizione}`), category);
-        Object.assign(this, a);
         this.log = log;
         this.device = device;
         this.client = client;
@@ -21,15 +21,19 @@ export abstract class ComelitAccessory<T extends DeviceData> {
         this.uuid_base = device.objectId;
         this.services = this.initServices();
         this.reachable = true;
+        this.category = category;
     }
 
     getServices(): Service[] {
         return this.services;
     }
 
+    identify(callback: Function) {
+        callback();
+    }
+
     protected initAccessoryInformation(): Service {
-        const Characteristic = HomebridgeAPI.hap.Characteristic;
-        const accessoryInformation = new HomebridgeAPI.hap.Service.AccessoryInformation(null, null);
+        const accessoryInformation = new Service.AccessoryInformation(null, null);
         accessoryInformation
             .setCharacteristic(Characteristic.Name, this.name)
             .setCharacteristic(Characteristic.Manufacturer, 'Comelit')
@@ -40,5 +44,5 @@ export abstract class ComelitAccessory<T extends DeviceData> {
 
     protected abstract initServices(): Service[];
 
-    protected abstract update(data: T);
+    public abstract update(data: T);
 }

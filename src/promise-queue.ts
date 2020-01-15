@@ -32,9 +32,7 @@ export abstract class PromiseBasedQueue<M, R> implements Queue<M, R> {
     }
 
     processQueue(response: R) {
-        if (this.queuedMessages.length) {
-            this.processResponse(this.queuedMessages, response);
-        }
+        this.processResponse(this.queuedMessages, response);
     }
 
     enqueue(message: M): Promise<R> {

@@ -12,11 +12,6 @@ export class Lightbulb extends ComelitAccessory<LightDeviceData> {
         super(log, device, name, client, Categories.LIGHTBULB);
     }
 
-    identify(callback: Function) {
-        this.log(`Comelit light identify: ${this.device.objectId}, ${this.device.descrizione} - ${this.name}`);
-        callback();
-    }
-
     protected initServices(): Service[] {
         const accessoryInformation = this.initAccessoryInformation(); // common info about the accessory
 
@@ -57,7 +52,7 @@ export class Lightbulb extends ComelitAccessory<LightDeviceData> {
         return [accessoryInformation, this.lightbulbService]
     }
 
-    protected update(data: LightDeviceData) {
+    public update(data: LightDeviceData) {
         this.device = data;
         const status = parseInt(data.status);
         console.log(`Updating status of light ${this.device.id}. New status is ${status}`);
