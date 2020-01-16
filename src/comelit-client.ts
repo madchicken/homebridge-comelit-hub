@@ -465,11 +465,9 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
         const msg: MqttIncomingMessage = JSON.parse(message.toString());
         switch (topic) {
             case READ_TOPIC:
-                console.log(`Incoming message`, message.toString());
                 this.processQueue(msg);
                 break;
             case WRITE_TOPIC:
-                console.log(`Outgoing message`, message.toString());
                 break;
             default:
                 console.error(`Unknown topic ${topic}`);

@@ -51,13 +51,13 @@ async function run() {
 async function info(id: string) {
     console.log(chalk.green(`Getting device information for ${options.id}`));
     const data = await client.device(id);
-    console.log(chalk.blue(JSON.stringify(data)));
+    console.log(data);
 }
 
 async function params() {
     console.log(chalk.green(`Getting parameters`));
     const data = await client.readParameters();
-    console.log(chalk.blue(JSON.stringify(data)));
+    console.log(data);
 }
 
 run().then(() => console.log('Exiting'));
