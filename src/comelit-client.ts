@@ -439,7 +439,7 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
         if (response.req_result === 0) {
             return Promise.resolve(true);
         }
-        throw new Error(response.message);
+        return Promise.reject(new Error(response.message));
     }
 
     mapHome(home: DeviceData): HomeIndex {

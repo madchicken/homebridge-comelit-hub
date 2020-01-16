@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import yargs = require('yargs');
 import chalk = require('chalk');
-import {ComelitClient} from "./comelit-client";
+import {ComelitClient} from "../comelit-client";
 
 const options = yargs.options({
         host: {type: 'string', demandOption: true},
