@@ -27,6 +27,7 @@ async function run() {
     console.log(chalk.green(`Executing command ${command}`));
     try {
         await client.init(options.host, options.username, options.password, options.hub_username, options.hub_password);
+        await client.login();
 
         switch (command) {
             case 'info':
