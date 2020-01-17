@@ -5,11 +5,12 @@ import {HomebridgeAPI} from "../index";
 
 export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
     static readonly OFF = 0;
+    static readonly AUTO = 0;
     static readonly HEAT = 1;
     static readonly COOL = 2;
     static readonly CELSIUS = 0;
 
-    static readonly AUTO_MODE = '2';
+    static readonly COMELIT_AUTO_MODE = '2';
 
     private thermostatService: Service;
 
@@ -21,8 +22,9 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
         const accessoryInformation = this.initAccessoryInformation();
 
         this.thermostatService = new HomebridgeAPI.hap.Service.Thermostat(this.device.descrizione, null);
-        const isAuto: boolean = this.device.auto_man === Thermostat.AUTO_MODE;
-        const heatingCollingState = isAuto ? Thermostat.AUTO_MODE : (this.device.est_inv === '0' ? Thermostat.COOL : Thermostat.HEAT);
+        const isAuto: boolean = this.device.auto_man === Thermostat.COMELIT_AUTO_MODE;
+        this.log(`Thermostat auto mode is ${isAuto}`);
+        const heatingCollingState = isAuto ? Thermostat.AUTO : (this.device.est_inv === '0' ? Thermostat.COOL : Thermostat.HEAT);
         this.thermostatService.setCharacteristic(Characteristic.CurrentHeatingCoolingState, heatingCollingState);
         this.thermostatService.setCharacteristic(Characteristic.TargetHeatingCoolingState, heatingCollingState);
         const temperature = this.device.temperatura ? parseFloat(this.device.temperatura) / 10 : 0;
