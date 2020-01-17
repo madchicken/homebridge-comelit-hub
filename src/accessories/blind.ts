@@ -42,14 +42,10 @@ export class Blind extends ComelitAccessory<BlindDeviceData> {
 
         this.coveringService
             .getCharacteristic(Characteristic.CurrentPosition)
-            .on(CharacteristicEventTypes.GET, async (callback: Function) => {
-                const position = this.device.status === '0' ? Blind.CLOSED : Blind.OPEN;
-                callback(null, position);
-            })
             .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<number>) => {
                 try {
                     const data = await this.client.device(this.device.id);
-                    callback(null, data.status === '2' ? Blind.OPEN : Blind.CLOSED);
+                    callback(null, data.status === '0' ? Blind.CLOSED : Blind.OPEN);
                 } catch (e) {
                     callback(e);
                 }
