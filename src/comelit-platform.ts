@@ -33,7 +33,9 @@ export class ComelitPlatform {
     }
 
     async accessories(callback: (array: any[]) => void) {
+        console.log('Building accessories list...');
         if (!this.client) {
+            console.log('Creating client and logging in...');
             this.client = new ComelitClient(this.updateAccessory);
             await this.client.init(
                 this.config.broker_url,
@@ -43,12 +45,9 @@ export class ComelitPlatform {
                 this.config.hub_password,
                 this.config.client_id
             );
+            await this.client.login();
         }
-        let loggedIn = this.client.isLogged();
-        if (!loggedIn) {
-            loggedIn = await this.client.login();
-        }
-        if (loggedIn) {
+        if (this.client.isLogged()) {
             const rootElementInfo = await this.client.device(ROOT_ID);
             const homeIndex = this.client.mapHome(rootElementInfo);
             const lightIds = [...homeIndex.lightsIndex.keys()];
@@ -84,6 +83,7 @@ export class ComelitPlatform {
             this.mappedAccessories = new Map<string, ComelitAccessory<DeviceData>>();
         }
 
+        console.log(`Found ${this.mappedAccessories.size} accessories`);
         callback([...this.mappedAccessories.values()]);
     }
 
