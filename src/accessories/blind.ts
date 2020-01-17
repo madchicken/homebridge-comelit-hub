@@ -1,6 +1,7 @@
 import {ComelitAccessory} from "./comelit";
 import {BlindDeviceData, ComelitClient} from "../comelit-client";
 import {Categories, Characteristic, CharacteristicEventTypes, NodeCallback, Service} from "hap-nodejs";
+import {HomebridgeAPI} from "../index";
 
 export class Blind extends ComelitAccessory<BlindDeviceData> {
     static readonly DECREASING = 0;
@@ -20,7 +21,7 @@ export class Blind extends ComelitAccessory<BlindDeviceData> {
     protected initServices(): Service[] {
         const accessoryInformation = this.initAccessoryInformation();
 
-        this.coveringService = new Service.WindowCovering(this.device.descrizione, null);
+        this.coveringService = new HomebridgeAPI.hap.Service.WindowCovering(this.device.descrizione, null);
 
         const status = parseInt(this.device.status);
         this.coveringService.setCharacteristic(Characteristic.CurrentPosition, status == Blind.OPEN ? 100 : 0);

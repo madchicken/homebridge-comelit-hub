@@ -33,7 +33,7 @@ export abstract class ComelitAccessory<T extends DeviceData> {
     }
 
     protected initAccessoryInformation(): Service {
-        const accessoryInformation = new Service.AccessoryInformation(null, null);
+        const accessoryInformation = new HomebridgeAPI.hap.Service.AccessoryInformation(null, null);
         accessoryInformation
             .setCharacteristic(Characteristic.Name, this.name)
             .setCharacteristic(Characteristic.Manufacturer, 'Comelit')

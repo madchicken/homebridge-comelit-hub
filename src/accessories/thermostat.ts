@@ -1,6 +1,7 @@
 import {ComelitAccessory} from "./comelit";
 import {ComelitClient, ThermostatDeviceData} from "../comelit-client";
 import {Categories, Characteristic, CharacteristicEventTypes, Service, VoidCallback} from "hap-nodejs";
+import {HomebridgeAPI} from "../index";
 
 export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
     static readonly OFF = 0;
@@ -19,7 +20,7 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
     protected initServices(): Service[] {
         const accessoryInformation = this.initAccessoryInformation();
 
-        this.thermostatService = new Service.Thermostat(this.device.descrizione, null);
+        this.thermostatService = new HomebridgeAPI.hap.Service.Thermostat(this.device.descrizione, null);
         const isAuto: boolean = this.device.auto_man === Thermostat.AUTO_MODE;
         const heatingCollingState = isAuto ? Thermostat.AUTO_MODE : (this.device.est_inv === '0' ? Thermostat.COOL : Thermostat.HEAT);
         this.thermostatService.setCharacteristic(Characteristic.CurrentHeatingCoolingState, heatingCollingState);

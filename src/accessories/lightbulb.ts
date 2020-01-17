@@ -1,6 +1,7 @@
 import {ComelitAccessory} from "./comelit";
 import {ComelitClient, DeviceData, LightDeviceData} from "../comelit-client";
 import {Categories, Characteristic, CharacteristicEventTypes, Service} from "hap-nodejs";
+import {HomebridgeAPI} from "../index";
 
 export class Lightbulb extends ComelitAccessory<LightDeviceData> {
     static readonly ON = 1;
@@ -15,7 +16,7 @@ export class Lightbulb extends ComelitAccessory<LightDeviceData> {
     protected initServices(): Service[] {
         const accessoryInformation = this.initAccessoryInformation(); // common info about the accessory
 
-        this.lightbulbService = new Service.Lightbulb(this.name, null);
+        this.lightbulbService = new HomebridgeAPI.hap.Service.Lightbulb(this.name, null);
 
         this.lightbulbService
             .addCharacteristic(Characteristic.StatusActive);
