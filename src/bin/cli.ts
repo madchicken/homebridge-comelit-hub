@@ -12,6 +12,7 @@ const options = yargs.options({
     })
     .command('info', 'Get info about a device', {
         id: {type: 'string', demandOption: true},
+        detail: {type: 'number', demandOption: false, default: 1},
     })
     .command('params', 'Get HUB parameters', {
         token: {type: 'string', demandOption: true},
@@ -31,7 +32,7 @@ async function run() {
 
         switch (command) {
             case 'info':
-                await info(options.id as string);
+                await info(options.id as string, options.detail as number);
                 break;
             case 'params':
                 await params();
@@ -48,9 +49,9 @@ async function run() {
     }
 }
 
-async function info(id: string) {
+async function info(id: string, detailLevel: number = 1) {
     console.log(chalk.green(`Getting device information for ${options.id}`));
-    const data = await client.device(id);
+    const data = await client.device(id, detailLevel);
     console.log(data);
 }
 

@@ -367,14 +367,14 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
         return ComelitClient.evalResponse(response).then(value => value);
     }
 
-    async device(objId: string): Promise<DeviceData> {
+    async device(objId: string, detailLevel?: number): Promise<DeviceData> {
         const packet: MqttMessage = {
             req_type: REQUEST_TYPE.STRUCTURE,
             seq_id: this.props.index++,
             req_sub_type: -1,
             sessiontoken: this.props.sessiontoken,
             obj_id: objId,
-            detail_level: 1,
+            detail_level: detailLevel || 1,
         };
         const response = await this.publish(packet);
         return ComelitClient.evalResponse(response)
