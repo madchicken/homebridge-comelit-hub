@@ -6,7 +6,8 @@ import Timeout = NodeJS.Timeout;
 
 const connectAsync = MQTT.connectAsync;
 const WRITE_TOPIC = 'HSrv/0025291701EC/rx/HSrv_0025291701EC3_0592EF88-AEEE-47BD-A859-9E70017';
-const READ_TOPIC = 'HSrv/0025291701EC/tx/HSrv_0025291701EC3_0592EF88-AEEE-47BD-A859-9E70017';
+// const READ_TOPIC = 'HSrv/0025291701EC/tx/HSrv_0025291701EC3_0592EF88-AEEE-47BD-A859-9E70017';
+const READ_TOPIC = 'HSrv/0025291701EC/tx/#';
 
 export enum REQUEST_TYPE {
     STRUCTURE = 0,
@@ -465,7 +466,7 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
 
     private handleIncomingMessage(topic: string, message: any) {
         const msg: MqttIncomingMessage = JSON.parse(message.toString());
-        this.log(`Incoming message for topic ${topic}:`, msg);
+        this.log(`Incoming message for topic ${topic}: ${message.toString()}`);
         switch (topic) {
             case READ_TOPIC:
                 this.processQueue(msg);
