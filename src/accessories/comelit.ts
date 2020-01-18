@@ -1,5 +1,5 @@
 import {ComelitClient, DeviceData} from "../comelit-client";
-import {Callback, Categories, Characteristic, Service} from "hap-nodejs";
+import {Categories, Characteristic, Service} from "hap-nodejs";
 import {HomebridgeAPI} from "../index";
 
 export abstract class ComelitAccessory<T extends DeviceData> {
@@ -13,7 +13,7 @@ export abstract class ComelitAccessory<T extends DeviceData> {
     services: Service[];
     reachable: boolean;
 
-    constructor(log: Function, device: T, name: string, client: ComelitClient, category: Categories) {
+    protected constructor(log: Function, device: T, name: string, client: ComelitClient, category: Categories) {
         this.log = log;
         this.device = device;
         this.client = client;
