@@ -6,8 +6,8 @@ import Timeout = NodeJS.Timeout;
 
 const connectAsync = MQTT.connectAsync;
 const WRITE_TOPIC = 'HSrv/0025291701EC/rx/HSrv_0025291701EC3_0592EF88-AEEE-47BD-A859-9E70017';
-// const READ_TOPIC = 'HSrv/0025291701EC/tx/HSrv_0025291701EC3_0592EF88-AEEE-47BD-A859-9E70017';
-const READ_TOPIC = 'HSrv/0025291701EC/tx/#';
+const READ_TOPIC = 'HSrv/0025291701EC/tx/HSrv_0025291701EC3_0592EF88-AEEE-47BD-A859-9E70017';
+const ALL_READ_TOPIC = 'HSrv/0025291701EC/tx/#';
 
 export enum REQUEST_TYPE {
     STRUCTURE = 0,
@@ -262,7 +262,7 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
             keepalive: 120,
         });
         // Register to incoming messages
-        await this.props.client.subscribe(READ_TOPIC);
+        await this.props.client.subscribe(ALL_READ_TOPIC);
         await this.props.client.subscribe(WRITE_TOPIC);
         this.props.client.on('message', this.handleIncomingMessage.bind(this));
         this.props.agent_id = await this.retriveAgentId();
@@ -475,6 +475,7 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
                 break;
             default:
                 console.error(`Unknown topic ${topic}`);
+                this.processQueue(msg);
         }
     }
 }
