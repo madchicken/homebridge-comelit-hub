@@ -37,7 +37,7 @@ export class ComelitPlatform {
         if (!this.client) {
             try {
                 this.log('Creating client and logging in...');
-                this.client = new ComelitClient(this.updateAccessory, this.log);
+                this.client = new ComelitClient(this.updateAccessory.bind(this), this.log);
                 await this.client.init(
                     this.config.broker_url,
                     this.config.username,
