@@ -5,8 +5,9 @@ const MQTT = require("async-mqtt");
 import Timeout = NodeJS.Timeout;
 
 const connectAsync = MQTT.connectAsync;
-const WRITE_TOPIC = 'HSrv/0025291701EC/rx/HSrv_0025291701EC3_0592EF88-AEEE-47BD-A859-9E70017';
-const READ_TOPIC = 'HSrv/0025291701EC/tx/HSrv_0025291701EC3_0592EF88-AEEE-47BD-A859-9E70017';
+const CLIENT_ID = 'HSrv_0025291701EC3_0592EF88-AEEE-47BD-A859-9E70017';
+const WRITE_TOPIC = 'HSrv/0025291701EC/rx/' + CLIENT_ID;
+const READ_TOPIC = 'HSrv/0025291701EC/tx/' + CLIENT_ID;
 const ALL_TOPICS = 'HSrv/#';
 
 export enum REQUEST_TYPE {
@@ -258,7 +259,7 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
         this.props.client = await connectAsync(brokerUrl, {
             username: hub_username,
             password: hub_password,
-            clientId: clientId || `HOMEBRIDGE`,
+            clientId: clientId || CLIENT_ID,
             keepalive: 120,
         });
         // Register to incoming messages
