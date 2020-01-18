@@ -17,13 +17,13 @@ export interface HubConfig {
 }
 
 export class ComelitPlatform {
-    private readonly log: Function;
+    private readonly log: (message?: any, ...optionalParams: any[]) => void;
     private readonly homebridge: Homebridge;
     private client: ComelitClient;
     private readonly config: HubConfig;
     public mappedAccessories: Map<string, ComelitAccessory<DeviceData>> = new Map<string, ComelitAccessory<DeviceData>>();
 
-    constructor(log: Function, config: HubConfig, homebridge: Homebridge) {
+    constructor(log: (message?: any, ...optionalParams: any[]) => void, config: HubConfig, homebridge: Homebridge) {
         this.log = (str: string) => log("[COMELIT HUB] " + str);
         this.log('Initializing platform: ', config);
         this.config = config;
@@ -37,7 +37,7 @@ export class ComelitPlatform {
         if (!this.client) {
             try {
                 console.log('Creating client and logging in...');
-                this.client = new ComelitClient(this.updateAccessory);
+                this.client = new ComelitClient(this.updateAccessory, this.log);
                 await this.client.init(
                     this.config.broker_url,
                     this.config.username,
