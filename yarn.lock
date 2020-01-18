@@ -1125,13 +1125,12 @@ hap-nodejs@0.4.51:
     node-persist "^0.0.11"
     tweetnacl "^1.0.1"
 
-hap-nodejs@^0.5.4:
-  version "0.5.4"
-  resolved "https://registry.yarnpkg.com/hap-nodejs/-/hap-nodejs-0.5.4.tgz#137943b3ba5afc54e89ecb4ff7edc90d8e1e5267"
-  integrity sha512-ok1jikRvnmVUYEqz33MTHuCrm6CHkF1lQfe79Z3ExTDdiuhRLobkAE6M51FspZVTaLCRudrGT3bwBFpTKqgrSw==
+hap-nodejs@^0.5.5:
+  version "0.5.6"
+  resolved "https://registry.yarnpkg.com/hap-nodejs/-/hap-nodejs-0.5.6.tgz#39423a62bfbd759d70adcfeca6f143e1b76c16e6"
+  integrity sha512-hK6HaRUKhO948roA/SF9+5t61qyAWsTCj9SeR3qTt9uQIyIWUpKIAiJlNQADMTb4LcJwC0yaVexw8cU5z2wxNw==
   dependencies:
     bonjour-hap "^3.5.1"
-    buffer-shims "^1.0.0"
     debug "^2.2.0"
     decimal.js "^7.2.3"
     fast-srp-hap "^1.0.1"
