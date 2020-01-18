@@ -23,7 +23,6 @@ export class Blind extends ComelitAccessory<BlindDeviceData> {
 
         this.coveringService = new HomebridgeAPI.hap.Service.WindowCovering(this.device.descrizione, null);
 
-        this.coveringService.setCharacteristic(Characteristic.CurrentPosition, 100);
         this.coveringService.setCharacteristic(Characteristic.PositionState, Blind.STOPPED);
 
         this.coveringService
@@ -38,7 +37,7 @@ export class Blind extends ComelitAccessory<BlindDeviceData> {
             });
 
         this.coveringService
-            .getCharacteristic(Characteristic.CurrentPosition)
+            .getCharacteristic(Characteristic.PositionState)
             .on(CharacteristicEventTypes.GET, async (callback: NodeCallback<number>) => {
                 try {
                     const data = await this.client.device(this.device.id);
