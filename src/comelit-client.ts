@@ -210,7 +210,7 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
         super();
         this.props = {
             client: null,
-            index: 0,
+            index: 1,
         };
         this.onUpdate = onUpdate;
         this.log = log || console.log;
