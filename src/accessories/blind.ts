@@ -54,7 +54,7 @@ export class Blind extends ComelitAccessory<BlindDeviceData> {
                             value = PositionState.STOPPED;
                             break;
                     }
-                    this.log('Set blind position state to ' + value);
+                    this.log(`Set ${this.device.descrizione} blind position state to ${value}`);
                     callback(null, value);
                 } catch (e) {
                     callback(e);

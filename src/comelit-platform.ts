@@ -88,9 +88,8 @@ export class ComelitPlatform {
         }
 
         this.log(`Found ${this.mappedAccessories.size} accessories`);
-        for(const accessory of this.mappedAccessories.values()) {
-            this.client.subscribeObject(accessory.device.id);
-        }
+        await this.client.subscribeObject(ROOT_ID);
+        this.log('Subscribed to root object');
         callback([...this.mappedAccessories.values()]);
     }
 
