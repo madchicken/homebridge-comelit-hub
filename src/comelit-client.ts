@@ -451,7 +451,7 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
     }
 
     private async publish(packet: MqttMessage): Promise<MqttIncomingMessage> {
-        this.log('Sending message to HUB ', packet);
+        this.log(`Sending message to HUB ${JSON.stringify(packet)}`);
         await this.props.client.publish(WRITE_TOPIC, JSON.stringify(packet));
         try {
             return await this.enqueue(packet);
