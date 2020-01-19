@@ -65,7 +65,6 @@ export class Blind extends ComelitAccessory<BlindDeviceData> {
     }
 
     public update(data: BlindDeviceData) {
-        this.device = data;
         let value;
         switch (data.status) {
             case Blind.OPENING:

@@ -54,7 +54,6 @@ export class Lightbulb extends ComelitAccessory<LightDeviceData> {
     }
 
     public update(data: LightDeviceData) {
-        this.device = data;
         const status = parseInt(data.status);
         console.log(`Updating status of light ${this.device.id}. New status is ${status}`);
         this.lightbulbService.getCharacteristic(Characteristic.On).updateValue(status);

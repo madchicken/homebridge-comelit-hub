@@ -7,9 +7,9 @@ export abstract class ComelitAccessory<T extends DeviceData> {
     readonly log: Function;
     readonly name: string;
     readonly category: Categories;
+    readonly device: T;
+    readonly client: ComelitClient;
 
-    device: T;
-    client: ComelitClient;
     services: Service[];
     reachable: boolean;
 

@@ -56,7 +56,6 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
     }
 
     public update(data: ThermostatDeviceData) {
-        this.device = data;
         const isOff: boolean = data.status === Thermostat.OFF;
         const isAuto: boolean = data.auto_man === Thermostat.AUTO_MODE;
         this.log(`Thermostat auto mode is ${isAuto}`);

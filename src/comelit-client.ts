@@ -217,7 +217,7 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
     }
 
     processResponse(messages: DeferredMessage<MqttMessage, MqttIncomingMessage>[], response: MqttIncomingMessage): void {
-        const deferredMqttMessage = messages.find(message => message.message.seq_id == response.seq_id && message.message.req_type == response.req_type);
+        const deferredMqttMessage = response.seq_id ? messages.find(message => message.message.seq_id == response.seq_id && message.message.req_type == response.req_type) : null;
         if (deferredMqttMessage) {
             messages.splice(messages.indexOf(deferredMqttMessage));
             if (response.req_result === 0) {
@@ -227,7 +227,8 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
             }
         } else {
             if (response.obj_id && response.out_data && response.out_data.length) {
-                const datum = response.out_data[0] as DeviceData;
+                const datum: DeviceData = response.out_data[0];
+                this.log(`Updating ${response.obj_id} with data ${JSON.stringify(datum)}`);
                 const value = this.homeIndex.updateObject(response.obj_id, datum);
                 if (this.onUpdate && value) {
                     this.onUpdate(response.obj_id, value);
@@ -499,7 +500,7 @@ class HomeIndex {
     updateObject(id: string, data: DeviceData): DeviceData {
         if(this.mainIndex.has(id)) {
             const deviceData = this.mainIndex.get(id);
-            const value = Object.apply(deviceData, data);
+            const value = { ...deviceData, ...data };
             this.mainIndex.set(id, value);
             return value;
         }
