@@ -11,13 +11,17 @@ const READ_TOPIC = 'HSrv/0025291701EC/tx/' + CLIENT_ID;
 const ALL_TOPICS = 'HSrv/#';
 
 export enum REQUEST_TYPE {
-    STRUCTURE = 0,
+    STATUS = 0,
     ACTION = 1,
     SUBSCRIBE = 3,
     LOGIN = 5,
     PING = 7,
     READ_PARAMS = 8,
     AGENT_ID = 13,
+}
+
+export enum REQUEST_SUB_TYPE {
+    NONE = -1,
 }
 
 export interface MqttIncomingMessage {
@@ -314,7 +318,7 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
         const packet: MqttMessage = {
             req_type: REQUEST_TYPE.LOGIN,
             seq_id: this.props.index++,
-            req_sub_type: -1,
+            req_sub_type: REQUEST_SUB_TYPE.NONE,
             agent_type: 0,
             agent_id: this.props.agent_id,
             user_name: this.username,
@@ -361,7 +365,7 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
         const packet: MqttMessage = {
             req_type: REQUEST_TYPE.PING,
             seq_id: this.props.index++,
-            req_sub_type: -1,
+            req_sub_type: REQUEST_SUB_TYPE.NONE,
             sessiontoken: this.props.sessiontoken,
         };
         const response = await this.publish(packet);
@@ -370,9 +374,9 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
 
     async device(objId: string, detailLevel?: number): Promise<DeviceData> {
         const packet: MqttMessage = {
-            req_type: REQUEST_TYPE.STRUCTURE,
+            req_type: REQUEST_TYPE.STATUS,
             seq_id: this.props.index++,
-            req_sub_type: -1,
+            req_sub_type: REQUEST_SUB_TYPE.NONE,
             sessiontoken: this.props.sessiontoken,
             obj_id: objId,
             detail_level: detailLevel || 1,
@@ -384,9 +388,9 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
 
     async rooms(objId: string): Promise<DeviceData> {
         const packet: MqttMessage = {
-            req_type: REQUEST_TYPE.STRUCTURE,
+            req_type: REQUEST_TYPE.STATUS,
             seq_id: this.props.index++,
-            req_sub_type: -1,
+            req_sub_type: REQUEST_SUB_TYPE.NONE,
             sessiontoken: this.props.sessiontoken,
             obj_id: objId,
             obj_type: 1000,
