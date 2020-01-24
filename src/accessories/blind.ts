@@ -8,7 +8,8 @@ export class Blind extends ComelitAccessory<BlindDeviceData> {
     static readonly STOPPED = '0';
     static readonly OPENING = '1';
     static readonly CLOSING = '2';
-    static readonly TOGGLE = 1;
+    static readonly TOGGLE_OPEN = 1;
+    static readonly TOGGLE_CLOSE = 0;
     static readonly OPEN = 100;
     static readonly CLOSED = 0;
 
@@ -33,7 +34,7 @@ export class Blind extends ComelitAccessory<BlindDeviceData> {
             .getCharacteristic(Characteristic.TargetPosition)
             .on(CharacteristicEventTypes.SET, async (state: number, callback: Function) => {
                 try {
-                    await this.client.toggleBlind(this.device.id, Blind.TOGGLE);
+                    await this.client.toggleBlind(this.device.id, state < Blind.OPEN ? Blind.TOGGLE_CLOSE : Blind.TOGGLE_OPEN);
                     callback(null);
                 } catch (e) {
                     callback(e);
