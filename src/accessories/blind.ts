@@ -26,6 +26,7 @@ export class Blind extends ComelitAccessory<BlindDeviceData> {
         this.coveringService = new HomebridgeAPI.hap.Service.WindowCovering(this.device.descrizione, null);
 
         this.coveringService.setCharacteristic(Characteristic.PositionState, Blind.STOPPED);
+        this.coveringService.setCharacteristic(Characteristic.TargetPosition, Blind.OPEN);
         this.coveringService.setCharacteristic(Characteristic.CurrentPosition, Blind.OPEN);
 
         this.coveringService
