@@ -36,20 +36,20 @@ export class Blind extends ComelitAccessory<BlindDeviceData> {
             .getCharacteristic(Characteristic.TargetPosition)
             .on(CharacteristicEventTypes.SET, async (state: number, callback: Function) => {
                 try {
-                    const status = state < Blind.OPEN ? Blind.TOGGLE_CLOSE : Blind.TOGGLE_OPEN;
+                    const currentPosition = this.coveringService.getCharacteristic(Characteristic.CurrentPosition).value as number;
+                    const status = state < currentPosition ? Blind.TOGGLE_CLOSE : Blind.TOGGLE_OPEN;
+                    const delta = Math.abs(state - currentPosition);
                     if (this.timeout) {
                         clearTimeout(this.timeout);
                         this.timeout = null;
                         await this.client.toggleBlind(this.device.id, Blind.TOGGLE_CLOSE); // stop the blind
                     }
                     await this.client.toggleBlind(this.device.id, status);
-                    if (state > Blind.CLOSED && state < Blind.OPEN) {
-                        this.timeout = setTimeout(async () => {
-                            this.log(`Stopping blind to ${state}%`);
-                            await this.client.toggleBlind(this.device.id, Blind.TOGGLE_CLOSE);
-                            this.coveringService.getCharacteristic(Characteristic.CurrentPosition).updateValue(status);
-                        }, Blind.OPENING_CLOSING_TIME * state / 100);
-                    }
+                    this.timeout = setTimeout(async () => {
+                        this.log(`Stopping blind to ${state}%`);
+                        await this.client.toggleBlind(this.device.id, Blind.TOGGLE_CLOSE);
+                        this.coveringService.getCharacteristic(Characteristic.CurrentPosition).updateValue(status);
+                    }, Blind.OPENING_CLOSING_TIME * delta / 100);
                     callback(null);
                 } catch (e) {
                     callback(e);
