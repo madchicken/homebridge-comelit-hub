@@ -3,6 +3,7 @@ import {BlindDeviceData, ComelitClient} from "../comelit-client";
 import {Categories, Characteristic, CharacteristicEventTypes, NodeCallback, Service} from "hap-nodejs";
 import {HomebridgeAPI} from "../index";
 import {PositionState} from "hap-nodejs/dist/lib/gen/HomeKit";
+import Timeout = NodeJS.Timeout;
 
 export class Blind extends ComelitAccessory<BlindDeviceData> {
     static readonly STOPPED = '0';
@@ -13,9 +14,10 @@ export class Blind extends ComelitAccessory<BlindDeviceData> {
     static readonly OPEN = 100;
     static readonly CLOSED = 0;
 
-    static readonly OPENING_TIME = 35000; // 35 seconds to open approx.
+    static readonly OPENING_CLOSING_TIME = 35000; // 35 seconds to open approx.
 
     private coveringService: Service;
+    private timeout: Timeout;
 
     constructor(log: Function, device: BlindDeviceData, name: string, client: ComelitClient) {
         super(log, device, name, client, Categories.WINDOW_COVERING);
@@ -34,7 +36,15 @@ export class Blind extends ComelitAccessory<BlindDeviceData> {
             .getCharacteristic(Characteristic.TargetPosition)
             .on(CharacteristicEventTypes.SET, async (state: number, callback: Function) => {
                 try {
-                    await this.client.toggleBlind(this.device.id, state < Blind.OPEN ? Blind.TOGGLE_CLOSE : Blind.TOGGLE_OPEN);
+                    const status = state < Blind.OPEN ? Blind.TOGGLE_CLOSE : Blind.TOGGLE_OPEN;
+                    await this.client.toggleBlind(this.device.id, status);
+                    if (this.timeout) {
+                        clearTimeout(this.timeout);
+                        this.timeout = null;
+                    }
+                    this.timeout = setTimeout(() => {
+                        this.coveringService.getCharacteristic(Characteristic.CurrentPosition).updateValue(status);
+                    }, Blind.OPENING_CLOSING_TIME * state / 100);
                     callback(null);
                 } catch (e) {
                     callback(e);
