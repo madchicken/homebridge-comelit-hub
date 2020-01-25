@@ -36,6 +36,7 @@ export class Blind extends ComelitAccessory<BlindDeviceData> {
             .getCharacteristic(Characteristic.TargetPosition)
             .on(CharacteristicEventTypes.SET, async (state: number, callback: Function) => {
                 try {
+                    this.log(`Set blind status to ${state}`);
                     const status = state < Blind.OPEN ? Blind.TOGGLE_CLOSE : Blind.TOGGLE_OPEN;
                     await this.client.toggleBlind(this.device.id, status);
                     if (this.timeout) {
