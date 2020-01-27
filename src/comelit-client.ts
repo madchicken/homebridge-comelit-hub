@@ -46,6 +46,7 @@ export enum ELEMENT_TYPE {
     BLIND = 2,
     LIGHT = 3,
     THERMOSTAT = 9,
+    OUTLET = 10,
     POWER_CHECK = 11,
     ROOM = 1001,
 }
@@ -87,6 +88,11 @@ export interface LightDeviceData extends DeviceData {}
 
 export interface BlindDeviceData extends DeviceData {
     tempo_uscita: number;
+}
+
+export interface OutletDeviceData extends DeviceData {
+    instant_power: number,
+    out_power: number,
 }
 
 export interface ThermostatDeviceData extends DeviceData {
@@ -476,6 +482,7 @@ class HomeIndex {
     public readonly roomsIndex = new Map() as DeviceIndex;
     public readonly thermostatsIndex = new Map<string, ThermostatDeviceData>();
     public readonly blindsIndex = new Map<string, BlindDeviceData>();
+    public readonly outletsIndex = new Map<string, OutletDeviceData>();
 
     public readonly mainIndex = new Map<string, DeviceData>();
 
@@ -496,17 +503,22 @@ class HomeIndex {
     }
 
     private visitElement(element: DeviceInfo) {
-        if (element.data.type === ELEMENT_TYPE.LIGHT) {
-            this.lightsIndex.set(element.id, element.data as LightDeviceData);
-        }
-        if (element.data.type === ELEMENT_TYPE.ROOM) {
-            this.roomsIndex.set(element.id, element.data);
-        }
-        if (element.data.type === ELEMENT_TYPE.THERMOSTAT) {
-            this.thermostatsIndex.set(element.id, element.data as ThermostatDeviceData);
-        }
-        if (element.data.type === ELEMENT_TYPE.BLIND) {
-            this.blindsIndex.set(element.id, element.data as BlindDeviceData);
+        switch (element.data.type) {
+            case ELEMENT_TYPE.LIGHT:
+                this.lightsIndex.set(element.id, element.data as LightDeviceData);
+                break;
+            case ELEMENT_TYPE.ROOM:
+                this.roomsIndex.set(element.id, element.data);
+                break;
+            case ELEMENT_TYPE.THERMOSTAT:
+                this.thermostatsIndex.set(element.id, element.data as ThermostatDeviceData);
+                break;
+            case ELEMENT_TYPE.BLIND:
+                this.blindsIndex.set(element.id, element.data as BlindDeviceData);
+                break;
+            case ELEMENT_TYPE.OUTLET:
+                this.outletsIndex.set(element.id, element.data as OutletDeviceData);
+                break;
         }
 
         this.mainIndex.set(element.id, element.data);

@@ -5,6 +5,7 @@ import {Lightbulb} from "./accessories/lightbulb";
 import {Thermostat} from "./accessories/thermostat";
 import {Blind} from "./accessories/blind";
 import Timeout = NodeJS.Timeout;
+import {Outlet} from "./accessories/outlet";
 
 const ROOT_ID = 'GEN#17#13#1';
 
@@ -113,6 +114,16 @@ export class ComelitPlatform {
                 this.mappedAccessories.set(id, new Blind(this.log, deviceData, `Blind ${deviceData.descrizione}`, this.client));
             }
         });
+        const outletIds = [...homeIndex.outletsIndex.keys()];
+        this.log(`Found ${outletIds.length} outlets`);
+        outletIds.forEach(id => {
+            const deviceData = homeIndex.outletsIndex.get(id);
+            if (deviceData) {
+                this.log(`Outlet ID: ${id}, ${deviceData.descrizione}`);
+                this.mappedAccessories.set(id, new Outlet(this.log, deviceData, `Outlet ${deviceData.descrizione}`, this.client));
+            }
+        });
+
 
         this.log(`Found ${this.mappedAccessories.size} accessories`);
         this.log('Subscribed to root object');

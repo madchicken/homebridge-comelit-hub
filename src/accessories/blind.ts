@@ -1,8 +1,7 @@
 import {ComelitAccessory} from "./comelit";
 import {BlindDeviceData, ComelitClient} from "../comelit-client";
-import {Categories, Characteristic, CharacteristicEventTypes, NodeCallback, Service} from "hap-nodejs";
+import {Categories, Characteristic, CharacteristicEventTypes, Service} from "hap-nodejs";
 import {HomebridgeAPI} from "../index";
-import {PositionState} from "hap-nodejs/dist/lib/gen/HomeKit";
 import Timeout = NodeJS.Timeout;
 
 export class Blind extends ComelitAccessory<BlindDeviceData> {
