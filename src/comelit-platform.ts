@@ -4,6 +4,7 @@ import {ComelitAccessory} from "./accessories/comelit";
 import {Lightbulb} from "./accessories/lightbulb";
 import {Thermostat} from "./accessories/thermostat";
 import {Blind} from "./accessories/blind";
+import Timeout = NodeJS.Timeout;
 
 const ROOT_ID = 'GEN#17#13#1';
 
@@ -21,7 +22,10 @@ export class ComelitPlatform {
     private readonly homebridge: Homebridge;
     private client: ComelitClient;
     private readonly config: HubConfig;
+    private keepAliveTimer: Timeout;
     public mappedAccessories: Map<string, ComelitAccessory<DeviceData>> = new Map<string, ComelitAccessory<DeviceData>>();
+
+    static KEEP_ALIVE_TIMEOUT = 30000;
 
     constructor(log: (message?: any, ...optionalParams: any[]) => void, config: HubConfig, homebridge: Homebridge) {
         this.log = (str: string) => log("[COMELIT HUB] " + str);
@@ -32,63 +36,85 @@ export class ComelitPlatform {
         this.log("homebridge API version: " + homebridge.version);
     }
 
-    async accessories(callback: (array: any[]) => void) {
-        this.log('Building accessories list...');
-        if (!this.client) {
-            try {
-                this.log('Creating client and logging in...');
-                this.client = new ComelitClient(this.updateAccessory.bind(this), this.log);
-                await this.client.init(
-                    this.config.broker_url,
-                    this.config.username,
-                    this.config.password,
-                    this.config.hub_username,
-                    this.config.hub_password,
-                );
-                await this.client.login();
-            } catch (e) {
-                this.log(e);
-                return [];
-            }
+    private async login(): Promise<boolean> {
+        try {
+            await this.shutdown();
+            this.log('Creating client and logging in...');
+            this.client = new ComelitClient(this.updateAccessory.bind(this), this.log);
+            await this.client.init(
+                this.config.broker_url,
+                this.config.username,
+                this.config.password,
+                this.config.hub_username,
+                this.config.hub_password,
+            );
+        } catch (e) {
+            this.log('Error initializing MQTT client', e);
+            return false;
         }
-        if (this.client.isLogged()) {
-            const rootElementInfo = await this.client.device(ROOT_ID);
-            const homeIndex = this.client.mapHome(rootElementInfo);
-            const lightIds = [...homeIndex.lightsIndex.keys()];
-            this.log(`Found ${lightIds.length} lights`);
 
-            lightIds.forEach(id => {
-                const deviceData = homeIndex.lightsIndex.get(id);
-                if (deviceData) {
-                    this.log(`Light ID: ${id}, ${deviceData.descrizione}`);
-                    this.mappedAccessories.set(id, new Lightbulb(this.log, deviceData, `Light ${deviceData.descrizione}`, this.client));
-                }
-            });
-            const thermostatIds = [...homeIndex.thermostatsIndex.keys()];
-            this.log(`Found ${thermostatIds.length} thermostats`);
-            thermostatIds.forEach(id => {
-                const deviceData = homeIndex.thermostatsIndex.get(id);
-                if (deviceData) {
-                    this.log(`Thermostat ID: ${id}, ${deviceData.descrizione}`);
-                    this.mappedAccessories.set(id, new Thermostat(this.log, deviceData, `Thermostat ${deviceData.descrizione}`, this.client));
-                }
-            });
-            const shadeIds = [...homeIndex.blindsIndex.keys()];
-            this.log(`Found ${shadeIds.length} shades`);
-            shadeIds.forEach(id => {
-                const deviceData = homeIndex.blindsIndex.get(id);
-                if (deviceData) {
-                    this.log(`Blind ID: ${id}, ${deviceData.descrizione}`);
-                    this.mappedAccessories.set(id, new Blind(this.log, deviceData, `Blind ${deviceData.descrizione}`, this.client));
-                }
-            });
-        } else {
-            this.log('Error logging in');
+        try {
+            await this.client.login();
+            this.keepAlive();
+            await this.client.subscribeObject(ROOT_ID);
+            return true;
+        } catch (e) {
+            this.log('Error logging in', e);
+            return false;
+        }
+    }
+
+    private async shutdown() {
+        if (this.client) {
+            this.log('Shutting down old client...');
+            if (this.keepAliveTimer) {
+                clearTimeout(this.keepAliveTimer);
+                this.keepAliveTimer = null;
+            }
+            await this.client.shutdown();
+            this.client = null;
+        }
+    }
+
+    async accessories(callback: (array: any[]) => void) {
+        const login = await this.login();
+        if (!login || this.client.isLogged()) {
+            this.log('Not logged, returning empty accessory array');
             this.mappedAccessories = new Map<string, ComelitAccessory<DeviceData>>();
         }
+        this.log('Building accessories list...');
+        const rootElementInfo = await this.client.device(ROOT_ID);
+        const homeIndex = this.client.mapHome(rootElementInfo);
+        const lightIds = [...homeIndex.lightsIndex.keys()];
+        this.log(`Found ${lightIds.length} lights`);
+
+        lightIds.forEach(id => {
+            const deviceData = homeIndex.lightsIndex.get(id);
+            if (deviceData) {
+                this.log(`Light ID: ${id}, ${deviceData.descrizione}`);
+                this.mappedAccessories.set(id, new Lightbulb(this.log, deviceData, `Light ${deviceData.descrizione}`, this.client));
+            }
+        });
+        const thermostatIds = [...homeIndex.thermostatsIndex.keys()];
+        this.log(`Found ${thermostatIds.length} thermostats`);
+        thermostatIds.forEach(id => {
+            const deviceData = homeIndex.thermostatsIndex.get(id);
+            if (deviceData) {
+                this.log(`Thermostat ID: ${id}, ${deviceData.descrizione}`);
+                this.mappedAccessories.set(id, new Thermostat(this.log, deviceData, `Thermostat ${deviceData.descrizione}`, this.client));
+            }
+        });
+        const shadeIds = [...homeIndex.blindsIndex.keys()];
+        this.log(`Found ${shadeIds.length} shades`);
+        shadeIds.forEach(id => {
+            const deviceData = homeIndex.blindsIndex.get(id);
+            if (deviceData) {
+                this.log(`Blind ID: ${id}, ${deviceData.descrizione}`);
+                this.mappedAccessories.set(id, new Blind(this.log, deviceData, `Blind ${deviceData.descrizione}`, this.client));
+            }
+        });
 
         this.log(`Found ${this.mappedAccessories.size} accessories`);
-        await this.client.subscribeObject(ROOT_ID);
         this.log('Subscribed to root object');
         callback([...this.mappedAccessories.values()]);
     }
@@ -98,5 +124,17 @@ export class ComelitPlatform {
         if (accessory) {
             accessory.update(data);
         }
+    }
+
+    async keepAlive() {
+        this.keepAliveTimer = setTimeout(async () => {
+            try {
+                await this.client.ping();
+                this.keepAlive();
+            } catch(e) {
+                this.log(e);
+                await this.login();
+            }
+        }, ComelitPlatform.KEEP_ALIVE_TIMEOUT);
     }
 }

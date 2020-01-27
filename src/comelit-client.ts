@@ -2,7 +2,7 @@ import {AsyncMqttClient} from "async-mqtt";
 import {DeferredMessage, PromiseBasedQueue} from "./promise-queue";
 
 const MQTT = require("async-mqtt");
-import Timeout = NodeJS.Timeout;
+
 
 const connectAsync = MQTT.connectAsync;
 const CLIENT_ID = 'HSrv_0025291701EC3_0592EF88-AEEE-47BD-A859-9E70017';
@@ -17,10 +17,12 @@ export enum REQUEST_TYPE {
     LOGIN = 5,
     PING = 7,
     READ_PARAMS = 8,
-    AGENT_ID = 13,
+    GET_DATETIME = 9,
+    ANNOUNCE = 13,
 }
 
 export enum REQUEST_SUB_TYPE {
+    GET_CONF_PARAM_GROUP = 23,
     NONE = -1,
 }
 
@@ -208,7 +210,6 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
     private password: string;
     private readonly onUpdate: (objId: string, device: DeviceData) => void;
     private readonly log: (message?: any, ...optionalParams: any[]) => void;
-    private keepAliveTimer: Timeout;
 
     constructor(onUpdate?: (objId: string, device: DeviceData) => void, log?: (message?: any, ...optionalParams: any[]) => void) {
         super();
@@ -245,18 +246,6 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
         return !!this.props.sessiontoken;
     }
 
-    async keepAlive() {
-        this.keepAliveTimer = setTimeout(async () => {
-            try {
-                await this.ping();
-                this.keepAlive();
-            } catch(e) {
-                this.log(e);
-                await this.login();
-            }
-        }, 30000);
-    }
-
     async init(brokerUrl: string, username: string, password: string, hub_username: string, hub_password: string, clientId?: string): Promise<AsyncMqttClient> {
         this.username = username;
         this.password = password;
@@ -286,10 +275,6 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
                 console.error(e.message);
             }
         }
-        if (this.keepAliveTimer) {
-            clearTimeout(this.keepAliveTimer);
-            this.keepAliveTimer = null;
-        }
         this.props.client = null;
         this.props.index = 0;
         this.props.sessiontoken = null;
@@ -299,9 +284,9 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
     private async retriveAgentId(): Promise<number> {
         this.log('Retrieving agent id...');
         const packet: MqttMessage = {
-            req_type: REQUEST_TYPE.AGENT_ID,
+            req_type: REQUEST_TYPE.ANNOUNCE,
             seq_id: this.props.index++,
-            req_sub_type: -1,
+            req_sub_type: REQUEST_SUB_TYPE.NONE,
             agent_type: 0
         };
         const msg = await this.publish(packet);
@@ -327,7 +312,6 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
         try {
             const msg = await this.publish(packet);
             this.props.sessiontoken = msg.sessiontoken;
-            this.keepAlive();
             return true;
         } catch(e) {
             console.error(e);
@@ -339,7 +323,7 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
         const packet: MqttMessage = {
             req_type: REQUEST_TYPE.READ_PARAMS,
             seq_id: this.props.index++,
-            req_sub_type: 23,
+            req_sub_type: REQUEST_SUB_TYPE.GET_CONF_PARAM_GROUP,
             param_type: 2,
             agent_type: 0,
             agent_id: this.props.agent_id,
