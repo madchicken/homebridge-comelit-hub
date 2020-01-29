@@ -261,6 +261,29 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
             password: hub_password,
             clientId: clientId || CLIENT_ID,
             keepalive: 120,
+            rejectUnauthorized: false,
+            ca: [
+                '-----BEGIN CERTIFICATE-----',
+                'MIIDVDCCAjwCCQCk6Q2uiT2kYTANBgkqhkiG9w0BAQsFADBrMQswCQYDVQQGEwJJ',
+                'VDEOMAwGA1UECAwFSXRhbHkxHDAaBgNVBAcME1JvdmV0dGEgU2FuIExvcmVuem8x',
+                'HDAaBgNVBAoME0NvbWVsaXQgR3JvdXAgUy5wLmExEDAOBgNVBAsMB0NvbWVsaXQw',
+                'IBcNMTYwOTAxMTUzNzQ3WhgPMjA1NjA4MjIxNTM3NDdaMGsxCzAJBgNVBAYTAklU',
+                'MQ4wDAYDVQQIDAVJdGFseTEcMBoGA1UEBwwTUm92ZXR0YSBTYW4gTG9yZW56bzEc',
+                'MBoGA1UECgwTQ29tZWxpdCBHcm91cCBTLnAuYTEQMA4GA1UECwwHQ29tZWxpdDCC',
+                'ASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALGnC95A9hap/DtNLXFwap4c',
+                'EKw73MOp6grATtiOjZ2xK0squEjQXqY3aBJkg2eO9hUhOZ4F4m7USaL9mo+HchsX',
+                '+PV9vBUB6Qn844L6seHFtaVJWJXoZZrKTBIKn3NVdCFgOnEeBhU6rskEcDoXAIS8',
+                'G3b9MozLBywp07uX9dy83vJxJej5uwNSssB4QOniAN+86Q287Vh84ROap0hjxZ2y',
+                '7DPQRjf0Nr2FuK8YPyI88y1RUdvGa3WS6mrRoeauf6qXAo1WtalUZTV4smxSl4Yt',
+                'VeF2jLvQ2oRiFPXCzMPZ0y7hxQ5ZFN2c5zdAANb9+Zlfv6jWg5Er1tjb1ZGEW9kC',
+                'AwEAATANBgkqhkiG9w0BAQsFAAOCAQEAoqjPMMgseUk8+VKqH6obGqKlClDtL13m',
+                '+HkEx2YOCAb/YWFOcBBm7dXw7bxl5rcEiUuokh8dbYKf36ggdFSyGC6Wn8fQ9CBP',
+                'WDzNjWmIImORVcI3nbpjmW9ZC8scECgEm0oigX58bSl0O22VbphmG8N7ke71fSs7',
+                'Wo/vIT2PsKO6x1DwgSWMlDsh91E98rgy+SoK4chUnEPsT8apan6DkHMJXGcQ3t9N',
+                'w5otCsXQcnP+zCcfG9yYlj3qe9yLU0m8QTG3rccalicXM3T/Pv0iDCljLH65jaUh',
+                'clwH27JlXXA6U+uCnGjz84mA9Y9RQ+C8EfwBb7QFcI7dXBfE+4ae0w==',
+                '-----END CERTIFICATE-----',
+            ]
         });
         // Register to incoming messages
         await this.props.client.subscribe(ALL_TOPICS);
@@ -391,7 +414,7 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
             .then(() => response.out_data[0] as DeviceData);
     }
 
-    async toggleLight(id: string, status: number): Promise<boolean> {
+    async toggleDeviceStatus(id: string, status: number): Promise<boolean> {
         const packet: MqttMessage = {
             req_type: REQUEST_TYPE.ACTION,
             seq_id: this.props.index++,

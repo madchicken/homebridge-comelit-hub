@@ -8,14 +8,13 @@ const options = yargs.options({
         username: { alias: 'u', type: 'string', demandOption: true, default: 'admin'},
         password: { alias: 'p', type: 'string', demandOption: true, default: 'admin'},
         hub_username: { alias: 'hu', type: 'string', demandOption: true, default: 'hsrv-user'},
-        hub_password: { alias: 'hp', type: 'string', demandOption: true},
+        hub_password: { alias: 'hp', type: 'string', demandOption: true, default: 'sf1nE9bjPc'},
     })
     .command('info', 'Get info about a device', {
         id: {type: 'string', demandOption: true},
         detail: {type: 'number', demandOption: false, default: 1},
     })
     .command('params', 'Get HUB parameters', {
-        token: {type: 'string', demandOption: true},
     })
     .demandCommand(1, 'You need at least one command before moving on')
     .demandOption( 'host', 'You must provide the COMELIT MQTT URL')

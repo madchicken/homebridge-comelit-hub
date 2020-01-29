@@ -49,21 +49,21 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
         const isAuto: boolean = data.auto_man === Thermostat.AUTO_MODE;
         this.log(`Thermostat auto mode is ${isAuto}`);
         const heatingCollingState = isOff ? CurrentHeatingCoolingState.OFF : data.est_inv === Thermostat.OFF ? CurrentHeatingCoolingState.COOL : CurrentHeatingCoolingState.HEAT;
-        this.thermostatService.setCharacteristic(Characteristic.CurrentHeatingCoolingState, heatingCollingState);
-        this.thermostatService.setCharacteristic(Characteristic.TargetHeatingCoolingState, isAuto ? TargetHeatingCoolingState.AUTO : heatingCollingState);
+        this.thermostatService.getCharacteristic(Characteristic.CurrentHeatingCoolingState).updateValue(heatingCollingState);
+        this.thermostatService.getCharacteristic(Characteristic.TargetHeatingCoolingState).updateValue(isAuto ? TargetHeatingCoolingState.AUTO : heatingCollingState);
         const temperature = data.temperatura ? parseFloat(data.temperatura) / 10 : 0;
         this.log(`Temperature for ${this.name} is ${temperature}`);
-        this.thermostatService.setCharacteristic(Characteristic.CurrentTemperature, temperature);
+        this.thermostatService.getCharacteristic(Characteristic.CurrentTemperature).updateValue(temperature);
         const targetTemperature = data.soglia_attiva ? parseFloat(data.soglia_attiva) / 10 : 0;
         this.log(`Threshold for ${this.name} is ${targetTemperature}`);
-        this.thermostatService.setCharacteristic(Characteristic.TargetTemperature, targetTemperature);
-        this.thermostatService.setCharacteristic(Characteristic.TemperatureDisplayUnits, TemperatureDisplayUnits.CELSIUS);
+        this.thermostatService.getCharacteristic(Characteristic.TargetTemperature).updateValue(targetTemperature);
+        this.thermostatService.getCharacteristic(Characteristic.TemperatureDisplayUnits).updateValue(TemperatureDisplayUnits.CELSIUS);
 
         const isDehumidifierOn = data.auto_man_umi === Thermostat.DEHUMIDIFIER_ON;
-        this.dehumidifierService.setCharacteristic(Characteristic.CurrentRelativeHumidity, parseInt(data.umidita));
-        this.dehumidifierService.setCharacteristic(Characteristic.CurrentHumidifierDehumidifierState, isDehumidifierOn ? CurrentHumidifierDehumidifierState.DEHUMIDIFYING : CurrentHumidifierDehumidifierState.INACTIVE);
-        this.dehumidifierService.setCharacteristic(Characteristic.TargetHumidifierDehumidifierState, TargetHumidifierDehumidifierState.HUMIDIFIER_OR_DEHUMIDIFIER);
-        this.dehumidifierService.setCharacteristic(Characteristic.Active, isDehumidifierOn ? Active.ACTIVE : Active.INACTIVE);
+        this.dehumidifierService.getCharacteristic(Characteristic.CurrentRelativeHumidity).updateValue(parseInt(data.umidita));
+        this.dehumidifierService.getCharacteristic(Characteristic.CurrentHumidifierDehumidifierState).updateValue(isDehumidifierOn ? CurrentHumidifierDehumidifierState.DEHUMIDIFYING : CurrentHumidifierDehumidifierState.INACTIVE);
+        this.dehumidifierService.getCharacteristic(Characteristic.TargetHumidifierDehumidifierState).updateValue(TargetHumidifierDehumidifierState.HUMIDIFIER_OR_DEHUMIDIFIER);
+        this.dehumidifierService.getCharacteristic(Characteristic.Active).updateValue(isDehumidifierOn ? Active.ACTIVE : Active.INACTIVE);
         return temperature;
     }
 }

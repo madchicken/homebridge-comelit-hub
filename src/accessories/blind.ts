@@ -62,6 +62,8 @@ export class Blind extends ComelitAccessory<BlindDeviceData> {
         let value;
         if (data.status === Blind.CLOSING) {
             value = Blind.CLOSED;
+        } if (data.status === Blind.OPENING) {
+            value = Blind.OPEN;
         } else {
             value = Blind.OPEN;
         }

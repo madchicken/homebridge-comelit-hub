@@ -38,10 +38,10 @@ export class Lightbulb extends ComelitAccessory<LightDeviceData> {
             .on(CharacteristicEventTypes.GET, async (callback: Function) => {
                 callback(null, parseInt(this.device.status));
             })
-            .on(CharacteristicEventTypes.SET, async (state: number, callback: Function) => {
-                const status = state ? Lightbulb.ON : Lightbulb.OFF;
+            .on(CharacteristicEventTypes.SET, async (yes: boolean, callback: Function) => {
+                const status = yes ? Lightbulb.ON : Lightbulb.OFF;
                 try {
-                    await this.client.toggleLight(this.device.id, status);
+                    await this.client.toggleDeviceStatus(this.device.id, status);
                     this.device.status = `${status}`;
                     callback()
                 } catch (e) {
