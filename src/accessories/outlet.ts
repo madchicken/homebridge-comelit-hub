@@ -1,8 +1,7 @@
 import {ComelitAccessory} from "./comelit";
 import {ComelitClient, OutletDeviceData} from "../comelit-client";
-import {Categories, Characteristic, CharacteristicEventTypes, Service} from "hap-nodejs";
+import {Categories, Characteristic, CharacteristicEventTypes, Formats, Perms, Service} from "hap-nodejs";
 import {HomebridgeAPI} from "../index";
-import {Formats, Perms} from "hap-nodejs/src/lib/Characteristic";
 
 class Consumption extends Characteristic {
     static readonly UUID: string = '00000029-0000-2000-8000-0026BB765291';
