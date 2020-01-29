@@ -2,6 +2,20 @@ import {ComelitAccessory} from "./comelit";
 import {ComelitClient, OutletDeviceData} from "../comelit-client";
 import {Categories, Characteristic, CharacteristicEventTypes, Service} from "hap-nodejs";
 import {HomebridgeAPI} from "../index";
+import {Formats, Perms} from "hap-nodejs/src/lib/Characteristic";
+
+class Consumption extends Characteristic {
+    static readonly UUID: string = '00000029-0000-2000-8000-0026BB765291';
+
+    constructor() {
+        super('Power consumption', Consumption.UUID);
+        this.setProps({
+            format: Formats.STRING,
+            perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY]
+        });
+        this.value = this.getDefaultValue();
+    }
+}
 
 export class Outlet extends ComelitAccessory<OutletDeviceData> {
     static readonly ON = 1;
@@ -17,6 +31,7 @@ export class Outlet extends ComelitAccessory<OutletDeviceData> {
         const accessoryInformation = this.initAccessoryInformation();
 
         this.outletService = new HomebridgeAPI.hap.Service.Outlet(this.device.descrizione, null);
+        this.outletService.addOptionalCharacteristic(Consumption);
         this.update(this.device);
         this.outletService.getCharacteristic(Characteristic.InUse).on(CharacteristicEventTypes.GET, async (callback: Function) => {
             callback(null, this.device.instant_power > 0);
@@ -31,6 +46,9 @@ export class Outlet extends ComelitAccessory<OutletDeviceData> {
                 callback(e);
             }
         });
+        this.outletService.getCharacteristic(Consumption).on(CharacteristicEventTypes.GET, async (callback: Function) => {
+            callback(null, `${this.device.instant_power} W`);
+        });
 
         return [accessoryInformation, this.outletService];
     }
@@ -38,5 +56,6 @@ export class Outlet extends ComelitAccessory<OutletDeviceData> {
     public update(data: OutletDeviceData) {
         this.outletService.getCharacteristic(Characteristic.On).updateValue(parseInt(data.status) > 0);
         this.outletService.getCharacteristic(Characteristic.InUse).updateValue(data.instant_power > 0);
+        this.outletService.getCharacteristic(Consumption).updateValue(`${data.instant_power} W`);
     }
 }
