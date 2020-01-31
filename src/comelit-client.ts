@@ -95,7 +95,7 @@ export interface BlindDeviceData extends DeviceData {
 }
 
 export interface OutletDeviceData extends DeviceData {
-    instant_power: number,
+    instant_power: string,
     out_power: number,
 }
 

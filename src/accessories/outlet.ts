@@ -36,7 +36,8 @@ export class Outlet extends ComelitAccessory<OutletDeviceData> {
         this.outletService.addOptionalCharacteristic(Consumption);
         this.update(this.device);
         this.outletService.getCharacteristic(Characteristic.InUse).on(CharacteristicEventTypes.GET, async (callback: Function) => {
-            callback(null, this.device.instant_power > 0);
+            const power = parseFloat(this.device.instant_power);
+            callback(null, power > 0);
         });
         this.outletService.getCharacteristic(Characteristic.On).on(CharacteristicEventTypes.SET, async (yes: boolean, callback: Function) => {
             const status = yes ? Outlet.ON : Outlet.OFF;
@@ -57,8 +58,9 @@ export class Outlet extends ComelitAccessory<OutletDeviceData> {
 
     public update(data: OutletDeviceData) {
         this.outletService.getCharacteristic(Characteristic.On).updateValue(data.status > 0);
-        this.outletService.getCharacteristic(Characteristic.InUse).updateValue(data.instant_power > 0);
+        const power = parseFloat(data.instant_power);
+        this.outletService.getCharacteristic(Characteristic.InUse).updateValue(power > 0);
         this.outletService.getCharacteristic(Consumption).updateValue(`${data.instant_power} W`);
-        gauge.set({ plug: data.descrizione }, data.instant_power);
+        gauge.set({ plug: data.descrizione }, power);
     }
 }
