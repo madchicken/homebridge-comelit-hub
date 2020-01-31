@@ -37,7 +37,8 @@
     "lodash": "^4.17.15",
     "homebridge": "^0.4.50",
     "yargs": "^15.1.0",
-    "chalk": "^3.0.0"
+    "chalk": "^3.0.0",
+    "prom-client": "^11.5.3"
   },
   "bin": {
     "comelit": "./bin/cli.js"

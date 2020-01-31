@@ -39,7 +39,7 @@ export class Outlet extends ComelitAccessory<OutletDeviceData> {
             const status = yes ? Outlet.ON : Outlet.OFF;
             try {
                 await this.client.toggleDeviceStatus(this.device.id, status);
-                this.device.status = `${status}`;
+                this.device.status = status;
                 callback()
             } catch (e) {
                 callback(e);
@@ -53,7 +53,7 @@ export class Outlet extends ComelitAccessory<OutletDeviceData> {
     }
 
     public update(data: OutletDeviceData) {
-        this.outletService.getCharacteristic(Characteristic.On).updateValue(parseInt(data.status) > 0);
+        this.outletService.getCharacteristic(Characteristic.On).updateValue(data.status > 0);
         this.outletService.getCharacteristic(Characteristic.InUse).updateValue(data.instant_power > 0);
         this.outletService.getCharacteristic(Consumption).updateValue(`${data.instant_power} W`);
     }

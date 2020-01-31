@@ -48,7 +48,7 @@ export enum ELEMENT_TYPE {
     THERMOSTAT = 9,
     OUTLET = 10,
     POWER_CHECK = 11,
-    ROOM = 1001,
+    ZONE = 1001,
 }
 
 export enum ELEMENT_SUBTYPE {
@@ -68,7 +68,7 @@ export interface DeviceData {
     descrizione: string;
     sched_status: string;
     sched_lock: string;
-    status: string
+    status: number;
     placeOrder?: string;
     num_modulo: string,
     num_uscita: string,
@@ -84,7 +84,8 @@ export interface DeviceInfo {
     data: DeviceData;
 }
 
-export interface LightDeviceData extends DeviceData {}
+export interface LightDeviceData extends DeviceData {
+}
 
 export interface BlindDeviceData extends DeviceData {
     tempo_uscita: number;
@@ -93,6 +94,30 @@ export interface BlindDeviceData extends DeviceData {
 export interface OutletDeviceData extends DeviceData {
     instant_power: number,
     out_power: number,
+}
+
+export enum ThermoSeason {
+    SUMMER,
+    WINTER
+}
+
+export enum ClimaMode {
+    NONE,
+    AUTO,
+    MANUAL,
+    FORCED,
+}
+
+export enum ObjectStatus {
+    NONE = -1,
+    OFF = 0,
+    ON = 1,
+    IDLE= 2,
+    UP= 7,
+    DOWN = 8,
+    OPEN = 9,
+    CLOSE = 10,
+    ON_COOLING = 11,
 }
 
 export interface ThermostatDeviceData extends DeviceData {
@@ -161,8 +186,8 @@ export interface ThermostatDeviceData extends DeviceData {
     heatLimitMin: string;
     viewOnly: string;
     temperatura: string;
-    auto_man: string;
-    est_inv: string;
+    auto_man: ClimaMode;
+    est_inv: ThermoSeason;
     soglia_attiva: string;
     out_value_inv: string;
     out_value_est: string;
@@ -209,6 +234,35 @@ interface Param {
     param_value: string;
 }
 
+const COMELIT_CERTIFICATE: string[] = [
+    '-----BEGIN CERTIFICATE-----',
+    'MIIDVDCCAjwCCQCk6Q2uiT2kYTANBgkqhkiG9w0BAQsFADBrMQswCQYDVQQGEwJJ',
+    'VDEOMAwGA1UECAwFSXRhbHkxHDAaBgNVBAcME1JvdmV0dGEgU2FuIExvcmVuem8x',
+    'HDAaBgNVBAoME0NvbWVsaXQgR3JvdXAgUy5wLmExEDAOBgNVBAsMB0NvbWVsaXQw',
+    'IBcNMTYwOTAxMTUzNzQ3WhgPMjA1NjA4MjIxNTM3NDdaMGsxCzAJBgNVBAYTAklU',
+    'MQ4wDAYDVQQIDAVJdGFseTEcMBoGA1UEBwwTUm92ZXR0YSBTYW4gTG9yZW56bzEc',
+    'MBoGA1UECgwTQ29tZWxpdCBHcm91cCBTLnAuYTEQMA4GA1UECwwHQ29tZWxpdDCC',
+    'ASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALGnC95A9hap/DtNLXFwap4c',
+    'EKw73MOp6grATtiOjZ2xK0squEjQXqY3aBJkg2eO9hUhOZ4F4m7USaL9mo+HchsX',
+    '+PV9vBUB6Qn844L6seHFtaVJWJXoZZrKTBIKn3NVdCFgOnEeBhU6rskEcDoXAIS8',
+    'G3b9MozLBywp07uX9dy83vJxJej5uwNSssB4QOniAN+86Q287Vh84ROap0hjxZ2y',
+    '7DPQRjf0Nr2FuK8YPyI88y1RUdvGa3WS6mrRoeauf6qXAo1WtalUZTV4smxSl4Yt',
+    'VeF2jLvQ2oRiFPXCzMPZ0y7hxQ5ZFN2c5zdAANb9+Zlfv6jWg5Er1tjb1ZGEW9kC',
+    'AwEAATANBgkqhkiG9w0BAQsFAAOCAQEAoqjPMMgseUk8+VKqH6obGqKlClDtL13m',
+    '+HkEx2YOCAb/YWFOcBBm7dXw7bxl5rcEiUuokh8dbYKf36ggdFSyGC6Wn8fQ9CBP',
+    'WDzNjWmIImORVcI3nbpjmW9ZC8scECgEm0oigX58bSl0O22VbphmG8N7ke71fSs7',
+    'Wo/vIT2PsKO6x1DwgSWMlDsh91E98rgy+SoK4chUnEPsT8apan6DkHMJXGcQ3t9N',
+    'w5otCsXQcnP+zCcfG9yYlj3qe9yLU0m8QTG3rccalicXM3T/Pv0iDCljLH65jaUh',
+    'clwH27JlXXA6U+uCnGjz84mA9Y9RQ+C8EfwBb7QFcI7dXBfE+4ae0w==',
+    '-----END CERTIFICATE-----',
+];
+
+function deserializeMessage(message: any): MqttIncomingMessage {
+    const parsed: any = JSON.parse(message.toString());
+    parsed.status = parseInt(parsed.status);
+    return parsed as MqttIncomingMessage;
+}
+
 export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMessage> {
     private readonly props: ComelitProps;
     private homeIndex: HomeIndex;
@@ -252,38 +306,18 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
         return !!this.props.sessiontoken;
     }
 
-    async init(brokerUrl: string, username: string, password: string, hub_username: string, hub_password: string, clientId?: string): Promise<AsyncMqttClient> {
+    async init(brokerUrl: string, username: string, password: string, hub_username?: string,
+               hub_password?: string, clientId?: string): Promise<AsyncMqttClient> {
         this.username = username;
         this.password = password;
         this.log(`Connecting to Comelit HUB at ${brokerUrl}`);
         this.props.client = await connectAsync(brokerUrl, {
-            username: hub_username,
-            password: hub_password,
+            username: hub_username || 'hsrv-user',
+            password: hub_password || 'sf1nE9bjPc',
             clientId: clientId || CLIENT_ID,
             keepalive: 120,
             rejectUnauthorized: false,
-            ca: [
-                '-----BEGIN CERTIFICATE-----',
-                'MIIDVDCCAjwCCQCk6Q2uiT2kYTANBgkqhkiG9w0BAQsFADBrMQswCQYDVQQGEwJJ',
-                'VDEOMAwGA1UECAwFSXRhbHkxHDAaBgNVBAcME1JvdmV0dGEgU2FuIExvcmVuem8x',
-                'HDAaBgNVBAoME0NvbWVsaXQgR3JvdXAgUy5wLmExEDAOBgNVBAsMB0NvbWVsaXQw',
-                'IBcNMTYwOTAxMTUzNzQ3WhgPMjA1NjA4MjIxNTM3NDdaMGsxCzAJBgNVBAYTAklU',
-                'MQ4wDAYDVQQIDAVJdGFseTEcMBoGA1UEBwwTUm92ZXR0YSBTYW4gTG9yZW56bzEc',
-                'MBoGA1UECgwTQ29tZWxpdCBHcm91cCBTLnAuYTEQMA4GA1UECwwHQ29tZWxpdDCC',
-                'ASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALGnC95A9hap/DtNLXFwap4c',
-                'EKw73MOp6grATtiOjZ2xK0squEjQXqY3aBJkg2eO9hUhOZ4F4m7USaL9mo+HchsX',
-                '+PV9vBUB6Qn844L6seHFtaVJWJXoZZrKTBIKn3NVdCFgOnEeBhU6rskEcDoXAIS8',
-                'G3b9MozLBywp07uX9dy83vJxJej5uwNSssB4QOniAN+86Q287Vh84ROap0hjxZ2y',
-                '7DPQRjf0Nr2FuK8YPyI88y1RUdvGa3WS6mrRoeauf6qXAo1WtalUZTV4smxSl4Yt',
-                'VeF2jLvQ2oRiFPXCzMPZ0y7hxQ5ZFN2c5zdAANb9+Zlfv6jWg5Er1tjb1ZGEW9kC',
-                'AwEAATANBgkqhkiG9w0BAQsFAAOCAQEAoqjPMMgseUk8+VKqH6obGqKlClDtL13m',
-                '+HkEx2YOCAb/YWFOcBBm7dXw7bxl5rcEiUuokh8dbYKf36ggdFSyGC6Wn8fQ9CBP',
-                'WDzNjWmIImORVcI3nbpjmW9ZC8scECgEm0oigX58bSl0O22VbphmG8N7ke71fSs7',
-                'Wo/vIT2PsKO6x1DwgSWMlDsh91E98rgy+SoK4chUnEPsT8apan6DkHMJXGcQ3t9N',
-                'w5otCsXQcnP+zCcfG9yYlj3qe9yLU0m8QTG3rccalicXM3T/Pv0iDCljLH65jaUh',
-                'clwH27JlXXA6U+uCnGjz84mA9Y9RQ+C8EfwBb7QFcI7dXBfE+4ae0w==',
-                '-----END CERTIFICATE-----',
-            ]
+            ca: COMELIT_CERTIFICATE
         });
         // Register to incoming messages
         await this.props.client.subscribe(ALL_TOPICS);
@@ -342,7 +376,7 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
             const msg = await this.publish(packet);
             this.props.sessiontoken = msg.sessiontoken;
             return true;
-        } catch(e) {
+        } catch (e) {
             console.error(e);
             return false
         }
@@ -450,7 +484,7 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
             act_type: 2,
             sessiontoken: this.props.sessiontoken,
             obj_id: id,
-            act_params: [temperature*10],
+            act_params: [temperature * 10],
         };
         const response = await this.publish(packet);
         return ComelitClient.evalResponse(response).then(value => value);
@@ -473,7 +507,7 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
         await this.props.client.publish(WRITE_TOPIC, JSON.stringify(packet));
         try {
             return await this.enqueue(packet);
-        } catch(response) {
+        } catch (response) {
             if (response.req_result === 1 && response.message === 'invalid token') {
                 await this.login(); // relogin and override invalid token
                 return this.publish(packet); // resend packet
@@ -483,7 +517,7 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
     }
 
     private handleIncomingMessage(topic: string, message: any) {
-        const msg: MqttIncomingMessage = JSON.parse(message.toString());
+        const msg: MqttIncomingMessage = deserializeMessage(message);
         this.log(`Incoming message for topic ${topic}: ${message.toString()}`);
         switch (topic) {
             case READ_TOPIC:
@@ -516,9 +550,9 @@ class HomeIndex {
     }
 
     updateObject(id: string, data: DeviceData): DeviceData {
-        if(this.mainIndex.has(id)) {
+        if (this.mainIndex.has(id)) {
             const deviceData = this.mainIndex.get(id);
-            const value = { ...deviceData, ...data };
+            const value = {...deviceData, ...data};
             this.mainIndex.set(id, value);
             return value;
         }
@@ -530,7 +564,7 @@ class HomeIndex {
             case ELEMENT_TYPE.LIGHT:
                 this.lightsIndex.set(element.id, element.data as LightDeviceData);
                 break;
-            case ELEMENT_TYPE.ROOM:
+            case ELEMENT_TYPE.ZONE:
                 this.roomsIndex.set(element.id, element.data);
                 break;
             case ELEMENT_TYPE.THERMOSTAT:
@@ -546,7 +580,7 @@ class HomeIndex {
 
         this.mainIndex.set(element.id, element.data);
 
-        if(element.data.elements) {
+        if (element.data.elements) {
             element.data.elements.forEach(value => this.visitElement(value));
         }
     }

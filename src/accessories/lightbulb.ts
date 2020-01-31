@@ -1,5 +1,5 @@
 import {ComelitAccessory} from "./comelit";
-import {ComelitClient, DeviceData, LightDeviceData} from "../comelit-client";
+import {ComelitClient, DeviceData, LightDeviceData, ObjectStatus} from "../comelit-client";
 import {Categories, Characteristic, CharacteristicEventTypes, Service} from "hap-nodejs";
 import {HomebridgeAPI} from "../index";
 
@@ -23,7 +23,7 @@ export class Lightbulb extends ComelitAccessory<LightDeviceData> {
 
         this.lightbulbService
             .setCharacteristic(Characteristic.StatusActive, true)
-            .setCharacteristic(Characteristic.On, parseInt(this.device.status));
+            .setCharacteristic(Characteristic.On, this.device.status === ObjectStatus.ON);
 
         this.lightbulbService
             .getCharacteristic(Characteristic.StatusActive)
@@ -36,13 +36,13 @@ export class Lightbulb extends ComelitAccessory<LightDeviceData> {
         this.lightbulbService
             .getCharacteristic(Characteristic.On)
             .on(CharacteristicEventTypes.GET, async (callback: Function) => {
-                callback(null, parseInt(this.device.status));
+                callback(null, this.device.status);
             })
             .on(CharacteristicEventTypes.SET, async (yes: boolean, callback: Function) => {
-                const status = yes ? Lightbulb.ON : Lightbulb.OFF;
+                const status = yes ? ObjectStatus.ON : ObjectStatus.OFF;
                 try {
                     await this.client.toggleDeviceStatus(this.device.id, status);
-                    this.device.status = `${status}`;
+                    this.device.status = status;
                     callback()
                 } catch (e) {
                     callback(e);
@@ -53,7 +53,7 @@ export class Lightbulb extends ComelitAccessory<LightDeviceData> {
     }
 
     public update(data: LightDeviceData) {
-        const status = parseInt(data.status);
+        const status = data.status === ObjectStatus.ON;
         console.log(`Updating status of light ${this.device.id}. New status is ${status}`);
         this.lightbulbService.getCharacteristic(Characteristic.On).updateValue(status);
     }

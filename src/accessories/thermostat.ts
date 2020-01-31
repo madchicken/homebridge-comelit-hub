@@ -1,11 +1,13 @@
 import {ComelitAccessory} from "./comelit";
-import {ComelitClient, ThermostatDeviceData} from "../comelit-client";
+import {ClimaMode, ComelitClient, ObjectStatus, ThermoSeason, ThermostatDeviceData} from "../comelit-client";
 import {Categories, Characteristic, CharacteristicEventTypes, Service, VoidCallback} from "hap-nodejs";
 import {HomebridgeAPI} from "../index";
 import {
     Active,
-    CurrentHeatingCoolingState, CurrentHumidifierDehumidifierState,
-    TargetHeatingCoolingState, TargetHumidifierDehumidifierState,
+    CurrentHeatingCoolingState,
+    CurrentHumidifierDehumidifierState,
+    TargetHeatingCoolingState,
+    TargetHumidifierDehumidifierState,
     TemperatureDisplayUnits
 } from "hap-nodejs/dist/lib/gen/HomeKit";
 
@@ -45,12 +47,12 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
     }
 
     public update(data: ThermostatDeviceData) {
-        const isOff: boolean = data.status === Thermostat.OFF;
-        const isAuto: boolean = data.auto_man === Thermostat.AUTO_MODE;
+        const isOff: boolean = data.status === ObjectStatus.OFF;
+        const isAuto: boolean = data.auto_man === ClimaMode.AUTO;
         this.log(`Thermostat auto mode is ${isAuto}`);
-        const heatingCollingState = isOff ? CurrentHeatingCoolingState.OFF : data.est_inv === Thermostat.OFF ? CurrentHeatingCoolingState.COOL : CurrentHeatingCoolingState.HEAT;
+        const heatingCollingState = isOff ? CurrentHeatingCoolingState.OFF : data.est_inv === ThermoSeason.SUMMER ? CurrentHeatingCoolingState.COOL : CurrentHeatingCoolingState.HEAT;
         this.thermostatService.getCharacteristic(Characteristic.CurrentHeatingCoolingState).updateValue(heatingCollingState);
-        this.thermostatService.getCharacteristic(Characteristic.TargetHeatingCoolingState).updateValue(isAuto ? TargetHeatingCoolingState.AUTO : heatingCollingState);
+        this.thermostatService.getCharacteristic(Characteristic.TargetHeatingCoolingState).updateValue(heatingCollingState);
         const temperature = data.temperatura ? parseFloat(data.temperatura) / 10 : 0;
         this.log(`Temperature for ${this.name} is ${temperature}`);
         this.thermostatService.getCharacteristic(Characteristic.CurrentTemperature).updateValue(temperature);
