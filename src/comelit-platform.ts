@@ -4,8 +4,9 @@ import {ComelitAccessory} from "./accessories/comelit";
 import {Lightbulb} from "./accessories/lightbulb";
 import {Thermostat} from "./accessories/thermostat";
 import {Blind} from "./accessories/blind";
-import Timeout = NodeJS.Timeout;
 import {Outlet} from "./accessories/outlet";
+import {PowerSupplier} from "./accessories/power-supplier";
+import Timeout = NodeJS.Timeout;
 
 const ROOT_ID = 'GEN#17#13#1';
 
@@ -121,6 +122,15 @@ export class ComelitPlatform {
             if (deviceData) {
                 this.log(`Outlet ID: ${id}, ${deviceData.descrizione}`);
                 this.mappedAccessories.set(id, new Outlet(this.log, deviceData, `Outlet ${deviceData.descrizione}`, this.client));
+            }
+        });
+        const supplierIds = [...homeIndex.supplierIndex.keys()];
+        this.log(`Found ${supplierIds.length} suppliers`);
+        supplierIds.forEach(id => {
+            const deviceData = homeIndex.supplierIndex.get(id);
+            if (deviceData) {
+                this.log(`Supplier ID: ${id}, ${deviceData.descrizione}`);
+                this.mappedAccessories.set(id, new PowerSupplier(this.log, deviceData, `Supplier ${deviceData.descrizione}`, this.client));
             }
         });
 

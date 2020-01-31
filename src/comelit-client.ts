@@ -42,33 +42,36 @@ export interface MqttIncomingMessage {
     message?: string;
 }
 
-export enum ELEMENT_TYPE {
+export enum OBJECT_TYPE {
     BLIND = 2,
     LIGHT = 3,
     THERMOSTAT = 9,
     OUTLET = 10,
-    POWER_CHECK = 11,
+    POWER_SUPPLIER = 11,
     ZONE = 1001,
 }
 
-export enum ELEMENT_SUBTYPE {
+export enum OBJECT_SUBTYPE {
     SIMPLE = 1,
     ELECTRIC_BLIND = 7,
-    POWER = 15,
-    THERMOSTAT = 17,
+    CONSUMPTION = 15,
+    THERMOSTAT_DEHUMIDIFIER = 16,
 }
 
 export const ON = 1;
 export const OFF = 0;
 
-export interface DeviceData {
+export interface DomoticData {
     id: string;
     type: number;
     sub_type: number;
-    descrizione: string;
     sched_status: string;
     sched_lock: string;
     status: number;
+}
+
+export interface DeviceData extends DomoticData {
+    descrizione: string;
     placeOrder?: string;
     num_modulo: string,
     num_uscita: string,
@@ -105,7 +108,10 @@ export enum ClimaMode {
     NONE,
     AUTO,
     MANUAL,
-    FORCED,
+    SEMI_AUTO,
+    SEMI_MAN,
+    OFF_AUTO,
+    OFF_MANUAL,
 }
 
 export enum ObjectStatus {
@@ -195,10 +201,22 @@ export interface ThermostatDeviceData extends DeviceData {
     dir_out_est: string;
     semiauto_enabled: string;
     umidita: string;
-    auto_man_umi: string;
+    auto_man_umi: ClimaMode;
     deumi_umi: string;
     soglia_attiva_umi: string;
     semiauto_umi_enabled: string;
+}
+
+export interface SupplierDeviceData extends DeviceData {
+    "label_value": string,
+    "label_price": string,
+    "prod": string,
+    "count_div": string,
+    "cost": string,
+    "kCO2": string,
+    "compare": string,
+    "groupOrder": string,
+    "instant_power": string,
 }
 
 export interface MqttMessage {
@@ -297,6 +315,10 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
                 const value = this.homeIndex.updateObject(response.obj_id, datum);
                 if (this.onUpdate && value) {
                     this.onUpdate(response.obj_id, value);
+                }
+
+                if (datum.type === OBJECT_TYPE.POWER_SUPPLIER && datum.sub_type === OBJECT_SUBTYPE.CONSUMPTION) {
+
                 }
             }
         }
@@ -540,6 +562,7 @@ class HomeIndex {
     public readonly thermostatsIndex = new Map<string, ThermostatDeviceData>();
     public readonly blindsIndex = new Map<string, BlindDeviceData>();
     public readonly outletsIndex = new Map<string, OutletDeviceData>();
+    public readonly supplierIndex = new Map<string, SupplierDeviceData>();
 
     public readonly mainIndex = new Map<string, DeviceData>();
 
@@ -561,19 +584,22 @@ class HomeIndex {
 
     private visitElement(element: DeviceInfo) {
         switch (element.data.type) {
-            case ELEMENT_TYPE.LIGHT:
+            case OBJECT_TYPE.LIGHT:
                 this.lightsIndex.set(element.id, element.data as LightDeviceData);
                 break;
-            case ELEMENT_TYPE.ZONE:
+            case OBJECT_TYPE.ZONE:
                 this.roomsIndex.set(element.id, element.data);
                 break;
-            case ELEMENT_TYPE.THERMOSTAT:
+            case OBJECT_TYPE.THERMOSTAT:
                 this.thermostatsIndex.set(element.id, element.data as ThermostatDeviceData);
                 break;
-            case ELEMENT_TYPE.BLIND:
+            case OBJECT_TYPE.BLIND:
                 this.blindsIndex.set(element.id, element.data as BlindDeviceData);
                 break;
-            case ELEMENT_TYPE.OUTLET:
+            case OBJECT_TYPE.OUTLET:
+                this.outletsIndex.set(element.id, element.data as OutletDeviceData);
+                break;
+            case OBJECT_TYPE.POWER_SUPPLIER:
                 this.outletsIndex.set(element.id, element.data as OutletDeviceData);
                 break;
         }

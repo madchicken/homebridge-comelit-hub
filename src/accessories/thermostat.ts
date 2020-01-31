@@ -1,12 +1,18 @@
 import {ComelitAccessory} from "./comelit";
-import {ClimaMode, ComelitClient, ObjectStatus, ThermoSeason, ThermostatDeviceData} from "../comelit-client";
+import {
+    ClimaMode,
+    ComelitClient,
+    OBJECT_SUBTYPE,
+    ObjectStatus,
+    ThermoSeason,
+    ThermostatDeviceData
+} from "../comelit-client";
 import {Categories, Characteristic, CharacteristicEventTypes, Service, VoidCallback} from "hap-nodejs";
 import {HomebridgeAPI} from "../index";
 import {
     Active,
     CurrentHeatingCoolingState,
     CurrentHumidifierDehumidifierState,
-    TargetHeatingCoolingState,
     TargetHumidifierDehumidifierState,
     TemperatureDisplayUnits
 } from "hap-nodejs/dist/lib/gen/HomeKit";
@@ -26,9 +32,12 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
 
     protected initServices(): Service[] {
         const accessoryInformation = this.initAccessoryInformation();
+        const isDehumidifier = this.device.sub_type === OBJECT_SUBTYPE.THERMOSTAT_DEHUMIDIFIER;
 
         this.thermostatService = new HomebridgeAPI.hap.Service.Thermostat(this.device.descrizione, null);
-        this.dehumidifierService = new HomebridgeAPI.hap.Service.HumidifierDehumidifier(this.device.descrizione, null);
+        if (isDehumidifier) {
+            this.dehumidifierService = new HomebridgeAPI.hap.Service.HumidifierDehumidifier(this.device.descrizione, null);
+        }
         this.update(this.device);
 
         this.thermostatService
@@ -43,13 +52,15 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
                 }
             });
 
-        return [accessoryInformation, this.thermostatService, this.dehumidifierService];
+        return isDehumidifier ?
+            [accessoryInformation, this.thermostatService, this.dehumidifierService] :
+            [accessoryInformation, this.thermostatService];
     }
 
-    public update(data: ThermostatDeviceData) {
+    public update(data: ThermostatDeviceData): void {
         const isOff: boolean = data.status === ObjectStatus.OFF;
         const isAuto: boolean = data.auto_man === ClimaMode.AUTO;
-        this.log(`Thermostat auto mode is ${isAuto}`);
+        this.log(`Thermostat auto mode is ${isAuto}, off ${isOff}`);
         const heatingCollingState = isOff ? CurrentHeatingCoolingState.OFF : data.est_inv === ThermoSeason.SUMMER ? CurrentHeatingCoolingState.COOL : CurrentHeatingCoolingState.HEAT;
         this.thermostatService.getCharacteristic(Characteristic.CurrentHeatingCoolingState).updateValue(heatingCollingState);
         this.thermostatService.getCharacteristic(Characteristic.TargetHeatingCoolingState).updateValue(heatingCollingState);
@@ -61,11 +72,15 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
         this.thermostatService.getCharacteristic(Characteristic.TargetTemperature).updateValue(targetTemperature);
         this.thermostatService.getCharacteristic(Characteristic.TemperatureDisplayUnits).updateValue(TemperatureDisplayUnits.CELSIUS);
 
-        const isDehumidifierOn = data.auto_man_umi === Thermostat.DEHUMIDIFIER_ON;
-        this.dehumidifierService.getCharacteristic(Characteristic.CurrentRelativeHumidity).updateValue(parseInt(data.umidita));
-        this.dehumidifierService.getCharacteristic(Characteristic.CurrentHumidifierDehumidifierState).updateValue(isDehumidifierOn ? CurrentHumidifierDehumidifierState.DEHUMIDIFYING : CurrentHumidifierDehumidifierState.INACTIVE);
-        this.dehumidifierService.getCharacteristic(Characteristic.TargetHumidifierDehumidifierState).updateValue(TargetHumidifierDehumidifierState.HUMIDIFIER_OR_DEHUMIDIFIER);
-        this.dehumidifierService.getCharacteristic(Characteristic.Active).updateValue(isDehumidifierOn ? Active.ACTIVE : Active.INACTIVE);
-        return temperature;
+        if(data.sub_type === OBJECT_SUBTYPE.THERMOSTAT_DEHUMIDIFIER) {
+            const isDehumidifierOff = data.auto_man_umi === ClimaMode.OFF_AUTO ||
+                data.auto_man_umi === ClimaMode.OFF_MANUAL ||
+                data.auto_man_umi === ClimaMode.NONE;
+
+            this.dehumidifierService.getCharacteristic(Characteristic.CurrentRelativeHumidity).updateValue(parseInt(data.umidita));
+            this.dehumidifierService.getCharacteristic(Characteristic.CurrentHumidifierDehumidifierState).updateValue(isDehumidifierOff ? CurrentHumidifierDehumidifierState.INACTIVE : CurrentHumidifierDehumidifierState.DEHUMIDIFYING);
+            this.dehumidifierService.getCharacteristic(Characteristic.TargetHumidifierDehumidifierState).updateValue(TargetHumidifierDehumidifierState.HUMIDIFIER_OR_DEHUMIDIFIER);
+            this.dehumidifierService.getCharacteristic(Characteristic.Active).updateValue(isDehumidifierOff ? Active.INACTIVE : Active.ACTIVE);
+        }
     }
 }

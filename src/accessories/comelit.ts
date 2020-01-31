@@ -44,5 +44,5 @@ export abstract class ComelitAccessory<T extends DeviceData> {
 
     protected abstract initServices(): Service[];
 
-    public abstract update(data: T);
+    public abstract update(data: T): void;
 }
