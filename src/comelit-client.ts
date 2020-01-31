@@ -311,14 +311,10 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
         } else {
             if (response.obj_id && response.out_data && response.out_data.length) {
                 const datum: DeviceData = response.out_data[0];
-                this.log(`Updating ${response.obj_id} with data ${JSON.stringify(datum)}`);
                 const value = this.homeIndex.updateObject(response.obj_id, datum);
                 if (this.onUpdate && value) {
+                    this.log(`Updating ${response.obj_id} with data ${JSON.stringify(datum)}`);
                     this.onUpdate(response.obj_id, value);
-                }
-
-                if (datum.type === OBJECT_TYPE.POWER_SUPPLIER && datum.sub_type === OBJECT_SUBTYPE.CONSUMPTION) {
-
                 }
             }
         }
