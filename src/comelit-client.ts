@@ -596,7 +596,7 @@ class HomeIndex {
                 this.outletsIndex.set(element.id, element.data as OutletDeviceData);
                 break;
             case OBJECT_TYPE.POWER_SUPPLIER:
-                this.outletsIndex.set(element.id, element.data as OutletDeviceData);
+                this.supplierIndex.set(element.id, element.data as SupplierDeviceData);
                 break;
         }
 
