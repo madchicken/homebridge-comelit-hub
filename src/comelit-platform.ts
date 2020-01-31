@@ -9,6 +9,7 @@ import {PowerSupplier} from "./accessories/power-supplier";
 import Timeout = NodeJS.Timeout;
 import express, {Express} from "express";
 import {register} from "prom-client";
+import * as http from "http";
 
 const ROOT_ID = 'GEN#17#13#1';
 
@@ -21,6 +22,7 @@ export interface HubConfig {
     client_id: string;
     http_port?: number;
 }
+const DEFAULT_HTTP_PORT = 3002;
 
 export class ComelitPlatform {
     private readonly log: (message?: any, ...optionalParams: any[]) => void;
@@ -31,7 +33,8 @@ export class ComelitPlatform {
     public mappedAccessories: Map<string, ComelitAccessory<DeviceData>> = new Map<string, ComelitAccessory<DeviceData>>();
 
     static KEEP_ALIVE_TIMEOUT = 30000;
-    private readonly server: Express;
+    private readonly es: Express;
+    private server: http.Server;
 
     constructor(log: (message?: any, ...optionalParams: any[]) => void, config: HubConfig, homebridge: Homebridge) {
         this.log = (str: string) => log("[COMELIT HUB] " + str);
@@ -39,13 +42,7 @@ export class ComelitPlatform {
         this.config = config;
         // Save the API object as plugin needs to register new accessory via this object
         this.homebridge = homebridge;
-        this.server = express();
-        const DEFAULT_HTTP_PORT = 3002;
-        this.server.listen(config.http_port || DEFAULT_HTTP_PORT);
-        this.server.get('/metrics', (req, res) => {
-            res.set('Content-Type', register.contentType);
-            res.end(register.metrics());
-        });
+        this.es = express();
         this.log("homebridge API version: " + homebridge.version);
     }
 
@@ -61,6 +58,11 @@ export class ComelitPlatform {
                 this.config.hub_username,
                 this.config.hub_password,
             );
+            this.server = this.es.listen(this.config.http_port || DEFAULT_HTTP_PORT);
+            this.server.get('/metrics', (req, res) => {
+                res.set('Content-Type', register.contentType);
+                res.end(register.metrics());
+            });
         } catch (e) {
             this.log('Error initializing MQTT client', e);
             return false;
@@ -87,6 +89,7 @@ export class ComelitPlatform {
             await this.client.shutdown();
             this.client = null;
         }
+        this.server.close(() => { this.server = null });
     }
 
     async accessories(callback: (array: any[]) => void) {
