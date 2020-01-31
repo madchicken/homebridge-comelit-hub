@@ -23,6 +23,11 @@ export interface HubConfig {
     http_port?: number;
 }
 const DEFAULT_HTTP_PORT = 3002;
+const expr = express();
+expr.get('/metrics', (req, res) => {
+    res.set('Content-Type', register.contentType);
+    res.end(register.metrics());
+});
 
 export class ComelitPlatform {
     private readonly log: (message?: any, ...optionalParams: any[]) => void;
@@ -33,7 +38,6 @@ export class ComelitPlatform {
     public mappedAccessories: Map<string, ComelitAccessory<DeviceData>> = new Map<string, ComelitAccessory<DeviceData>>();
 
     static KEEP_ALIVE_TIMEOUT = 30000;
-    private readonly es: Express;
     private server: http.Server;
 
     constructor(log: (message?: any, ...optionalParams: any[]) => void, config: HubConfig, homebridge: Homebridge) {
@@ -42,7 +46,6 @@ export class ComelitPlatform {
         this.config = config;
         // Save the API object as plugin needs to register new accessory via this object
         this.homebridge = homebridge;
-        this.es = express();
         this.log("homebridge API version: " + homebridge.version);
     }
 
@@ -58,11 +61,9 @@ export class ComelitPlatform {
                 this.config.hub_username,
                 this.config.hub_password,
             );
-            this.server = this.es.listen(this.config.http_port || DEFAULT_HTTP_PORT);
-            this.server.get('/metrics', (req, res) => {
-                res.set('Content-Type', register.contentType);
-                res.end(register.metrics());
-            });
+            if (!this.server) {
+                this.server = expr.listen(this.config.http_port || DEFAULT_HTTP_PORT);
+            }
         } catch (e) {
             this.log('Error initializing MQTT client', e);
             return false;
@@ -89,7 +90,6 @@ export class ComelitPlatform {
             await this.client.shutdown();
             this.client = null;
         }
-        this.server.close(() => { this.server = null });
     }
 
     async accessories(callback: (array: any[]) => void) {
