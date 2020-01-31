@@ -3,7 +3,7 @@ import {Categories, Service} from "hap-nodejs";
 import {ComelitClient, SupplierDeviceData} from "../comelit-client";
 import client from "prom-client";
 
-const gauge = new client.Gauge({ name: 'comelit_total_consumption', help: 'Consumption in Wh' });
+const consumption = new client.Gauge({ name: 'comelit_total_consumption', help: 'Consumption in Wh' });
 
 export class PowerSupplier extends ComelitAccessory<SupplierDeviceData> {
 
@@ -16,6 +16,6 @@ export class PowerSupplier extends ComelitAccessory<SupplierDeviceData> {
     }
 
     update(data: SupplierDeviceData): void {
-        gauge.set(parseFloat(data.instant_power));
+        consumption.set(parseFloat(data.instant_power));
     }
 }
