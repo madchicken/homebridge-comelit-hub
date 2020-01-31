@@ -7,6 +7,8 @@ import {Blind} from "./accessories/blind";
 import {Outlet} from "./accessories/outlet";
 import {PowerSupplier} from "./accessories/power-supplier";
 import Timeout = NodeJS.Timeout;
+import express, {Express} from "express";
+import {register} from "prom-client";
 
 const ROOT_ID = 'GEN#17#13#1';
 
@@ -17,6 +19,7 @@ export interface HubConfig {
     hub_password: string;
     broker_url: string;
     client_id: string;
+    http_port?: number;
 }
 
 export class ComelitPlatform {
@@ -28,6 +31,7 @@ export class ComelitPlatform {
     public mappedAccessories: Map<string, ComelitAccessory<DeviceData>> = new Map<string, ComelitAccessory<DeviceData>>();
 
     static KEEP_ALIVE_TIMEOUT = 30000;
+    private readonly server: Express;
 
     constructor(log: (message?: any, ...optionalParams: any[]) => void, config: HubConfig, homebridge: Homebridge) {
         this.log = (str: string) => log("[COMELIT HUB] " + str);
@@ -35,6 +39,13 @@ export class ComelitPlatform {
         this.config = config;
         // Save the API object as plugin needs to register new accessory via this object
         this.homebridge = homebridge;
+        this.server = express();
+        const DEFAULT_HTTP_PORT = 3002;
+        this.server.listen(config.http_port || DEFAULT_HTTP_PORT);
+        this.server.get('/metrics', (req, res) => {
+            res.set('Content-Type', register.contentType);
+            res.end(register.metrics());
+        });
         this.log("homebridge API version: " + homebridge.version);
     }
 
