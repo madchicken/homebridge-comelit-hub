@@ -23,7 +23,7 @@ export interface HubConfig {
     http_port?: number;
 }
 const DEFAULT_HTTP_PORT = 3002;
-const expr = express();
+const expr: Express = express();
 expr.get('/metrics', (req, res) => {
     res.set('Content-Type', register.contentType);
     res.end(register.metrics());
