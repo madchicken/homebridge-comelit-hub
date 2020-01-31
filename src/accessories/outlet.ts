@@ -2,6 +2,9 @@ import {ComelitAccessory} from "./comelit";
 import {ComelitClient, OutletDeviceData} from "../comelit-client";
 import {Categories, Characteristic, CharacteristicEventTypes, Formats, Perms, Service} from "hap-nodejs";
 import {HomebridgeAPI} from "../index";
+import client from "prom-client";
+
+const gauge = new client.Gauge({ name: 'comelit_consumption', help: 'Consumption for single line in Wh' });
 
 class Consumption extends Characteristic {
     static readonly UUID: string = '00000029-0000-2000-8000-0026BB765291';
@@ -56,5 +59,6 @@ export class Outlet extends ComelitAccessory<OutletDeviceData> {
         this.outletService.getCharacteristic(Characteristic.On).updateValue(data.status > 0);
         this.outletService.getCharacteristic(Characteristic.InUse).updateValue(data.instant_power > 0);
         this.outletService.getCharacteristic(Consumption).updateValue(`${data.instant_power} W`);
+        gauge.set({ plug: data.descrizione }, data.instant_power);
     }
 }
