@@ -56,11 +56,12 @@ export class Blind extends ComelitAccessory<BlindDeviceData> {
     }
 
     public update(data: BlindDeviceData) {
-        if (data.status === ObjectStatus.IDLE) {
+        const status = parseInt(data.status);
+        if (status === ObjectStatus.IDLE) {
             this.coveringService.getCharacteristic(Characteristic.CurrentPosition).updateValue(Blind.CLOSED);
-        } if (data.status === ObjectStatus.ON) {
+        } if (status === ObjectStatus.ON) {
             this.coveringService.getCharacteristic(Characteristic.CurrentPosition).updateValue(Blind.OPEN);
-        } if (data.status === ObjectStatus.IDLE) {
+        } if (status === ObjectStatus.IDLE) {
             this.coveringService.getCharacteristic(Characteristic.PositionState).updateValue(PositionState.STOPPED);
         }
     }

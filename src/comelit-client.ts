@@ -67,7 +67,7 @@ export interface DomoticData {
     sub_type: number;
     sched_status: string;
     sched_lock: string;
-    status: number;
+    status: string;
 }
 
 export interface DeviceData extends DomoticData {

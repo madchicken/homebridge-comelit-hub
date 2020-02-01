@@ -62,7 +62,8 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
     }
 
     public update(data: ThermostatDeviceData): void {
-        const isOff: boolean = data.status === ObjectStatus.OFF;
+        const status = parseInt(data.status);
+        const isOff: boolean = status === ObjectStatus.OFF;
         const isAuto: boolean = data.auto_man === ClimaMode.AUTO;
         this.log(`Thermostat auto mode is ${isAuto}, off ${isOff}`);
         const heatingCollingState = isOff ? CurrentHeatingCoolingState.OFF : data.est_inv === ThermoSeason.SUMMER ? CurrentHeatingCoolingState.COOL : CurrentHeatingCoolingState.HEAT;
@@ -76,7 +77,7 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
         this.thermostatService.getCharacteristic(Characteristic.TargetTemperature).updateValue(targetTemperature);
         this.thermostatService.getCharacteristic(Characteristic.TemperatureDisplayUnits).updateValue(TemperatureDisplayUnits.CELSIUS);
 
-        thermostatStatus.set({ thermostat_name: data.descrizione }, data.status);
+        thermostatStatus.set({ thermostat_name: data.descrizione }, status);
         thermostatTemperature.set({ thermostat_name: data.descrizione }, temperature);
 
         if(data.sub_type === OBJECT_SUBTYPE.THERMOSTAT_DEHUMIDIFIER) {

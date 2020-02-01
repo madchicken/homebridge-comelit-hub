@@ -16,6 +16,7 @@ export class Lightbulb extends ComelitAccessory<LightDeviceData> {
     protected initServices(): Service[] {
         const accessoryInformation = this.initAccessoryInformation(); // common info about the accessory
 
+        const status = parseInt(this.device.status);
         this.lightbulbService = new HomebridgeAPI.hap.Service.Lightbulb(this.name, null);
 
         this.lightbulbService
@@ -23,7 +24,7 @@ export class Lightbulb extends ComelitAccessory<LightDeviceData> {
 
         this.lightbulbService
             .setCharacteristic(Characteristic.StatusActive, true)
-            .setCharacteristic(Characteristic.On, this.device.status === ObjectStatus.ON);
+            .setCharacteristic(Characteristic.On, status === ObjectStatus.ON);
 
         this.lightbulbService
             .getCharacteristic(Characteristic.StatusActive)
@@ -42,7 +43,7 @@ export class Lightbulb extends ComelitAccessory<LightDeviceData> {
                 const status = yes ? ObjectStatus.ON : ObjectStatus.OFF;
                 try {
                     await this.client.toggleDeviceStatus(this.device.id, status);
-                    this.device.status = status;
+                    this.device.status = `${status}`;
                     callback()
                 } catch (e) {
                     callback(e);
@@ -53,7 +54,7 @@ export class Lightbulb extends ComelitAccessory<LightDeviceData> {
     }
 
     public update(data: LightDeviceData) {
-        const status = data.status === ObjectStatus.ON;
+        const status = parseInt(data.status) === ObjectStatus.ON;
         console.log(`Updating status of light ${this.device.id}. New status is ${status}`);
         this.lightbulbService.getCharacteristic(Characteristic.On).updateValue(status);
     }
