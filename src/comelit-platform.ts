@@ -37,7 +37,7 @@ export class ComelitPlatform {
     private keepAliveTimer: Timeout;
     public mappedAccessories: Map<string, ComelitAccessory<DeviceData>> = new Map<string, ComelitAccessory<DeviceData>>();
 
-    static KEEP_ALIVE_TIMEOUT = 30000;
+    static KEEP_ALIVE_TIMEOUT = 120000;
     private server: http.Server;
 
     constructor(log: (message?: any, ...optionalParams: any[]) => void, config: HubConfig, homebridge: Homebridge) {
@@ -72,7 +72,6 @@ export class ComelitPlatform {
         try {
             await this.client.login();
             this.keepAlive();
-            await this.client.subscribeObject(ROOT_ID);
             return true;
         } catch (e) {
             this.log('Error logging in', e);
@@ -165,6 +164,7 @@ export class ComelitPlatform {
         this.keepAliveTimer = setTimeout(async () => {
             try {
                 await this.client.ping();
+                await this.client.subscribeObject(ROOT_ID);
                 this.keepAlive();
             } catch(e) {
                 this.log(e);
