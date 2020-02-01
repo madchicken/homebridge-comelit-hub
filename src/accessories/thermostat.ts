@@ -16,6 +16,10 @@ import {
     TargetHumidifierDehumidifierState,
     TemperatureDisplayUnits
 } from "hap-nodejs/dist/lib/gen/HomeKit";
+import client from "prom-client";
+
+const thermostatStatus = new client.Gauge({ name: 'comelit_thermostat_status', help: 'Thermostat on/off', labelNames: ['thermostat_name']});
+const thermostatTemperature = new client.Gauge({ name: 'comelit_thermostat_temperature', help: 'Thermostat temperature', labelNames: ['thermostat_name']});
 
 export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
     static readonly ON = '1';
@@ -71,6 +75,9 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
         this.log(`Threshold for ${this.name} is ${targetTemperature}`);
         this.thermostatService.getCharacteristic(Characteristic.TargetTemperature).updateValue(targetTemperature);
         this.thermostatService.getCharacteristic(Characteristic.TemperatureDisplayUnits).updateValue(TemperatureDisplayUnits.CELSIUS);
+
+        thermostatStatus.set({ thermostat_name: data.descrizione }, data.status);
+        thermostatTemperature.set({ thermostat_name: data.descrizione }, temperature);
 
         if(data.sub_type === OBJECT_SUBTYPE.THERMOSTAT_DEHUMIDIFIER) {
             const isDehumidifierOff = data.auto_man_umi === ClimaMode.OFF_AUTO ||

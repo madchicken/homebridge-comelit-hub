@@ -12,10 +12,11 @@ export class PowerSupplier extends ComelitAccessory<SupplierDeviceData> {
     }
 
     protected initServices(): Service[] {
-        return [];
+        return [this.initAccessoryInformation()];
     }
 
     update(data: SupplierDeviceData): void {
+        this.log(`Reporting consumption ${data.instant_power}Wh`);
         consumption.set(parseFloat(data.instant_power));
     }
 }

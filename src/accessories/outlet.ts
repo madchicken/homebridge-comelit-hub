@@ -4,7 +4,7 @@ import {Categories, Characteristic, CharacteristicEventTypes, Formats, Perms, Se
 import {HomebridgeAPI} from "../index";
 import client from "prom-client";
 
-const singleConsumption = new client.Gauge({ name: 'comelit_consumption', help: 'Consumption for single line in Wh', labelNames: ['name']});
+const singleConsumption = new client.Gauge({ name: 'comelit_plug_consumption', help: 'Consumption for single line in Wh', labelNames: ['plug_name']});
 
 class Consumption extends Characteristic {
     static readonly UUID: string = '00000029-0000-2000-8000-0026BB765291';
@@ -61,6 +61,7 @@ export class Outlet extends ComelitAccessory<OutletDeviceData> {
         const power = parseFloat(data.instant_power);
         this.outletService.getCharacteristic(Characteristic.InUse).updateValue(power > 0);
         this.outletService.getCharacteristic(Consumption).updateValue(`${data.instant_power} W`);
-        singleConsumption.set({ name: data.descrizione }, power);
+        this.log(`Reporting consumption for ${data.descrizione}: ${data.instant_power}Wh`);
+        singleConsumption.set({ plug_name: data.descrizione }, power);
     }
 }
