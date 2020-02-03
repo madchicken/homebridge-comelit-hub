@@ -2,6 +2,9 @@ import {ComelitAccessory} from "./comelit";
 import {ComelitClient, DeviceData, LightDeviceData, ObjectStatus} from "../comelit-client";
 import {Categories, Characteristic, CharacteristicEventTypes, Service} from "hap-nodejs";
 import {HomebridgeAPI} from "../index";
+import client from "prom-client";
+
+const lightStatus = new client.Gauge({ name: 'comelit_light_status', help: 'Lightbulb on/off', labelNames: ['light_name']});
 
 export class Lightbulb extends ComelitAccessory<LightDeviceData> {
     static readonly ON = 1;
@@ -56,6 +59,7 @@ export class Lightbulb extends ComelitAccessory<LightDeviceData> {
     public update(data: LightDeviceData) {
         const status = parseInt(data.status) === ObjectStatus.ON;
         console.log(`Updating status of light ${this.device.id}. New status is ${status}`);
+        lightStatus.set({ light_name: data.descrizione }, parseInt(data.status));
         this.lightbulbService.getCharacteristic(Characteristic.On).updateValue(status);
     }
 }
