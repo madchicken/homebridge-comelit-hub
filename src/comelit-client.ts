@@ -330,7 +330,7 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
                hub_password?: string, clientId?: string): Promise<AsyncMqttClient> {
         this.username = username;
         this.password = password;
-        this.clientId = `${CLIENT_ID_PREFIX}_${clientId}` || `${CLIENT_ID_PREFIX}_${generateUUID(`${Math.random()}`)}`;
+        this.clientId = clientId ? `${CLIENT_ID_PREFIX}_${clientId}` : `${CLIENT_ID_PREFIX}_${generateUUID(`${Math.random()}`)}`;
         this.readTopic = `${CLIENT_ID_PREFIX}/${HUB_ID}/tx/${this.clientId}`;
         this.writeTopic = `${CLIENT_ID_PREFIX}/${HUB_ID}/rx/${this.clientId}`;
         this.log(`Connecting to Comelit HUB at ${brokerUrl}`);
