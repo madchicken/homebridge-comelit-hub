@@ -1,14 +1,13 @@
 import {AsyncMqttClient} from "async-mqtt";
 import {DeferredMessage, PromiseBasedQueue} from "./promise-queue";
+import {generateUUID} from "./utils";
 
 const MQTT = require("async-mqtt");
 
 
 const connectAsync = MQTT.connectAsync;
-const CLIENT_ID = 'HSrv_0025291701EC3_0592EF88-AEEE-47BD-A859-9E70017';
-const WRITE_TOPIC = 'HSrv/0025291701EC/rx/' + CLIENT_ID;
-const READ_TOPIC = 'HSrv/0025291701EC/tx/' + CLIENT_ID;
-const ALL_TOPICS = 'HSrv/#';
+const CLIENT_ID_PREFIX = 'HSrv';
+const HUB_ID = '0025291701EC';
 
 export enum REQUEST_TYPE {
     STATUS = 0,
@@ -286,6 +285,9 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
     private homeIndex: HomeIndex;
     private username: string;
     private password: string;
+    private writeTopic: string;
+    private readTopic: string;
+    private clientId: string;
     private readonly onUpdate: (objId: string, device: DeviceData) => void;
     private readonly log: (message?: any, ...optionalParams: any[]) => void;
 
@@ -328,17 +330,20 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
                hub_password?: string, clientId?: string): Promise<AsyncMqttClient> {
         this.username = username;
         this.password = password;
+        this.clientId = `${CLIENT_ID_PREFIX}_${clientId}` || `${CLIENT_ID_PREFIX}_${generateUUID(`${Math.random()}`)}`;
+        this.readTopic = `${CLIENT_ID_PREFIX}/${HUB_ID}/tx/${this.clientId}`;
+        this.writeTopic = `${CLIENT_ID_PREFIX}/${HUB_ID}/rx/${this.clientId}`;
         this.log(`Connecting to Comelit HUB at ${brokerUrl}`);
         this.props.client = await connectAsync(brokerUrl, {
             username: hub_username || 'hsrv-user',
             password: hub_password || 'sf1nE9bjPc',
-            clientId: clientId || CLIENT_ID,
+            clientId: clientId || CLIENT_ID_PREFIX,
             keepalive: 120,
             rejectUnauthorized: false,
             ca: COMELIT_CERTIFICATE
         });
         // Register to incoming messages
-        await this.props.client.subscribe(ALL_TOPICS);
+        await this.props.client.subscribe(this.readTopic);
         this.props.client.on('message', this.handleIncomingMessage.bind(this));
         this.props.agent_id = await this.retriveAgentId();
         this.log(`...done: client agent id is ${this.props.agent_id}`);
@@ -348,8 +353,7 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
     async shutdown() {
         if (this.props.client && this.props.client.connected) {
             try {
-                await this.props.client.unsubscribe(READ_TOPIC);
-                await this.props.client.unsubscribe(WRITE_TOPIC);
+                await this.props.client.unsubscribe(this.readTopic);
                 this.props.client.off('message', this.handleIncomingMessage.bind(this));
                 await this.props.client.end(true);
             } catch (e) {
@@ -522,7 +526,7 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
 
     private async publish(packet: MqttMessage): Promise<MqttIncomingMessage> {
         this.log(`Sending message to HUB ${JSON.stringify(packet)}`);
-        await this.props.client.publish(WRITE_TOPIC, JSON.stringify(packet));
+        await this.props.client.publish(this.writeTopic, JSON.stringify(packet));
         try {
             return await this.enqueue(packet);
         } catch (response) {
@@ -537,15 +541,11 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
     private handleIncomingMessage(topic: string, message: any) {
         const msg: MqttIncomingMessage = deserializeMessage(message);
         this.log(`Incoming message for topic ${topic}: ${message.toString()}`);
-        switch (topic) {
-            case READ_TOPIC:
-                this.processQueue(msg);
-                break;
-            case WRITE_TOPIC:
-                break;
-            default:
-                console.error(`Unknown topic ${topic}`);
-                this.processQueue(msg);
+        if (topic === this.readTopic) {
+            this.processQueue(msg);
+        } else {
+            console.error(`Unknown topic ${topic}`);
+            this.processQueue(msg);
         }
     }
 }

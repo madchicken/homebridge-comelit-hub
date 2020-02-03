@@ -60,6 +60,7 @@ export class ComelitPlatform {
                 this.config.password,
                 this.config.hub_username,
                 this.config.hub_password,
+                this.config.client_id
             );
             if (!this.server) {
                 this.server = expr.listen(this.config.http_port || DEFAULT_HTTP_PORT);
