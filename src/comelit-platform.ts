@@ -71,6 +71,7 @@ export class ComelitPlatform {
 
         try {
             await this.client.login();
+            await this.client.subscribeObject(ROOT_ID);
             this.keepAlive();
             return true;
         } catch (e) {
@@ -164,7 +165,6 @@ export class ComelitPlatform {
         this.keepAliveTimer = setTimeout(async () => {
             try {
                 await this.client.ping();
-                await this.client.subscribeObject(ROOT_ID);
                 this.keepAlive();
             } catch(e) {
                 this.log(e);
