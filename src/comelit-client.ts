@@ -21,8 +21,24 @@ export enum REQUEST_TYPE {
 }
 
 export enum REQUEST_SUB_TYPE {
+    CREATE_OBJ,
+    UPDATE_OBJ,
+    DELETE_OBJ,
+    SET_ACTION_OBJ ,
+    GET_TEMPO_OBJ,
+    SUBSCRIBE_RT ,
+    UNSUBSCRIBE_RT,
     GET_CONF_PARAM_GROUP = 23,
     NONE = -1,
+}
+
+export enum ACTION_TYPE {
+    SET,
+    CLIMA_MODE,
+    CLIMA_SET_POINT,
+    SWITCH_CLIMA_MODE = 13,
+    UMI_SETPOINT = 19,
+    SWITCH_UMI_MODE = 23,
 }
 
 export interface MqttIncomingMessage {
@@ -251,29 +267,6 @@ interface Param {
     param_value: string;
 }
 
-const COMELIT_CERTIFICATE: string[] = [
-    '-----BEGIN CERTIFICATE-----',
-    'MIIDVDCCAjwCCQCk6Q2uiT2kYTANBgkqhkiG9w0BAQsFADBrMQswCQYDVQQGEwJJ',
-    'VDEOMAwGA1UECAwFSXRhbHkxHDAaBgNVBAcME1JvdmV0dGEgU2FuIExvcmVuem8x',
-    'HDAaBgNVBAoME0NvbWVsaXQgR3JvdXAgUy5wLmExEDAOBgNVBAsMB0NvbWVsaXQw',
-    'IBcNMTYwOTAxMTUzNzQ3WhgPMjA1NjA4MjIxNTM3NDdaMGsxCzAJBgNVBAYTAklU',
-    'MQ4wDAYDVQQIDAVJdGFseTEcMBoGA1UEBwwTUm92ZXR0YSBTYW4gTG9yZW56bzEc',
-    'MBoGA1UECgwTQ29tZWxpdCBHcm91cCBTLnAuYTEQMA4GA1UECwwHQ29tZWxpdDCC',
-    'ASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALGnC95A9hap/DtNLXFwap4c',
-    'EKw73MOp6grATtiOjZ2xK0squEjQXqY3aBJkg2eO9hUhOZ4F4m7USaL9mo+HchsX',
-    '+PV9vBUB6Qn844L6seHFtaVJWJXoZZrKTBIKn3NVdCFgOnEeBhU6rskEcDoXAIS8',
-    'G3b9MozLBywp07uX9dy83vJxJej5uwNSssB4QOniAN+86Q287Vh84ROap0hjxZ2y',
-    '7DPQRjf0Nr2FuK8YPyI88y1RUdvGa3WS6mrRoeauf6qXAo1WtalUZTV4smxSl4Yt',
-    'VeF2jLvQ2oRiFPXCzMPZ0y7hxQ5ZFN2c5zdAANb9+Zlfv6jWg5Er1tjb1ZGEW9kC',
-    'AwEAATANBgkqhkiG9w0BAQsFAAOCAQEAoqjPMMgseUk8+VKqH6obGqKlClDtL13m',
-    '+HkEx2YOCAb/YWFOcBBm7dXw7bxl5rcEiUuokh8dbYKf36ggdFSyGC6Wn8fQ9CBP',
-    'WDzNjWmIImORVcI3nbpjmW9ZC8scECgEm0oigX58bSl0O22VbphmG8N7ke71fSs7',
-    'Wo/vIT2PsKO6x1DwgSWMlDsh91E98rgy+SoK4chUnEPsT8apan6DkHMJXGcQ3t9N',
-    'w5otCsXQcnP+zCcfG9yYlj3qe9yLU0m8QTG3rccalicXM3T/Pv0iDCljLH65jaUh',
-    'clwH27JlXXA6U+uCnGjz84mA9Y9RQ+C8EfwBb7QFcI7dXBfE+4ae0w==',
-    '-----END CERTIFICATE-----',
-];
-
 function deserializeMessage(message: any): MqttIncomingMessage {
     const parsed: any = JSON.parse(message.toString());
     parsed.status = parseInt(parsed.status);
@@ -339,8 +332,6 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
             password: hub_password || 'sf1nE9bjPc',
             clientId: clientId || CLIENT_ID_PREFIX,
             keepalive: 120,
-            rejectUnauthorized: false,
-            ca: COMELIT_CERTIFICATE
         });
         // Register to incoming messages
         await this.props.client.subscribe(this.readTopic);
@@ -422,7 +413,7 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
         const packet: MqttMessage = {
             req_type: REQUEST_TYPE.SUBSCRIBE,
             seq_id: this.props.index++,
-            req_sub_type: 5,
+            req_sub_type: REQUEST_SUB_TYPE.SUBSCRIBE_RT,
             sessiontoken: this.props.sessiontoken,
             obj_id: id,
         };
@@ -474,8 +465,8 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
         const packet: MqttMessage = {
             req_type: REQUEST_TYPE.ACTION,
             seq_id: this.props.index++,
-            req_sub_type: 3,
-            act_type: 0,
+            req_sub_type: REQUEST_SUB_TYPE.SET_ACTION_OBJ,
+            act_type: ACTION_TYPE.SET,
             sessiontoken: this.props.sessiontoken,
             obj_id: id,
             act_params: [status],
@@ -488,8 +479,8 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
         const packet: MqttMessage = {
             req_type: REQUEST_TYPE.ACTION,
             seq_id: this.props.index++,
-            req_sub_type: 3,
-            act_type: 0,
+            req_sub_type: REQUEST_SUB_TYPE.SET_ACTION_OBJ,
+            act_type: ACTION_TYPE.SET,
             sessiontoken: this.props.sessiontoken,
             obj_id: id,
             act_params: [status],
@@ -502,11 +493,25 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
         const packet: MqttMessage = {
             req_type: REQUEST_TYPE.ACTION,
             seq_id: this.props.index++,
-            req_sub_type: 3,
-            act_type: 2,
+            req_sub_type: REQUEST_SUB_TYPE.SET_ACTION_OBJ,
+            act_type: ACTION_TYPE.CLIMA_SET_POINT,
             sessiontoken: this.props.sessiontoken,
             obj_id: id,
             act_params: [temperature * 10],
+        };
+        const response = await this.publish(packet);
+        return ComelitClient.evalResponse(response).then(value => value);
+    }
+
+    async switchThermostatState(id: string, state: ClimaMode): Promise<boolean> {
+        const packet: MqttMessage = {
+            req_type: REQUEST_TYPE.ACTION,
+            seq_id: this.props.index++,
+            req_sub_type: REQUEST_SUB_TYPE.SET_ACTION_OBJ,
+            act_type: ACTION_TYPE.SWITCH_CLIMA_MODE,
+            sessiontoken: this.props.sessiontoken,
+            obj_id: id,
+            act_params: [state],
         };
         const response = await this.publish(packet);
         return ComelitClient.evalResponse(response).then(value => value);

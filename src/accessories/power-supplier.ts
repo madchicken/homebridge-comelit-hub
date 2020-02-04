@@ -16,7 +16,7 @@ export class PowerSupplier extends ComelitAccessory<SupplierDeviceData> {
     }
 
     update(data: SupplierDeviceData): void {
-        this.log(`Reporting consumption ${data.instant_power}Wh`);
+        this.log(`Reporting instant consumption of ${data.instant_power}Wh`);
         consumption.set(parseFloat(data.instant_power));
     }
 }

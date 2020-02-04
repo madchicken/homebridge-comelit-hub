@@ -5,6 +5,7 @@ import {HomebridgeAPI} from "../index";
 import client from "prom-client";
 
 const lightStatus = new client.Gauge({ name: 'comelit_light_status', help: 'Lightbulb on/off', labelNames: ['light_name']});
+const lightCount = new client.Counter({ name: 'comelit_light_total', help: 'Lightbulb on/off counter', labelNames: ['light_name']});
 
 export class Lightbulb extends ComelitAccessory<LightDeviceData> {
     static readonly ON = 1;
@@ -60,6 +61,9 @@ export class Lightbulb extends ComelitAccessory<LightDeviceData> {
         const status = parseInt(data.status) === ObjectStatus.ON;
         console.log(`Updating status of light ${this.device.id}. New status is ${status}`);
         lightStatus.set({ light_name: data.descrizione }, parseInt(data.status));
+        if (status) {
+            lightCount.inc({light_name: data.descrizione});
+        }
         this.lightbulbService.getCharacteristic(Characteristic.On).updateValue(status);
     }
 }

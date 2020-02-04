@@ -33,20 +33,22 @@ export class Blind extends ComelitAccessory<BlindDeviceData> {
                 try {
                     const currentPosition = this.coveringService.getCharacteristic(Characteristic.CurrentPosition).value as number;
                     const status = state < currentPosition ? ObjectStatus.OFF : ObjectStatus.ON;
-                    const delta = Math.abs(state - currentPosition);
-                    if (this.timeout) {
-                        clearTimeout(this.timeout);
-                        this.timeout = null;
+                    const delta = state < currentPosition ? (currentPosition - state) : (state - currentPosition);
+                    if (delta) {
+                        if (this.timeout) {
+                            clearTimeout(this.timeout);
+                            this.timeout = null;
 
-                        await this.client.toggleBlind(this.device.id, currentPosition === Blind.OPEN ? ObjectStatus.OFF : ObjectStatus.ON); // stop the blind
+                            await this.client.toggleBlind(this.device.id, ObjectStatus.OFF); // stop the blind
+                        }
+                        await this.client.toggleBlind(this.device.id, status);
+                        this.timeout = setTimeout(async () => {
+                            this.log(`Stopping blind to ${state}%`);
+                            await this.client.toggleBlind(this.device.id, ObjectStatus.OFF);
+                            this.coveringService.getCharacteristic(Characteristic.CurrentPosition).updateValue(state);
+                        }, Blind.OPENING_CLOSING_TIME * delta / 100);
                     }
-                    await this.client.toggleBlind(this.device.id, status);
-                    this.timeout = setTimeout(async () => {
-                        this.log(`Stopping blind to ${state}%`);
-                        await this.client.toggleBlind(this.device.id, ObjectStatus.CLOSE);
-                        this.coveringService.getCharacteristic(Characteristic.CurrentPosition).updateValue(status);
-                    }, Blind.OPENING_CLOSING_TIME * delta / 100);
-                    callback(null);
+                    callback();
                 } catch (e) {
                     callback(e);
                 }
