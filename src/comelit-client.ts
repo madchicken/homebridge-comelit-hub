@@ -335,7 +335,7 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
             keepalive: 120,
         });
         // Register to incoming messages
-        await this.subscribeTopic(`${CLIENT_ID_PREFIX}/${HUB_ID}/tx/#`, this.handleIncomingMessage.bind(this));
+        await this.subscribeTopic(this.readTopic, this.handleIncomingMessage.bind(this));
         this.props.agent_id = await this.retriveAgentId();
         this.log(`...done: client agent id is ${this.props.agent_id}`);
         return this.props.client;
