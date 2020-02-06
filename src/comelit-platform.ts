@@ -1,5 +1,5 @@
 import {Homebridge} from "./types";
-import {ComelitClient, DeviceData} from "./comelit-client";
+import {ComelitClient, DeviceData, ROOT_ID} from "./comelit-client";
 import {ComelitAccessory} from "./accessories/comelit";
 import {Lightbulb} from "./accessories/lightbulb";
 import {Thermostat} from "./accessories/thermostat";
@@ -10,8 +10,6 @@ import Timeout = NodeJS.Timeout;
 import express, {Express} from "express";
 import {register} from "prom-client";
 import * as http from "http";
-
-const ROOT_ID = 'GEN#17#13#1';
 
 export interface HubConfig {
     username: string;

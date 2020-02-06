@@ -38,14 +38,14 @@ export class Blind extends ComelitAccessory<BlindDeviceData> {
                         if (this.timeout) {
                             clearTimeout(this.timeout);
                             this.timeout = null;
-
-                            await this.client.toggleBlind(this.device.id, ObjectStatus.OFF); // stop the blind
+                            await this.client.toggleDeviceStatus(this.device.id, ObjectStatus.OFF); // stop the blind
                         }
-                        await this.client.toggleBlind(this.device.id, status);
+                        await this.client.toggleDeviceStatus(this.device.id, status);
                         this.timeout = setTimeout(async () => {
                             this.log(`Stopping blind to ${state}%`);
-                            await this.client.toggleBlind(this.device.id, ObjectStatus.OFF);
+                            await this.client.toggleDeviceStatus(this.device.id, ObjectStatus.OFF);
                             this.coveringService.getCharacteristic(Characteristic.CurrentPosition).updateValue(state);
+                            this.timeout = null;
                         }, Blind.OPENING_CLOSING_TIME * delta / 100);
                     }
                     callback();

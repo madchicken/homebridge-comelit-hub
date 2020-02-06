@@ -8,6 +8,7 @@ const MQTT = require("async-mqtt");
 const connectAsync = MQTT.connectAsync;
 const CLIENT_ID_PREFIX = 'HSrv';
 const HUB_ID = '0025291701EC';
+export const ROOT_ID = 'GEN#17#13#1';
 
 export enum REQUEST_TYPE {
     STATUS = 0,
@@ -304,7 +305,7 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
                 deferredMqttMessage.promise.reject(response);
             }
         } else {
-            if (response.obj_id && response.out_data && response.out_data.length) {
+            if (response.obj_id && response.out_data && response.out_data.length && this.homeIndex) {
                 const datum: DeviceData = response.out_data[0];
                 const value = this.homeIndex.updateObject(response.obj_id, datum);
                 if (this.onUpdate && value) {
@@ -323,10 +324,10 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
                hub_password?: string, clientId?: string): Promise<AsyncMqttClient> {
         this.username = username;
         this.password = password;
-        this.clientId = clientId ? `${CLIENT_ID_PREFIX}_${clientId}` : `${CLIENT_ID_PREFIX}_${generateUUID(`${Math.random()}`)}`;
+        this.clientId = clientId ? `${CLIENT_ID_PREFIX}_${clientId}` : `${CLIENT_ID_PREFIX}_${generateUUID(`${Math.random()}`).toUpperCase()}`;
         this.readTopic = `${CLIENT_ID_PREFIX}/${HUB_ID}/tx/${this.clientId}`;
         this.writeTopic = `${CLIENT_ID_PREFIX}/${HUB_ID}/rx/${this.clientId}`;
-        this.log(`Connecting to Comelit HUB at ${brokerUrl}`);
+        this.log(`Connecting to Comelit HUB at ${brokerUrl} with clientID ${this.clientId}`);
         this.props.client = await connectAsync(brokerUrl, {
             username: hub_username || 'hsrv-user',
             password: hub_password || 'sf1nE9bjPc',
@@ -334,18 +335,23 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
             keepalive: 120,
         });
         // Register to incoming messages
-        await this.props.client.subscribe(this.readTopic);
-        this.props.client.on('message', this.handleIncomingMessage.bind(this));
+        await this.subscribeTopic(`${CLIENT_ID_PREFIX}/${HUB_ID}/tx/#`, this.handleIncomingMessage.bind(this));
         this.props.agent_id = await this.retriveAgentId();
         this.log(`...done: client agent id is ${this.props.agent_id}`);
         return this.props.client;
     }
 
+    async subscribeTopic(topic: string, handler: (topic: string, message: any) => void) {
+        await this.props.client.subscribe(topic);
+        this.props.client.on('message', handler);
+    }
+
     async shutdown() {
         if (this.props.client && this.props.client.connected) {
             try {
+                this.log('Comelit client unsubscribe from read topic');
                 await this.props.client.unsubscribe(this.readTopic);
-                this.props.client.off('message', this.handleIncomingMessage.bind(this));
+                this.log('Comelit client ending session');
                 await this.props.client.end(true);
             } catch (e) {
                 console.error(e.message);
@@ -355,6 +361,7 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
         this.props.index = 0;
         this.props.sessiontoken = null;
         this.props.agent_id = null;
+        this.log('Comelit client disconnected');
     }
 
     private async retriveAgentId(): Promise<number> {
@@ -446,7 +453,7 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
             .then(() => response.out_data[0] as DeviceData);
     }
 
-    async rooms(objId: string): Promise<DeviceData> {
+    async zones(objId: string): Promise<DeviceData> {
         const packet: MqttMessage = {
             req_type: REQUEST_TYPE.STATUS,
             seq_id: this.props.index++,
@@ -462,56 +469,26 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
     }
 
     async toggleDeviceStatus(id: string, status: number): Promise<boolean> {
-        const packet: MqttMessage = {
-            req_type: REQUEST_TYPE.ACTION,
-            seq_id: this.props.index++,
-            req_sub_type: REQUEST_SUB_TYPE.SET_ACTION_OBJ,
-            act_type: ACTION_TYPE.SET,
-            sessiontoken: this.props.sessiontoken,
-            obj_id: id,
-            act_params: [status],
-        };
-        const response = await this.publish(packet);
-        return ComelitClient.evalResponse(response).then(value => value);
-    }
-
-    async toggleBlind(id: string, status: number): Promise<boolean> {
-        const packet: MqttMessage = {
-            req_type: REQUEST_TYPE.ACTION,
-            seq_id: this.props.index++,
-            req_sub_type: REQUEST_SUB_TYPE.SET_ACTION_OBJ,
-            act_type: ACTION_TYPE.SET,
-            sessiontoken: this.props.sessiontoken,
-            obj_id: id,
-            act_params: [status],
-        };
-        const response = await this.publish(packet);
-        return ComelitClient.evalResponse(response).then(value => value);
+        return this.sendAction(id, ACTION_TYPE.SET, status);
     }
 
     async setTemperature(id: string, temperature: number): Promise<boolean> {
-        const packet: MqttMessage = {
-            req_type: REQUEST_TYPE.ACTION,
-            seq_id: this.props.index++,
-            req_sub_type: REQUEST_SUB_TYPE.SET_ACTION_OBJ,
-            act_type: ACTION_TYPE.CLIMA_SET_POINT,
-            sessiontoken: this.props.sessiontoken,
-            obj_id: id,
-            act_params: [temperature * 10],
-        };
-        const response = await this.publish(packet);
-        return ComelitClient.evalResponse(response).then(value => value);
+        return this.sendAction(id, ACTION_TYPE.CLIMA_SET_POINT, temperature);
     }
 
     async switchThermostatState(id: string, state: ClimaMode): Promise<boolean> {
+        return this.sendAction(id, ACTION_TYPE.SWITCH_CLIMA_MODE, state);
+    }
+
+    async sendAction(id: string, type: ACTION_TYPE, value: any) {
         const packet: MqttMessage = {
             req_type: REQUEST_TYPE.ACTION,
             seq_id: this.props.index++,
             req_sub_type: REQUEST_SUB_TYPE.SET_ACTION_OBJ,
-            act_type: ACTION_TYPE.SWITCH_CLIMA_MODE,
+            act_type: type,
             sessiontoken: this.props.sessiontoken,
             obj_id: id,
-            act_params: [state],
+            act_params: [value],
         };
         const response = await this.publish(packet);
         return ComelitClient.evalResponse(response).then(value => value);
@@ -545,12 +522,11 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
 
     private handleIncomingMessage(topic: string, message: any) {
         const msg: MqttIncomingMessage = deserializeMessage(message);
-        this.log(`Incoming message for topic ${topic}: ${message.toString()}`);
+        // this.log(`Incoming message for topic ${topic}: ${message.toString()}`);
         if (topic === this.readTopic) {
             this.processQueue(msg);
         } else {
-            console.error(`Unknown topic ${topic}`);
-            this.processQueue(msg);
+            console.error(`Unknown topic ${topic}, message ${msg.toString()}`);
         }
     }
 }
