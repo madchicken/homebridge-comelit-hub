@@ -59,7 +59,7 @@ export class Blind extends ComelitAccessory<BlindDeviceData> {
                             if (position > Blind.CLOSED && position < Blind.OPEN) {
                                 // We stop the blind only for mid positions, otherwise it would stop by itself
                                 this.log(`Stopping blind to ${position}%`);
-                                await this.client.toggleDeviceStatus(this.device.id, ObjectStatus.OFF);
+                                await this.client.toggleDeviceStatus(this.device.id, position < currentPosition ? ObjectStatus.ON : ObjectStatus.OFF);
                             }
                             this.coveringService.getCharacteristic(Characteristic.CurrentPosition).updateValue(position);
                             this.timeout = null;
@@ -78,8 +78,10 @@ export class Blind extends ComelitAccessory<BlindDeviceData> {
     public update(data: BlindDeviceData) {
         const status = parseInt(data.status);
         if (status === ObjectStatus.IDLE) {
+            this.coveringService.getCharacteristic(Characteristic.TargetPosition).updateValue(Blind.CLOSED);
             this.coveringService.getCharacteristic(Characteristic.CurrentPosition).updateValue(Blind.CLOSED);
         } if (status === ObjectStatus.ON) {
+            this.coveringService.getCharacteristic(Characteristic.TargetPosition).updateValue(Blind.OPEN);
             this.coveringService.getCharacteristic(Characteristic.CurrentPosition).updateValue(Blind.OPEN);
         } if (status === ObjectStatus.IDLE) {
             this.coveringService.getCharacteristic(Characteristic.PositionState).updateValue(PositionState.STOPPED);
