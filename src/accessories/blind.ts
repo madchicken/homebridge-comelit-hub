@@ -64,7 +64,7 @@ export class Blind extends ComelitAccessory<BlindDeviceData> {
                             this.coveringService.getCharacteristic(Characteristic.CurrentPosition).updateValue(position);
                             this.timeout = null;
                             this.lastCommandTime = 0;
-                        }, Blind.OPENING_CLOSING_TIME * delta / 100);
+                        }, Blind.OPENING_CLOSING_TIME * Math.abs(delta) / 100);
                     }
                     callback();
                 } catch (e) {
