@@ -1,9 +1,10 @@
 import {AsyncMqttClient} from "async-mqtt";
 import {DeferredMessage, PromiseBasedQueue} from "./promise-queue";
 import {generateUUID} from "./utils";
-import dgram from "dgram";
+import dgram, {RemoteInfo} from "dgram";
 import MQTT from "async-mqtt";
 import {AddressInfo} from "net";
+import Timeout = NodeJS.Timeout;
 
 export const ROOT_ID = 'GEN#17#13#1';
 
@@ -327,15 +328,25 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
     scan(): Promise<void> {
         return new Promise(resolve => {
             const server = dgram.createSocket('udp4');
-
-            server.bind(() => {
-                server.setBroadcast(true);
+            let state = 'SCAN';
+            let timeout: Timeout;
+            function sendScan() {
                 const message = Buffer.alloc(12);
                 message.write('SCAN');
                 message.writeInt32BE(0x00000000, 4);
                 message.writeInt32BE(0x00FFFFFF, 8);
-                console.log(`Sending buffer ${message}`);
                 server.send(message, SCAN_PORT, '255.255.255.255');
+            }
+
+            function sendInfo(address: AddressInfo) {
+                const message = Buffer.alloc(12);
+                message.write('INFO');
+                server.send(message, address.port, address.address);
+            }
+
+            server.bind(() => {
+                server.setBroadcast(true);
+                timeout = setInterval(sendScan, 3000);
             });
 
             server.on('listening', () => {
@@ -345,14 +356,26 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
 
             server.on('error', (err) => {
                 console.log(`server error:\n${err.stack}`);
+                clearInterval(timeout);
                 server.close();
                 resolve();
             });
 
-            server.on('message', (msg, rinfo) => {
-                console.log(`server got: ${msg} from ${rinfo.address}:${rinfo.port}`);
-                server.close();
-                resolve();
+            server.on('message', (msg, rinfo: RemoteInfo) => {
+                console.log(`server got: ${msg} from ${rinfo.address}`);
+                switch (state) {
+                    case 'SCAN':
+                        if(msg.slice(0, 3).toString() === 'here') {
+                            state = 'INFO';
+                            clearInterval(timeout);
+                            sendInfo(rinfo);
+                        }
+                        break;
+                    case 'INFO':
+                        server.close();
+                        resolve();
+                        break;
+                }
             });
         });
     }
