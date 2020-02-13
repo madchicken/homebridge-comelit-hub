@@ -1,14 +1,16 @@
 import {AsyncMqttClient} from "async-mqtt";
 import {DeferredMessage, PromiseBasedQueue} from "./promise-queue";
 import {generateUUID} from "./utils";
+import dgram from "dgram";
+import MQTT from "async-mqtt";
+import {AddressInfo} from "net";
 
-const MQTT = require("async-mqtt");
-
+export const ROOT_ID = 'GEN#17#13#1';
 
 const connectAsync = MQTT.connectAsync;
 const CLIENT_ID_PREFIX = 'HSrv';
 const HUB_ID = '0025291701EC';
-export const ROOT_ID = 'GEN#17#13#1';
+const SCAN_PORT = 24199;
 
 export enum REQUEST_TYPE {
     STATUS = 0,
@@ -274,6 +276,8 @@ function deserializeMessage(message: any): MqttIncomingMessage {
     return parsed as MqttIncomingMessage;
 }
 
+const DEFAULT_TIMEOUT = 5000;
+
 export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMessage> {
     private readonly props: ComelitProps;
     private homeIndex: HomeIndex;
@@ -320,6 +324,39 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
         return !!this.props.sessiontoken;
     }
 
+    scan(): Promise<void> {
+        return new Promise(resolve => {
+            const server = dgram.createSocket('udp4');
+
+            server.bind(() => {
+                server.setBroadcast(true);
+                const message = Buffer.alloc(12);
+                message.write('SCAN');
+                message.writeInt32BE(0x00000000, 4);
+                message.writeInt32BE(0x00FFFFFF, 8);
+                console.log(`Sending buffer ${message}`);
+                server.send(message, SCAN_PORT, '255.255.255.255');
+            });
+
+            server.on('listening', () => {
+                const address: AddressInfo = server.address() as AddressInfo;
+                console.log(`server listening ${address.address}:${address.port}`);
+            });
+
+            server.on('error', (err) => {
+                console.log(`server error:\n${err.stack}`);
+                server.close();
+                resolve();
+            });
+
+            server.on('message', (msg, rinfo) => {
+                console.log(`server got: ${msg} from ${rinfo.address}:${rinfo.port}`);
+                server.close();
+                resolve();
+            });
+        });
+    }
+
     async init(brokerUrl: string, username: string, password: string, hub_username?: string,
                hub_password?: string, clientId?: string): Promise<AsyncMqttClient> {
         this.username = username;
@@ -336,6 +373,7 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
         });
         // Register to incoming messages
         await this.subscribeTopic(this.readTopic, this.handleIncomingMessage.bind(this));
+        this.setTimeout(DEFAULT_TIMEOUT);
         this.props.agent_id = await this.retriveAgentId();
         this.log(`...done: client agent id is ${this.props.agent_id}`);
         return this.props.client;
@@ -349,6 +387,7 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
     async shutdown() {
         if (this.props.client && this.props.client.connected) {
             try {
+                this.flush(true);
                 this.log('Comelit client unsubscribe from read topic');
                 await this.props.client.unsubscribe(this.readTopic);
                 this.log('Comelit client ending session');
