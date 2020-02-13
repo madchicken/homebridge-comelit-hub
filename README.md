@@ -5,16 +5,16 @@ The code is based on the reverse engineering of the official protocol, so expect
 
 Currently supported devices:
 
-- Simple light
-- Blind
-- Thermostat
-- Humidifier/Dehumidifier
-- Controlled plug
+- Simple lights
+- Blinds
+- Thermostats
+- Humidifiers/Dehumidifiers
+- Controlled plugs
 
 Missing devices:
 
-- RGB light
-- Dimmerable light
+- RGB lights
+- Dimmerable lights
 - Irrigation
 - Vedo/VIP
 
@@ -35,3 +35,6 @@ Add the following section to the platform array in the Homebridge config.json fi
 
 By default username and password are both set to `admin`.
 `broker_url` is the `mqtt://` + the IP/name of your HUB in the local network.
+
+## Screenshots
+![Home application screenshot](./images/home.png)
