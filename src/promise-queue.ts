@@ -32,7 +32,7 @@ export abstract class PromiseBasedQueue<M, R> implements Queue<M, R> {
 
     setTimeout(timeout: number) {
         if (timeout && timeout > 0) {
-            this.timeout = setTimeout(this.cleanPending, timeout);
+            this.timeout = setTimeout(this.cleanPending.bind(this), timeout);
         }
     }
 

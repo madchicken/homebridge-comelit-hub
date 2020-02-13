@@ -366,8 +366,6 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
                     sendInfo(rinfo);
                 } else {
                     console.log(`got: ${msg} from ${rinfo.address}`);
-                    server.close();
-                    resolve();
                 }
             });
         });
