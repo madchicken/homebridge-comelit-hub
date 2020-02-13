@@ -328,7 +328,6 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
     scan(): Promise<void> {
         return new Promise(resolve => {
             const server = dgram.createSocket('udp4');
-            let state = 'SCAN';
             let timeout: Timeout;
             function sendScan() {
                 const message = Buffer.alloc(12);
@@ -340,6 +339,7 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
 
             function sendInfo(address: AddressInfo) {
                 const message = Buffer.alloc(12);
+                console.log(`Found HUB at ${address.address}`);
                 message.write('INFO');
                 server.send(message, address.port, address.address);
             }
@@ -362,19 +362,12 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
             });
 
             server.on('message', (msg, rinfo: RemoteInfo) => {
-                console.log(`server got: ${msg} from ${rinfo.address}`);
-                switch (state) {
-                    case 'SCAN':
-                        if(msg.slice(0, 3).toString() === 'here') {
-                            state = 'INFO';
-                            clearInterval(timeout);
-                            sendInfo(rinfo);
-                        }
-                        break;
-                    case 'INFO':
-                        server.close();
-                        resolve();
-                        break;
+                if(msg.toString().startsWith('here')) {
+                    sendInfo(rinfo);
+                } else {
+                    console.log(`got: ${msg} from ${rinfo.address}`);
+                    server.close();
+                    resolve();
                 }
             });
         });
