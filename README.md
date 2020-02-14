@@ -3,6 +3,12 @@
 This is an Homebridge platform plugin to expose Comelit Home Automation to Apple HomeKit and use it with Siri.
 The code is based on the reverse engineering of the official protocol, so expect bugs.
 
+Note: the supported model of the HUB is this one 
+    
+    https://pro.comelitgroup.com/product/20003150
+
+The old Comelit Serial Bridge is _not_ supported by this plugin.
+
 Currently supported devices:
 
 - Simple lights
