@@ -41,7 +41,7 @@ export abstract class PromiseBasedQueue<M, R> implements Queue<M, R> {
         const toKeep = this.queuedMessages.reduce((keep: DeferredMessage<M, R>[], value) => {
             const delta = timestamp - value.timestamp;
             if (delta) {
-                console.log(`Rejecting unresolved promise after ${delta}ms`, value.message);
+                console.error(`Rejecting unresolved promise after ${delta}ms`, value.message);
                 value.promise.reject(new Error('Timeout'));
                 return keep;
             }

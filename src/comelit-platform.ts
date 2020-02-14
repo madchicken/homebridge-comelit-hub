@@ -17,7 +17,8 @@ export interface HubConfig {
     hub_username: string;
     hub_password: string;
     broker_url: string;
-    client_id: string;
+    client_id?: string;
+    export_prometheus_metrics?: boolean;
     http_port?: number;
 }
 const DEFAULT_HTTP_PORT = 3002;

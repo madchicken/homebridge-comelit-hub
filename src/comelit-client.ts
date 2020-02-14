@@ -561,8 +561,8 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
 
     private async publish(packet: MqttMessage): Promise<MqttIncomingMessage> {
         this.log(`Sending message to HUB ${JSON.stringify(packet)}`);
-        await this.props.client.publish(this.writeTopic, JSON.stringify(packet));
         try {
+            await this.props.client.publish(this.writeTopic, JSON.stringify(packet));
             return await this.enqueue(packet);
         } catch (response) {
             if (response.req_result === 1 && response.message === 'invalid token') {
