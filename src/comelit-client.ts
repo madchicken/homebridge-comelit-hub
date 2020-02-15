@@ -339,7 +339,7 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
 
             function sendInfo(address: AddressInfo) {
                 const message = Buffer.alloc(12);
-                console.log(`Found HUB at ${address.address}`);
+                this.log(`Found HUB at ${address.address}`);
                 message.write('INFO');
                 server.send(message, address.port, address.address);
             }
@@ -351,11 +351,11 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
 
             server.on('listening', () => {
                 const address: AddressInfo = server.address() as AddressInfo;
-                console.log(`server listening ${address.address}:${address.port}`);
+                this.log(`server listening ${address.address}:${address.port}`);
             });
 
             server.on('error', (err) => {
-                console.log(`server error:\n${err.stack}`);
+                this.log(`server error:\n${err.stack}`);
                 clearInterval(timeout);
                 server.close();
                 resolve();
@@ -365,7 +365,7 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
                 if(msg.toString().startsWith('here')) {
                     sendInfo(rinfo);
                 } else {
-                    console.log(`got: ${msg} from ${rinfo.address}`);
+                    this.log(`got: ${msg} from ${rinfo.address}`);
                 }
             });
         });
@@ -407,7 +407,7 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
                 this.log('Comelit client ending session');
                 await this.props.client.end(true);
             } catch (e) {
-                console.error(e.message);
+                this.log(e.message);
             }
         }
         this.props.client = null;
