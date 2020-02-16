@@ -277,6 +277,7 @@ function deserializeMessage(message: any): MqttIncomingMessage {
     return parsed as MqttIncomingMessage;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const DEFAULT_TIMEOUT = 5000;
 
 export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMessage> {
@@ -387,7 +388,7 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
         });
         // Register to incoming messages
         await this.subscribeTopic(this.readTopic, this.handleIncomingMessage.bind(this));
-        this.setTimeout(DEFAULT_TIMEOUT);
+        // this.setTimeout(DEFAULT_TIMEOUT);
         this.props.agent_id = await this.retriveAgentId();
         this.log(`...done: client agent id is ${this.props.agent_id}`);
         return this.props.client;
