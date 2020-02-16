@@ -11,6 +11,8 @@ import express, {Express} from "express";
 import {register} from "prom-client";
 import * as http from "http";
 
+const Sentry = require('@sentry/node');
+
 export interface HubConfig {
     username: string;
     password: string;
@@ -20,6 +22,7 @@ export interface HubConfig {
     client_id?: string;
     export_prometheus_metrics?: boolean;
     http_port?: number;
+    sentry_dsn?: string;
 }
 const DEFAULT_HTTP_PORT = 3002;
 const expr: Express = express();
@@ -40,6 +43,9 @@ export class ComelitPlatform {
     private server: http.Server;
 
     constructor(log: (message?: any, ...optionalParams: any[]) => void, config: HubConfig, homebridge: Homebridge) {
+        if (config.sentry_dsn) {
+            Sentry.init({dsn: config.sentry_dsn});
+        }
         this.log = (str: string) => log("[COMELIT HUB] " + str);
         this.log('Initializing platform: ', config);
         this.config = config;
@@ -66,6 +72,7 @@ export class ComelitPlatform {
             }
         } catch (e) {
             this.log('Error initializing MQTT client', e);
+            Sentry.captureException(e);
             return false;
         }
 
@@ -76,6 +83,7 @@ export class ComelitPlatform {
             return true;
         } catch (e) {
             this.log('Error logging in', e);
+            Sentry.captureException(e);
             return false;
         }
     }
@@ -168,6 +176,7 @@ export class ComelitPlatform {
                 this.keepAlive();
             } catch(e) {
                 this.log(e);
+                Sentry.captureException(e);
                 await this.login();
             }
         }, ComelitPlatform.KEEP_ALIVE_TIMEOUT);

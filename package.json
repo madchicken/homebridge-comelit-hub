@@ -6,7 +6,8 @@
   "description": "Comelit HUB support for Homebridge: https://github.com/nfarina/homebridge",
   "license": "Apache 2",
   "keywords": [
-    "homebridge-plugin", "comelit"
+    "homebridge-plugin",
+    "comelit"
   ],
   "engines": {
     "node": ">11.10.0",
@@ -32,33 +33,34 @@
     "watch-debug": "concurrently -k -p \"[{name}]\" -n \"Sass,TypeScript,Node\" -c \"yellow.bold,cyan.bold,green.bold\" \"yarn run watch-ts\" \"yarn run serve-debug\""
   },
   "dependencies": {
+    "@sentry/node": "5.12.2",
+    "async-mqtt": "^2.4.2",
+    "chalk": "^3.0.0",
+    "express": "^4.17.1",
+    "homebridge": "^0.4.50",
+    "lodash": "^4.17.15",
     "mqtt": "^3.0.0",
     "mqtt-packet": "^6.3.0",
-    "async-mqtt": "^2.4.2",
-    "typescript": "^3.7.4",
-    "lodash": "^4.17.15",
-    "homebridge": "^0.4.50",
-    "yargs": "^15.1.0",
-    "chalk": "^3.0.0",
     "prom-client": "^11.5.3",
-    "express": "^4.17.1"
+    "typescript": "^3.7.4",
+    "yargs": "^15.1.0"
   },
   "bin": {
     "comelit": "./bin/cli.js"
   },
   "devDependencies": {
+    "@types/chalk": "^2.2.0",
+    "@types/express": "^4.17.2",
+    "@types/lodash": "^4.14.149",
     "@types/mqtt": "^2.5.0",
     "@types/node": "^11.15.3",
-    "@types/lodash": "^4.14.149",
+    "@types/yargs": "^15.0.0",
     "@typescript-eslint/eslint-plugin": "^2.14.0",
     "@typescript-eslint/parser": "^2.14.0",
-    "@types/chalk": "^2.2.0",
-    "@types/yargs": "^15.0.0",
-    "@types/express": "^4.17.2",
     "concurrently": "^5.0.0",
     "eslint": "^6.4.0",
-    "ts-node": "^8.4.1",
+    "hap-nodejs": "^0.5.5",
     "nodemon": "^2.0.2",
-    "hap-nodejs": "^0.5.5"
+    "ts-node": "^8.4.1"
   }
 }
