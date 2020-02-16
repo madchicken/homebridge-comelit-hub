@@ -43,7 +43,7 @@ export class ComelitPlatform {
     private server: http.Server;
 
     constructor(log: (message?: any, ...optionalParams: any[]) => void, config: HubConfig, homebridge: Homebridge) {
-        if (config.sentry_dsn) {
+        if (config && config.sentry_dsn) {
             Sentry.init({dsn: config.sentry_dsn});
         }
         this.log = (str: string) => log("[COMELIT HUB] " + str);
