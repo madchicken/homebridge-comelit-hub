@@ -11,7 +11,7 @@ import express, {Express} from "express";
 import client, {register} from "prom-client";
 import * as http from "http";
 
-import Sentry from "@sentry/node";
+const Sentry = require('@sentry/node');
 
 export interface HubConfig {
     username: string;
@@ -51,7 +51,7 @@ export class ComelitPlatform {
     constructor(log: (message?: any, ...optionalParams: any[]) => void, config: HubConfig, homebridge: Homebridge) {
         if (config && config.sentry_dsn) {
             Sentry.init({dsn: config.sentry_dsn});
-        } else {
+        } else if (config) {
             Sentry.captureException = () => null;
         }
         this.log = (str: string) => log("[COMELIT HUB] " + str);
