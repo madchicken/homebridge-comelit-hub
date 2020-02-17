@@ -28,7 +28,7 @@ export abstract class PromiseBasedQueue<M, R> implements Queue<M, R> {
         this.queuedMessages = [];
     }
 
-    abstract processResponse(messages: DeferredMessage<M, R>[], response: R): void;
+    abstract processResponse(messages: DeferredMessage<M, R>[], response: R): boolean;
 
     setTimeout(timeout: number) {
         if (timeout && timeout > 0) {
@@ -43,8 +43,8 @@ export abstract class PromiseBasedQueue<M, R> implements Queue<M, R> {
         const toKeep = this.queuedMessages.reduce((keep: DeferredMessage<M, R>[], value) => {
             const delta = timestamp - value.timestamp;
             if (delta > timeout) {
-                console.error(`Rejecting unresolved promise after ${delta}ms`, );
-                value.promise.reject(new Error(`Timeout for message: ${JSON.stringify(value.message)}`));
+                console.error(`Rejecting unresolved promise after ${delta}ms (${JSON.stringify(value.message)})`);
+                value.promise.reject(new Error(`Timeout for message:  ${JSON.stringify(value.message)}`));
                 return keep;
             }
             keep.push(value);
@@ -63,13 +63,16 @@ export abstract class PromiseBasedQueue<M, R> implements Queue<M, R> {
     }
 
     processQueue(response: R) {
-        this.processResponse(this.queuedMessages, response);
+        if (this.processResponse(this.queuedMessages, response)) {
+            console.log(`Message processed. Message queue size is now ${this.queuedMessages.length}`);
+        }
     }
 
     enqueue(message: M): Promise<R> {
         const timestamp = new Date().getTime();
         const promise = new DeferredPromise<R>();
         this.queuedMessages.push({ timestamp, message, promise });
+        console.log(`Message queue size is ${this.queuedMessages.length}`);
         return promise.promise;
     }
 }

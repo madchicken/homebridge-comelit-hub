@@ -301,7 +301,7 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
         this.log = log || console.log;
     }
 
-    processResponse(messages: DeferredMessage<MqttMessage, MqttIncomingMessage>[], response: MqttIncomingMessage): void {
+    processResponse(messages: DeferredMessage<MqttMessage, MqttIncomingMessage>[], response: MqttIncomingMessage): boolean {
         const deferredMqttMessage = response.seq_id ? messages.find(message => message.message.seq_id == response.seq_id && message.message.req_type == response.req_type) : null;
         if (deferredMqttMessage) {
             messages.splice(messages.indexOf(deferredMqttMessage));
@@ -310,6 +310,7 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
             } else {
                 deferredMqttMessage.promise.reject(response);
             }
+            return true;
         } else {
             if (response.obj_id && response.out_data && response.out_data.length && this.homeIndex) {
                 const datum: DeviceData = response.out_data[0];
@@ -320,6 +321,7 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
                 }
             }
         }
+        return false;
     }
 
     isLogged(): boolean {
@@ -576,7 +578,7 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
 
     private handleIncomingMessage(topic: string, message: any) {
         const msg: MqttIncomingMessage = deserializeMessage(message);
-        // this.log(`Incoming message for topic ${topic}: ${message.toString()}`);
+        this.log(`Incoming message for topic ${topic}: ${message.toString()}`);
         if (topic === this.readTopic) {
             this.processQueue(msg);
         } else {

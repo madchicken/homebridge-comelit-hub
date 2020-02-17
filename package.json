@@ -30,7 +30,7 @@
     "lint": "tsc --noEmit && eslint \"src/*.{js,ts}\" --quiet --fix",
     "debug": "yarn run build && yarn run watch-debug",
     "serve-debug": "nodemon --inspect dist/index.js",
-    "watch-debug": "concurrently -k -p \"[{name}]\" -n \"Sass,TypeScript,Node\" -c \"yellow.bold,cyan.bold,green.bold\" \"yarn run watch-ts\" \"yarn run serve-debug\""
+    "watch-debug": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"yellow.bold,cyan.bold,green.bold\" \"yarn run watch-ts\" \"yarn run serve-debug\""
   },
   "dependencies": {
     "@sentry/node": "5.12.2",
