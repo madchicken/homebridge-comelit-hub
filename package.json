@@ -2,7 +2,7 @@
   "name": "homebridge-comelit-platform",
   "version": "1.0.0",
   "description": "Comelit HUB support for Homebridge: https://github.com/nfarina/homebridge",
-  "license": "MIT",
+  "license": "Apache 2",
   "keywords": [
     "homebridge-plugin", "comelit"
   ],
