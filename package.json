@@ -4,7 +4,7 @@
   "author": "Pierpaolo Follia",
   "repository": "https://github.com/madchicken/homebridge-comelit-hub",
   "description": "Comelit HUB support for Homebridge: https://github.com/nfarina/homebridge",
-  "license": "Apache 2",
+  "license": "Apache-2.0",
   "keywords": [
     "homebridge-plugin",
     "comelit"

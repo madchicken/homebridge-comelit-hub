@@ -8,7 +8,7 @@ import {Outlet} from "./accessories/outlet";
 import {PowerSupplier} from "./accessories/power-supplier";
 import Timeout = NodeJS.Timeout;
 import express, {Express} from "express";
-import {register} from "prom-client";
+import client, {register} from "prom-client";
 import * as http from "http";
 
 import Sentry from "@sentry/node";
@@ -24,6 +24,12 @@ export interface HubConfig {
     exporter_http_port?: number;
     sentry_dsn?: string;
 }
+
+const uptime = new client.Gauge({
+    name: 'comelit_uptime',
+    help: 'Client uptime',
+});
+
 const DEFAULT_HTTP_PORT = 3002;
 const expr: Express = express();
 expr.get('/metrics', (req, res) => {
@@ -175,8 +181,10 @@ export class ComelitPlatform {
         this.keepAliveTimer = setTimeout(async () => {
             try {
                 await this.client.ping();
+                uptime.set(1);
                 this.keepAlive();
             } catch(e) {
+                uptime.set(0);
                 this.log(e);
                 Sentry.captureException(e);
                 await this.login();
