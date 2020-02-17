@@ -32,17 +32,19 @@ export abstract class PromiseBasedQueue<M, R> implements Queue<M, R> {
 
     setTimeout(timeout: number) {
         if (timeout && timeout > 0) {
-            this.timeout = setTimeout(this.cleanPending.bind(this), timeout);
+            this.timeout = setTimeout(() => {
+                this.cleanPending(timeout);
+            }, timeout);
         }
     }
 
-    cleanPending() {
+    cleanPending(timeout: number) {
         const timestamp = new Date().getTime();
         const toKeep = this.queuedMessages.reduce((keep: DeferredMessage<M, R>[], value) => {
             const delta = timestamp - value.timestamp;
-            if (delta) {
-                console.error(`Rejecting unresolved promise after ${delta}ms`, value.message);
-                value.promise.reject(new Error('Timeout'));
+            if (delta > timeout) {
+                console.error(`Rejecting unresolved promise after ${delta}ms`, );
+                value.promise.reject(new Error(`Timeout for message: ${JSON.stringify(value.message)}`));
                 return keep;
             }
             keep.push(value);
