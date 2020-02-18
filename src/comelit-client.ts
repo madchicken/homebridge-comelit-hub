@@ -379,8 +379,35 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
                     const appVersion = msg.subarray(32, 112).toString();
                     const systemID = msg.subarray(112, 116).toString();
                     const description = msg.subarray(116, 152).toString();
-                    const modelID = msg.subarray(156, 160).toString().replace("7", "Sette");
-                    this.log(`Found hardware ${hwID} MAC ${macAddress}, app ${appID} version ${appVersion}, system id ${systemID}, ${description} ${modelID} at IP ${rinfo.address}`);
+                    const modelID = msg.subarray(156, 160).toString();
+                    let model = modelID;
+                    switch (modelID) {
+                        case 'Extd':
+                            model = "1456 - Gateway";
+                            break;
+                        case 'ExtS':
+                            model = "1456S - Gateway";
+                            break;
+                        case 'MSVF':
+                            model = "6741W - Mini SBC/ViP/Extender handsfree";
+                            break;
+                        case 'MSVU':
+                            model = "6741W - Mini SBC/ViP/Extender handsfree";
+                            break;
+                        case 'MnWi':
+                            model = "6742W - Mini ViP handsfree Wifi";
+                            break;
+                        case 'MxWi':
+                            model = "6842W - Maxi ViP 7'' Wifi";
+                            break;
+                        case 'Vist':
+                            model = "Visto - Wifi ViP";
+                            break;
+                        case 'HSrv':
+                            model = "Home server";
+                            break;
+                    }
+                    this.log(`Found hardware ${hwID} MAC ${macAddress}, app ${appID} version ${appVersion}, system id ${systemID}, ${model} - ${description} at IP ${rinfo.address}`);
                 }
             });
         });
