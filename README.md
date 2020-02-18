@@ -51,3 +51,5 @@ To enable metrics, specify `export_prometheus_metrics: true` in the platform con
 
 ## Screenshots
 ![Home application screenshot](https://github.com/madchicken/homebridge-comelit-hub/raw/master/images/home.png)
+
+![Grafana screenshot](https://github.com/madchicken/homebridge-comelit-hub/raw/master/images/grafana.png)
