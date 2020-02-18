@@ -378,7 +378,7 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
                hub_password?: string, clientId?: string): Promise<AsyncMqttClient> {
         this.username = username;
         this.password = password;
-        this.clientId = clientId ? `${CLIENT_ID_PREFIX}_${clientId}` : `${CLIENT_ID_PREFIX}_${generateUUID(`${Math.random()}`).toUpperCase()}`;
+        this.clientId = this.getOrCreateClientId(clientId);
         this.readTopic = `${CLIENT_ID_PREFIX}/${HUB_ID}/tx/${this.clientId}`;
         this.writeTopic = `${CLIENT_ID_PREFIX}/${HUB_ID}/rx/${this.clientId}`;
         this.log(`Connecting to Comelit HUB at ${brokerUrl} with clientID ${this.clientId}`);
@@ -394,6 +394,16 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
         this.props.agent_id = await this.retriveAgentId();
         this.log(`...done: client agent id is ${this.props.agent_id}`);
         return this.props.client;
+    }
+
+    private getOrCreateClientId(clientId: string): string {
+        if (this.clientId) {
+            // We already generated a client id, reuse it
+            return this.clientId;
+        }
+        return clientId ?
+            `${CLIENT_ID_PREFIX}_${clientId}` :
+            `${CLIENT_ID_PREFIX}_${generateUUID(`${Math.random()}`).toUpperCase()}`;
     }
 
     async subscribeTopic(topic: string, handler: (topic: string, message: any) => void) {

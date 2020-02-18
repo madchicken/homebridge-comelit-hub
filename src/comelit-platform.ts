@@ -66,7 +66,7 @@ export class ComelitPlatform {
         try {
             await this.shutdown();
             this.log('Creating client and logging in...');
-            this.client = new ComelitClient(this.updateAccessory.bind(this), this.log);
+            this.client = this.client || new ComelitClient(this.updateAccessory.bind(this), this.log);
             await this.client.init(
                 this.config.broker_url,
                 this.config.username,
@@ -104,7 +104,6 @@ export class ComelitPlatform {
                 this.keepAliveTimer = null;
             }
             await this.client.shutdown();
-            this.client = null;
         }
     }
 
