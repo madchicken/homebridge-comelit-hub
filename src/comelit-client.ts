@@ -277,6 +277,12 @@ function deserializeMessage(message: any): MqttIncomingMessage {
     return parsed as MqttIncomingMessage;
 }
 
+function bytesToHex(byteArray: Buffer): String {
+    return byteArray.reduce((output, elem) =>
+            (output + ('0' + elem.toString(16)).slice(-2)),
+        '');
+}
+
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const DEFAULT_TIMEOUT = 5000;
 
@@ -342,7 +348,6 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
 
             function sendInfo(address: AddressInfo) {
                 const message = Buffer.alloc(12);
-                this.log(`Found HUB at ${address.address}`);
                 message.write('INFO');
                 server.send(message, address.port, address.address);
             }
@@ -368,7 +373,14 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
                 if(msg.toString().startsWith('here')) {
                     sendInfo(rinfo);
                 } else {
-                    this.log(`got: ${msg} from ${rinfo.address}`);
+                    const macAddress = bytesToHex(msg.subarray(14, 20));
+                    const hwID = msg.subarray(20, 24).toString();
+                    const appID = msg.subarray(24, 28).toString();
+                    const appVersion = msg.subarray(32, 112).toString();
+                    const systemID = msg.subarray(112, 116).toString();
+                    const description = msg.subarray(116, 152).toString();
+                    const modelID = msg.subarray(156, 160).toString().replace("7", "Sette");
+                    this.log(`Found hardware ${hwID} MAC ${macAddress}, app ${appID} version ${appVersion}, system id ${systemID}, ${description} ${modelID} at IP ${rinfo.address}`);
                 }
             });
         });
