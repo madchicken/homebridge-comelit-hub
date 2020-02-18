@@ -42,6 +42,22 @@ Add the following section to the platform array in the Homebridge config.json fi
 By default username and password are both set to `admin`.
 `broker_url` is the `mqtt://` + the IP/name of your HUB in the local network.
 
+## Find the broker URL
+If you don't know the IP of the HUB on your local network, you can use the comelit CLI. After installing this plugin,
+just type:
+
+    comelit scan
+   
+You should get an output like this:
+
+    Executing command scan
+    server listening 0.0.0.0:55546
+    Found hardware IcoM MAC XXXXXXXXXXXX, app Mngr version 3.0.1, system id ViP_, IcoM -  at IP [X.X.X.X]
+    Found hardware D407 MAC XXXXXXXXXXXX, app HSrv version 1.2.0, system id ViP_, Home server - Comelit Hub 1 at IP [X.X.X.X]
+
+Hit CTRL+C to interrupt the scan command.
+The IP you are looking for is the `Home server` one.
+
 ## Prometheus Metrics
 This plugin exports some Prometheus metric to allow you to monitor your house. If you have a Prometheus instance running
 with a Grafana UI, you can display useful information about your house domotic usage. All exported metrics have `comelit_` prefix.
