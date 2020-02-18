@@ -277,6 +277,13 @@ function deserializeMessage(message: any): MqttIncomingMessage {
     return parsed as MqttIncomingMessage;
 }
 
+function bytesToHex(byteArray: Buffer): String {
+    return byteArray.reduce((output, elem) =>
+            (output + ('0' + elem.toString(16)).slice(-2)),
+        '');
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const DEFAULT_TIMEOUT = 5000;
 
 export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMessage> {
@@ -300,7 +307,7 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
         this.log = log || console.log;
     }
 
-    processResponse(messages: DeferredMessage<MqttMessage, MqttIncomingMessage>[], response: MqttIncomingMessage): void {
+    processResponse(messages: DeferredMessage<MqttMessage, MqttIncomingMessage>[], response: MqttIncomingMessage): boolean {
         const deferredMqttMessage = response.seq_id ? messages.find(message => message.message.seq_id == response.seq_id && message.message.req_type == response.req_type) : null;
         if (deferredMqttMessage) {
             messages.splice(messages.indexOf(deferredMqttMessage));
@@ -309,6 +316,7 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
             } else {
                 deferredMqttMessage.promise.reject(response);
             }
+            return true;
         } else {
             if (response.obj_id && response.out_data && response.out_data.length && this.homeIndex) {
                 const datum: DeviceData = response.out_data[0];
@@ -319,6 +327,7 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
                 }
             }
         }
+        return false;
     }
 
     isLogged(): boolean {
@@ -339,7 +348,6 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
 
             function sendInfo(address: AddressInfo) {
                 const message = Buffer.alloc(12);
-                console.log(`Found HUB at ${address.address}`);
                 message.write('INFO');
                 server.send(message, address.port, address.address);
             }
@@ -351,11 +359,11 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
 
             server.on('listening', () => {
                 const address: AddressInfo = server.address() as AddressInfo;
-                console.log(`server listening ${address.address}:${address.port}`);
+                this.log(`server listening ${address.address}:${address.port}`);
             });
 
             server.on('error', (err) => {
-                console.log(`server error:\n${err.stack}`);
+                this.log(`server error:\n${err.stack}`);
                 clearInterval(timeout);
                 server.close();
                 resolve();
@@ -365,7 +373,41 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
                 if(msg.toString().startsWith('here')) {
                     sendInfo(rinfo);
                 } else {
-                    console.log(`got: ${msg} from ${rinfo.address}`);
+                    const macAddress = bytesToHex(msg.subarray(14, 20));
+                    const hwID = msg.subarray(20, 24).toString();
+                    const appID = msg.subarray(24, 28).toString();
+                    const appVersion = msg.subarray(32, 112).toString();
+                    const systemID = msg.subarray(112, 116).toString();
+                    const description = msg.subarray(116, 152).toString();
+                    const modelID = msg.subarray(156, 160).toString();
+                    let model = modelID;
+                    switch (modelID) {
+                        case 'Extd':
+                            model = "1456 - Gateway";
+                            break;
+                        case 'ExtS':
+                            model = "1456S - Gateway";
+                            break;
+                        case 'MSVF':
+                            model = "6741W - Mini SBC/ViP/Extender handsfree";
+                            break;
+                        case 'MSVU':
+                            model = "6741W - Mini SBC/ViP/Extender handsfree";
+                            break;
+                        case 'MnWi':
+                            model = "6742W - Mini ViP handsfree Wifi";
+                            break;
+                        case 'MxWi':
+                            model = "6842W - Maxi ViP 7'' Wifi";
+                            break;
+                        case 'Vist':
+                            model = "Visto - Wifi ViP";
+                            break;
+                        case 'HSrv':
+                            model = "Home server";
+                            break;
+                    }
+                    this.log(`Found hardware ${hwID} MAC ${macAddress}, app ${appID} version ${appVersion}, system id ${systemID}, ${model} - ${description} at IP ${rinfo.address}`);
                 }
             });
         });
@@ -375,7 +417,7 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
                hub_password?: string, clientId?: string): Promise<AsyncMqttClient> {
         this.username = username;
         this.password = password;
-        this.clientId = clientId ? `${CLIENT_ID_PREFIX}_${clientId}` : `${CLIENT_ID_PREFIX}_${generateUUID(`${Math.random()}`).toUpperCase()}`;
+        this.clientId = this.getOrCreateClientId(clientId);
         this.readTopic = `${CLIENT_ID_PREFIX}/${HUB_ID}/tx/${this.clientId}`;
         this.writeTopic = `${CLIENT_ID_PREFIX}/${HUB_ID}/rx/${this.clientId}`;
         this.log(`Connecting to Comelit HUB at ${brokerUrl} with clientID ${this.clientId}`);
@@ -393,6 +435,16 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
         return this.props.client;
     }
 
+    private getOrCreateClientId(clientId: string): string {
+        if (this.clientId) {
+            // We already generated a client id, reuse it
+            return this.clientId;
+        }
+        return clientId ?
+            `${CLIENT_ID_PREFIX}_${clientId}` :
+            `${CLIENT_ID_PREFIX}_${generateUUID(`${Math.random()}`).toUpperCase()}`;
+    }
+
     async subscribeTopic(topic: string, handler: (topic: string, message: any) => void) {
         await this.props.client.subscribe(topic);
         this.props.client.on('message', handler);
@@ -407,7 +459,7 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
                 this.log('Comelit client ending session');
                 await this.props.client.end(true);
             } catch (e) {
-                console.error(e.message);
+                this.log(e.message);
             }
         }
         this.props.client = null;
@@ -561,8 +613,8 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
 
     private async publish(packet: MqttMessage): Promise<MqttIncomingMessage> {
         this.log(`Sending message to HUB ${JSON.stringify(packet)}`);
-        await this.props.client.publish(this.writeTopic, JSON.stringify(packet));
         try {
+            await this.props.client.publish(this.writeTopic, JSON.stringify(packet));
             return await this.enqueue(packet);
         } catch (response) {
             if (response.req_result === 1 && response.message === 'invalid token') {
@@ -575,7 +627,7 @@ export class ComelitClient extends PromiseBasedQueue<MqttMessage, MqttIncomingMe
 
     private handleIncomingMessage(topic: string, message: any) {
         const msg: MqttIncomingMessage = deserializeMessage(message);
-        // this.log(`Incoming message for topic ${topic}: ${message.toString()}`);
+        this.log(`Incoming message for topic ${topic}: ${message.toString()}`);
         if (topic === this.readTopic) {
             this.processQueue(msg);
         } else {

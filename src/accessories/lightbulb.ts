@@ -4,8 +4,16 @@ import {Categories, Characteristic, CharacteristicEventTypes, Service} from "hap
 import {HomebridgeAPI} from "../index";
 import client from "prom-client";
 
-const lightStatus = new client.Gauge({ name: 'comelit_light_status', help: 'Lightbulb on/off', labelNames: ['light_name']});
-const lightCount = new client.Counter({ name: 'comelit_light_total', help: 'Lightbulb on/off counter', labelNames: ['light_name']});
+const lightStatus = new client.Gauge({
+    name: 'comelit_light_status',
+    help: 'Lightbulb on/off',
+    labelNames: ['light_name']
+});
+const lightCount = new client.Counter({
+    name: 'comelit_light_total',
+    help: 'Lightbulb on/off counter',
+    labelNames: ['light_name']
+});
 
 export class Lightbulb extends ComelitAccessory<LightDeviceData> {
     static readonly ON = 1;
@@ -31,18 +39,7 @@ export class Lightbulb extends ComelitAccessory<LightDeviceData> {
             .setCharacteristic(Characteristic.On, status === ObjectStatus.ON);
 
         this.lightbulbService
-            .getCharacteristic(Characteristic.StatusActive)
-            .on(CharacteristicEventTypes.GET, async (callback: Function) => {
-                const deviceData = this.device;
-                const reachable = !!deviceData;
-                callback(null, reachable);
-            });
-
-        this.lightbulbService
             .getCharacteristic(Characteristic.On)
-            .on(CharacteristicEventTypes.GET, async (callback: Function) => {
-                callback(null, this.device.status);
-            })
             .on(CharacteristicEventTypes.SET, async (yes: boolean, callback: Function) => {
                 const status = yes ? ObjectStatus.ON : ObjectStatus.OFF;
                 try {
@@ -60,7 +57,7 @@ export class Lightbulb extends ComelitAccessory<LightDeviceData> {
     public update(data: LightDeviceData) {
         const status = parseInt(data.status) === ObjectStatus.ON;
         console.log(`Updating status of light ${this.device.id}. New status is ${status}`);
-        lightStatus.set({ light_name: data.descrizione }, parseInt(data.status));
+        lightStatus.set({light_name: data.descrizione}, parseInt(data.status));
         if (status) {
             lightCount.inc({light_name: data.descrizione});
         }

@@ -8,8 +8,10 @@ import {Outlet} from "./accessories/outlet";
 import {PowerSupplier} from "./accessories/power-supplier";
 import Timeout = NodeJS.Timeout;
 import express, {Express} from "express";
-import {register} from "prom-client";
+import client, {register} from "prom-client";
 import * as http from "http";
+
+const Sentry = require('@sentry/node');
 
 export interface HubConfig {
     username: string;
@@ -17,9 +19,17 @@ export interface HubConfig {
     hub_username: string;
     hub_password: string;
     broker_url: string;
-    client_id: string;
-    http_port?: number;
+    client_id?: string;
+    export_prometheus_metrics?: boolean;
+    exporter_http_port?: number;
+    sentry_dsn?: string;
 }
+
+const uptime = new client.Gauge({
+    name: 'comelit_uptime',
+    help: 'Client uptime',
+});
+
 const DEFAULT_HTTP_PORT = 3002;
 const expr: Express = express();
 expr.get('/metrics', (req, res) => {
@@ -39,6 +49,11 @@ export class ComelitPlatform {
     private server: http.Server;
 
     constructor(log: (message?: any, ...optionalParams: any[]) => void, config: HubConfig, homebridge: Homebridge) {
+        if (config && config.sentry_dsn) {
+            Sentry.init({dsn: config.sentry_dsn});
+        } else if (config) {
+            Sentry.captureException = () => null;
+        }
         this.log = (str: string) => log("[COMELIT HUB] " + str);
         this.log('Initializing platform: ', config);
         this.config = config;
@@ -51,7 +66,7 @@ export class ComelitPlatform {
         try {
             await this.shutdown();
             this.log('Creating client and logging in...');
-            this.client = new ComelitClient(this.updateAccessory.bind(this), this.log);
+            this.client = this.client || new ComelitClient(this.updateAccessory.bind(this), this.log);
             await this.client.init(
                 this.config.broker_url,
                 this.config.username,
@@ -60,11 +75,12 @@ export class ComelitPlatform {
                 this.config.hub_password,
                 this.config.client_id
             );
-            if (!this.server) {
-                this.server = expr.listen(this.config.http_port || DEFAULT_HTTP_PORT);
+            if (!this.server && this.config.export_prometheus_metrics) {
+                this.server = expr.listen(this.config.exporter_http_port || DEFAULT_HTTP_PORT);
             }
         } catch (e) {
             this.log('Error initializing MQTT client', e);
+            Sentry.captureException(e);
             return false;
         }
 
@@ -75,6 +91,7 @@ export class ComelitPlatform {
             return true;
         } catch (e) {
             this.log('Error logging in', e);
+            Sentry.captureException(e);
             return false;
         }
     }
@@ -87,7 +104,6 @@ export class ComelitPlatform {
                 this.keepAliveTimer = null;
             }
             await this.client.shutdown();
-            this.client = null;
         }
     }
 
@@ -164,9 +180,12 @@ export class ComelitPlatform {
         this.keepAliveTimer = setTimeout(async () => {
             try {
                 await this.client.ping();
+                uptime.set(1);
                 this.keepAlive();
             } catch(e) {
+                uptime.set(0);
                 this.log(e);
+                Sentry.captureException(e);
                 await this.login();
             }
         }, ComelitPlatform.KEEP_ALIVE_TIMEOUT);

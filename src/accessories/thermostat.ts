@@ -75,16 +75,21 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
 
     public update(data: ThermostatDeviceData): void {
         const status = parseInt(data.status);
-        const isOff: boolean = status === ObjectStatus.OFF;
+        const isOff: boolean = data.auto_man === ClimaMode.OFF_AUTO || data.auto_man === ClimaMode.OFF_MANUAL;
         const isAuto: boolean = data.auto_man === ClimaMode.AUTO;
         this.log(`Thermostat ${this.name} auto mode is ${isAuto}, off ${isOff}`);
-        const heatingCollingState = isOff ? CurrentHeatingCoolingState.OFF : data.est_inv === ThermoSeason.SUMMER ? CurrentHeatingCoolingState.COOL : CurrentHeatingCoolingState.HEAT;
+        const isSummer = data.est_inv === ThermoSeason.SUMMER;
+
+        const heatingCollingState = isOff ? CurrentHeatingCoolingState.OFF : isSummer ? CurrentHeatingCoolingState.COOL : CurrentHeatingCoolingState.HEAT;
         this.thermostatService.getCharacteristic(Characteristic.CurrentHeatingCoolingState).updateValue(heatingCollingState);
         this.thermostatService.getCharacteristic(Characteristic.TargetHeatingCoolingState).updateValue(isAuto ? TargetHeatingCoolingState.AUTO : (isOff ? TargetHeatingCoolingState.OFF : heatingCollingState));
+
         const temperature = data.temperatura ? parseFloat(data.temperatura) / 10 : 0;
         this.log(`Temperature for ${this.name} is ${temperature}`);
         this.thermostatService.getCharacteristic(Characteristic.CurrentTemperature).updateValue(temperature);
-        const targetTemperature = data.soglia_attiva ? parseFloat(data.soglia_attiva) / 10 : 0;
+
+        const activeThreshold = isSummer ? data.soglia_attiva_umi : data.soglia_attiva;
+        const targetTemperature = activeThreshold ? parseFloat(activeThreshold) / 10 : 0;
         this.log(`Threshold for ${this.name} is ${targetTemperature}`);
         this.thermostatService.getCharacteristic(Characteristic.TargetTemperature).updateValue(targetTemperature);
         this.thermostatService.getCharacteristic(Characteristic.TemperatureDisplayUnits).updateValue(TemperatureDisplayUnits.CELSIUS);
