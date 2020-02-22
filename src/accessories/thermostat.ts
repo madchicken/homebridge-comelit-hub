@@ -104,7 +104,7 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
 
             this.dehumidifierService.getCharacteristic(Characteristic.CurrentRelativeHumidity).updateValue(parseInt(data.umidita));
             this.dehumidifierService.getCharacteristic(Characteristic.CurrentHumidifierDehumidifierState).updateValue(isDehumidifierOff ? CurrentHumidifierDehumidifierState.INACTIVE : isDehumidifierAuto ? CurrentHumidifierDehumidifierState.IDLE : CurrentHumidifierDehumidifierState.DEHUMIDIFYING);
-            this.dehumidifierService.getCharacteristic(Characteristic.TargetHumidifierDehumidifierState).updateValue(TargetHumidifierDehumidifierState.HUMIDIFIER_OR_DEHUMIDIFIER);
+            this.dehumidifierService.getCharacteristic(Characteristic.TargetHumidifierDehumidifierState).updateValue(TargetHumidifierDehumidifierState.DEHUMIDIFIER);
             this.dehumidifierService.getCharacteristic(Characteristic.Active).updateValue(isDehumidifierOff ? Active.INACTIVE : Active.ACTIVE);
         }
     }

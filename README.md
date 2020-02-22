@@ -14,7 +14,7 @@ Currently supported devices:
 - Simple lights
 - Blinds
 - Thermostats
-- Humidifiers/Dehumidifiers
+- Dehumidifiers
 - Controlled plugs
 
 Missing devices:
@@ -64,6 +64,18 @@ with a Grafana UI, you can display useful information about your house domotic u
 The default port for the `/metrics` exporter is `3002` but can be configured by adding a `exporter_http_port` config value in 
 the `config.json` file.
 To enable metrics, specify `export_prometheus_metrics: true` in the platform config. 
+
+```json
+{
+    "platform": "Comelit",
+    "name": "My Home",
+    "username": "YOUR_USERNAME",
+    "password": "YOUR_PASSWORD",
+    "broker_url": "mqtt://192.168.1.2",
+    "export_prometheus_metrics": true,
+    "exporter_http_port": 3002
+}
+```
 
 ## Screenshots
 ![Home application screenshot](https://github.com/madchicken/homebridge-comelit-hub/raw/master/images/home.png)

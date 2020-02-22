@@ -25,13 +25,13 @@
       "hub_username": {
         "title": "Comelit HUB username",
         "type": "string",
-        "required": true,
+        "required": false,
         "default": ""
       },
       "hub_password": {
         "title": "Comelit HUB password",
         "type": "string",
-        "required": true,
+        "required": false,
         "default": ""
       },
       "broker_url": {
@@ -43,9 +43,22 @@
       "client_id": {
         "title": "Client ID",
         "type": "string",
-        "required": true,
+        "required": false,
         "default": "A98FAF87-3348-48E8-A3AB-693D8E53E353"
+      },
+      "export_prometheus_metrics": {
+        "title": "Export Prometheus Metrics",
+        "type": "boolean",
+        "required": false,
+        "default": false
+      },
+      "exporter_http_port": {
+        "title": "Prometheus exporter HTTP port",
+        "type": "number",
+        "required": false,
+        "default": 3002
       }
+
     }
   }
 }
