@@ -14,7 +14,7 @@ Currently supported devices:
 - Simple lights
 - Blinds
 - Thermostats
-- Humidifiers/Dehumidifiers
+- Dehumidifiers
 - Controlled plugs
 
 Missing devices:
