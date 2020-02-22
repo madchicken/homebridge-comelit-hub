@@ -65,6 +65,18 @@ The default port for the `/metrics` exporter is `3002` but can be configured by 
 the `config.json` file.
 To enable metrics, specify `export_prometheus_metrics: true` in the platform config. 
 
+```json
+{
+    "platform": "Comelit",
+    "name": "My Home",
+    "username": "YOUR_USERNAME",
+    "password": "YOUR_PASSWORD",
+    "broker_url": "mqtt://192.168.1.2",
+    "export_prometheus_metrics": true,
+    "exporter_http_port": 3002
+}
+```
+
 ## Screenshots
 ![Home application screenshot](https://github.com/madchicken/homebridge-comelit-hub/raw/master/images/home.png)
 
