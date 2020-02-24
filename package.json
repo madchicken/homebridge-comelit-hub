@@ -1,6 +1,6 @@
 {
   "name": "homebridge-comelit-platform",
-  "version": "1.0.4",
+  "version": "1.1.0",
   "author": "Pierpaolo Follia",
   "repository": {
     "type": "git",
@@ -25,7 +25,7 @@
     "build": "yarn run build-ts && yarn run lint",
     "serve": "node dist/index.js",
     "watch-node": "nodemon dist/index.js",
-    "watch": "concurrently -k -p \"[{name}]\" -n \"Sass,TypeScript,Node\" -c \"yellow.bold,cyan.bold,green.bold\" \"yarn run watch-ts\" \"yarn run watch-node\"",
+    "watch": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"yellow.bold,cyan.bold,green.bold\" \"yarn run watch-ts\" \"yarn run watch-node\"",
     "test": "jest --forceExit --coverage --verbose",
     "watch-test": "yarn run test -- --watchAll",
     "build-ts": "tsc",
@@ -49,7 +49,8 @@
     "yargs": "^15.1.0"
   },
   "bin": {
-    "comelit": "./bin/cli.js"
+    "comelit": "./bin/cli.js",
+    "vedo": "./bin/vedo-cli.js"
   },
   "devDependencies": {
     "@types/chalk": "^2.2.0",

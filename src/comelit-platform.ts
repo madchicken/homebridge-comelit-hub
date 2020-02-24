@@ -10,6 +10,7 @@ import Timeout = NodeJS.Timeout;
 import express, {Express} from "express";
 import client, {register} from "prom-client";
 import * as http from "http";
+import {VedoAlarm} from "./accessories/vedo-alarm";
 
 const Sentry = require('@sentry/node');
 
@@ -24,6 +25,8 @@ export interface HubConfig {
     exporter_http_port?: number;
     sentry_dsn?: string;
     blindClosingTime?: number;
+    disableAlarm?: boolean;
+    alarmCode?: string;
 }
 
 const uptime = new client.Gauge({
@@ -167,7 +170,17 @@ export class ComelitPlatform {
 
         this.log(`Found ${this.mappedAccessories.size} accessories`);
         this.log('Subscribed to root object');
-        callback([...this.mappedAccessories.values()]);
+
+        const parameters = await this.client.readParameters();
+        const alarmEnabled = parameters.find(p => p.param_name === 'alarmEnable').param_value === '1';
+        if (alarmEnabled && !this.config.disableAlarm) {
+            const alarmAddress = parameters.find(p => p.param_name === 'alarmLocalAddress').param_value;
+            const alarmPort = parameters.find(p => p.param_name === 'alarmLocalPort').param_value;
+            this.log(`Alarm is enabled, mapping it at ${alarmAddress} port ${alarmPort}`);
+            callback([...this.mappedAccessories.values(), new VedoAlarm(this.log, alarmAddress, this.config.alarmCode)]);
+        } else {
+            callback([...this.mappedAccessories.values()]);
+        }
     }
 
     updateAccessory(id: string, data: DeviceData) {

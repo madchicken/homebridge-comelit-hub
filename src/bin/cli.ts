@@ -18,8 +18,7 @@ interface ClientOptions {
     detail?: number,
 }
 
-const options: ClientOptions & any = yargs.options({
-    })
+const options: ClientOptions & any = yargs.options({})
     .command('scan', 'Find the HUB on your network')
     .command('info', 'Get info about a device', {
         host: {type: 'string', demandOption: true},
@@ -69,6 +68,7 @@ const options: ClientOptions & any = yargs.options({
         id: {type: 'string', demandOption: false, description: 'The ID of the object to subscribe to'},
         topic: {type: 'string', demandOption: false, description: 'The topic name to listen'},
     })
+    .demandCommand()
     .help().argv;
 
 const client = new ComelitClient();

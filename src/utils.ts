@@ -1,4 +1,5 @@
 import crypto, {BinaryLike} from "crypto";
+import http, {IncomingMessage, RequestOptions} from "http";
 
 export function generateUUID(data: BinaryLike) {
     const sha1sum = crypto.createHash('sha1');
@@ -15,4 +16,47 @@ export function generateUUID(data: BinaryLike) {
                 return s[i];
         }
     });
+}
+
+export function doGet<T = any>(address: string, path: string, uid: string): Promise<T> {
+    const options: RequestOptions = {
+        protocol: 'http:',
+        host: `${address}`,
+        method: 'GET',
+        family: 4,
+        path: `${path}?_=${new Date().getTime()}`,
+        headers: {
+            Cookie: `uid=${uid}`
+        }
+    };
+
+    return new Promise<T>((resolve, reject) => {
+        console.log(`Executing GET ${options.protocol}//${options.host}${path}`);
+        const req = http.request(options, (res: IncomingMessage) => {
+            let result = '';
+            res.on('data', (chunk: string) => result += chunk);
+            res.on('end', () => {
+                if (res.statusCode >= 200 && res.statusCode < 400) {
+                    if (result) {
+                        console.log(`GET on ${options.protocol}//${options.host}${path} successfully executed. Content is ${result}`);
+                        resolve(JSON.parse(result) as T);
+                    } else {
+                        console.log(`GET on ${options.protocol}//${options.host}${path} successfully executed. No content`);
+                        resolve();
+                    }
+                } else {
+                    reject(new Error(`Unknown error on GET ${options.host}${options.path}: ${res.statusCode}`));
+                }
+            });
+            res.on('error', (err: Error) => reject(err));
+        });
+        req.on('error', (error: Error) => reject(error));
+        req.end();
+    });
+}
+
+export async function sleep(time) {
+    return new Promise(
+        resolve => setTimeout(() => resolve(), time)
+    )
 }
