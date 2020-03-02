@@ -38,7 +38,8 @@ export abstract class ComelitAccessory<T extends DeviceData> {
             .setCharacteristic(Characteristic.Name, this.name)
             .setCharacteristic(Characteristic.Manufacturer, 'Comelit')
             .setCharacteristic(Characteristic.Model, 'None')
-            .setCharacteristic(Characteristic.FirmwareRevision, 'None');
+            .setCharacteristic(Characteristic.FirmwareRevision, 'None')
+            .setCharacteristic(Characteristic.SerialNumber, this.device.objectId);
         return accessoryInformation;
     }
 
