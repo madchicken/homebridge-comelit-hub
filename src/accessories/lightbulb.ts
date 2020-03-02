@@ -25,6 +25,30 @@ export class Lightbulb extends ComelitAccessory<LightDeviceData> {
         super(log, device, name, client, Categories.LIGHTBULB);
     }
 
+    async identify(callback: Function) {
+        if (this.isOn()) {
+            this.lightbulbService
+                .setCharacteristic(Characteristic.On, false);
+            setTimeout(() => {
+                this.lightbulbService
+                    .setCharacteristic(Characteristic.On, true);
+                callback();
+            }, 1000);
+        } else {
+            this.lightbulbService
+                .setCharacteristic(Characteristic.On, true);
+            setTimeout(() => {
+                this.lightbulbService
+                    .setCharacteristic(Characteristic.On, false);
+                callback();
+            }, 1000);
+        }
+    }
+
+    isOn(): boolean {
+        return parseInt(this.device.status) === ObjectStatus.ON;
+    }
+
     protected initServices(): Service[] {
         const accessoryInformation = this.initAccessoryInformation(); // common info about the accessory
 
