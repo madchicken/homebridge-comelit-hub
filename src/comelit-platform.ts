@@ -55,7 +55,7 @@ export class ComelitPlatform {
         } else if (config) {
             Sentry.captureException = () => null;
         }
-        this.log = (str: string) => log("[COMELIT HUB] " + str);
+        this.log = (str: string) => log(`[COMELIT HUB] ${str}`);
         this.log('Initializing platform: ', config);
         this.config = config;
         // Save the API object as plugin needs to register new accessory via this object
