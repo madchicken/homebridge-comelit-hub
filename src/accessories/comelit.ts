@@ -14,7 +14,7 @@ export abstract class ComelitAccessory<T extends DeviceData> {
     reachable: boolean;
 
     protected constructor(log: Function, device: T, name: string, client: ComelitClient, category: Categories) {
-        this.log = log;
+        this.log = (str: string) => log(`[${device.id}] ${str}`);
         this.device = device;
         this.client = client;
         this.name = name;
