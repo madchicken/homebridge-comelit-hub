@@ -9,14 +9,16 @@ export class Blind extends ComelitAccessory<BlindDeviceData> {
     static readonly OPEN = 100;
     static readonly CLOSED = 0;
 
-    static readonly OPENING_CLOSING_TIME = 35000; // 35 seconds to open approx. We should have this in the config
+    static readonly OPENING_CLOSING_TIME = 35; // 35 seconds to open approx. We should have this in the config
 
     private coveringService: Service;
     private timeout: Timeout;
     private lastCommandTime: number;
+    private readonly closingTime: number;
 
-    constructor(log: Function, device: BlindDeviceData, name: string, client: ComelitClient) {
+    constructor(log: Function, device: BlindDeviceData, name: string, client: ComelitClient, closingTime?: number) {
         super(log, device, name, client, Categories.WINDOW_COVERING);
+        this.closingTime = (closingTime || Blind.OPENING_CLOSING_TIME) * 1000;
     }
 
     protected initServices(): Service[] {
@@ -39,8 +41,8 @@ export class Blind extends ComelitAccessory<BlindDeviceData> {
                         clearTimeout(this.timeout);
                         this.timeout = null;
                         await this.client.toggleDeviceStatus(this.device.id, ObjectStatus.OFF); // stop the blind
-                        const diff = Blind.OPENING_CLOSING_TIME - (now - this.lastCommandTime);
-                        const newPosition = 100/ (Blind.OPENING_CLOSING_TIME / diff);
+                        const diff = this.closingTime - (now - this.lastCommandTime);
+                        const newPosition = 100/ (this.closingTime / diff);
                         this.coveringService.getCharacteristic(Characteristic.CurrentPosition).updateValue(newPosition);
                         this.coveringService.getCharacteristic(Characteristic.TargetPosition).updateValue(newPosition);
                         this.coveringService.getCharacteristic(Characteristic.PositionState).updateValue(PositionState.STOPPED);
@@ -56,15 +58,12 @@ export class Blind extends ComelitAccessory<BlindDeviceData> {
                         await this.client.toggleDeviceStatus(this.device.id, status);
                         this.lastCommandTime = new Date().getTime();
                         this.timeout = setTimeout(async () => {
-                            if (position > Blind.CLOSED && position < Blind.OPEN) {
-                                // We stop the blind only for mid positions, otherwise it would stop by itself
-                                this.log(`Stopping blind to ${position}%`);
-                                await this.client.toggleDeviceStatus(this.device.id, position < currentPosition ? ObjectStatus.ON : ObjectStatus.OFF);
-                            }
+                            this.log(`Stopping blind to ${position}%`);
+                            await this.client.toggleDeviceStatus(this.device.id, position < currentPosition ? ObjectStatus.ON : ObjectStatus.OFF);
                             this.coveringService.getCharacteristic(Characteristic.CurrentPosition).updateValue(position);
                             this.timeout = null;
                             this.lastCommandTime = 0;
-                        }, Blind.OPENING_CLOSING_TIME * Math.abs(delta) / 100);
+                        }, this.closingTime * Math.abs(delta) / 100);
                     }
                     callback();
                 } catch (e) {
@@ -78,7 +77,7 @@ export class Blind extends ComelitAccessory<BlindDeviceData> {
     public update(data: BlindDeviceData) {
         const status = parseInt(data.status);
         const now = new Date().getTime();
-        if (status === ObjectStatus.IDLE) {
+        if (status === ObjectStatus.IDLE || status === ObjectStatus.ON) {
             this.lastCommandTime = now;
         }
     }

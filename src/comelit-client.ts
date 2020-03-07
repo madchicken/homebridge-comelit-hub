@@ -111,6 +111,7 @@ export interface LightDeviceData extends DeviceData {
 
 export interface BlindDeviceData extends DeviceData {
     tempo_uscita: number;
+    open_status?: number;
 }
 
 export interface OutletDeviceData extends DeviceData {

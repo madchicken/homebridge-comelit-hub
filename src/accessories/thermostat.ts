@@ -49,8 +49,9 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
             .getCharacteristic(Characteristic.TargetTemperature)
             .on(CharacteristicEventTypes.SET, async (temperature: number, callback: VoidCallback) => {
                 try {
-                    await this.client.setTemperature(this.device.id, temperature);
-                    this.device.temperatura = `${temperature * 10}`;
+                    const normalizedTemp = temperature * 10;
+                    await this.client.setTemperature(this.device.id, normalizedTemp);
+                    this.device.temperatura = `${normalizedTemp}`;
                     callback()
                 } catch (e) {
                     callback(e);
@@ -80,7 +81,7 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
         this.log(`Thermostat ${this.name} auto mode is ${isAuto}, off ${isOff}`);
         const isSummer = data.est_inv === ThermoSeason.SUMMER;
 
-        const heatingCollingState = isOff ? CurrentHeatingCoolingState.OFF : isSummer ? CurrentHeatingCoolingState.COOL : CurrentHeatingCoolingState.HEAT;
+        const heatingCollingState = status === 0 ? CurrentHeatingCoolingState.OFF : isSummer ? CurrentHeatingCoolingState.COOL : CurrentHeatingCoolingState.HEAT;
         this.thermostatService.getCharacteristic(Characteristic.CurrentHeatingCoolingState).updateValue(heatingCollingState);
         this.thermostatService.getCharacteristic(Characteristic.TargetHeatingCoolingState).updateValue(isAuto ? TargetHeatingCoolingState.AUTO : (isOff ? TargetHeatingCoolingState.OFF : heatingCollingState));
 

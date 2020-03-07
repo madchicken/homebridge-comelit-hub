@@ -23,6 +23,7 @@ export interface HubConfig {
     export_prometheus_metrics?: boolean;
     exporter_http_port?: number;
     sentry_dsn?: string;
+    blindClosingTime?: number;
 }
 
 const uptime = new client.Gauge({
@@ -141,7 +142,7 @@ export class ComelitPlatform {
             const deviceData = homeIndex.blindsIndex.get(id);
             if (deviceData) {
                 this.log(`Blind ID: ${id}, ${deviceData.descrizione}`);
-                this.mappedAccessories.set(id, new Blind(this.log, deviceData, `Blind ${deviceData.descrizione}`, this.client));
+                this.mappedAccessories.set(id, new Blind(this.log, deviceData, `Blind ${deviceData.descrizione}`, this.client, this.config.blindClosingTime));
             }
         });
         const outletIds = [...homeIndex.outletsIndex.keys()];
