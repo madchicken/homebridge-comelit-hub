@@ -81,7 +81,7 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
         this.log(`Thermostat ${this.name} auto mode is ${isAuto}, off ${isOff}`);
         const isSummer = data.est_inv === ThermoSeason.SUMMER;
 
-        const heatingCollingState = status === 0 ? CurrentHeatingCoolingState.OFF : isSummer ? CurrentHeatingCoolingState.COOL : CurrentHeatingCoolingState.HEAT;
+        const heatingCollingState = isOff ? CurrentHeatingCoolingState.OFF : isSummer ? CurrentHeatingCoolingState.COOL : CurrentHeatingCoolingState.HEAT;
         this.thermostatService.getCharacteristic(Characteristic.CurrentHeatingCoolingState).updateValue(heatingCollingState);
         this.thermostatService.getCharacteristic(Characteristic.TargetHeatingCoolingState).updateValue(isAuto ? TargetHeatingCoolingState.AUTO : (isOff ? TargetHeatingCoolingState.OFF : heatingCollingState));
 

@@ -24,9 +24,12 @@ export function doGet<T = any>(address: string, path: string, uid: string): Prom
         host: `${address}`,
         method: 'GET',
         family: 4,
-        path: `${path}?_=${new Date().getTime()}`,
+        path,
         headers: {
-            Cookie: `uid=${uid}`
+            Cookie: `uid=${uid}`,
+            Referer: `http://${address}/user/index.htm`,
+            'X-Requested-With': 'XMLHttpRequest',
+            Accept: '*/*',
         }
     };
 

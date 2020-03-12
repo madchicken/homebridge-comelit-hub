@@ -46,30 +46,32 @@ let client: VedoClient = null;
 async function run() {
     const command = options._[0];
     console.log(chalk.green(`Executing command ${command} - ${JSON.stringify(options)}`));
+    client = new VedoClient(options.host);
+    const uid = await client.loginWithRetry(options.code);
     try {
         switch (command) {
             case 'area':
                 if (options.desc) {
-                    await areaDesc(options.host, options.code);
+                    await areaDesc(uid);
                 }
                 if (options.status) {
-                    await areaStatus(options.host, options.code);
+                    await areaStatus(uid);
                 }
                 if (options.active) {
-                    await activeAreas(options.host, options.code);
+                    await activeAreas(uid);
                 }
                 if (options.arm !== undefined) {
-                    await armArea(options.host, options.code, options.arm)
+                    await armArea(uid, options.arm)
                 } else if (options.disarm !== undefined) {
-                    await disarmArea(options.host, options.code, options.disarm)
+                    await disarmArea(uid, options.disarm)
                 }
                 break;
             case 'zone':
                 if (options.desc) {
-                    await zoneDesc(options.host, options.code);
+                    await zoneDesc(uid);
                 }
                 if (options.status) {
-                    await zoneStatus(options.host, options.code);
+                    await zoneStatus(uid);
                 }
                 break;
             default:
@@ -78,65 +80,49 @@ async function run() {
         }
 
         console.log(chalk.green('Shutting down'));
-        await client.shutdown();
+        await client.shutdown(uid);
         console.log(chalk.green(`Command ${command} executed successfully`));
     } catch (e) {
         console.error(e);
-        await client.shutdown();
+        await client.shutdown(uid);
     }
 }
 
-async function areaDesc(address: string, code: string) {
-    console.log(chalk.green(`Running area desc command for VEDO running at http://${address}`));
-    client = new VedoClient(address);
-    const uid = await client.loginWithRetry(code);
+async function areaDesc(uid: string) {
     const desc = await client.areaDesc(uid);
     console.log(desc);
 }
 
-async function zoneDesc(address: string, code: string) {
-    console.log(chalk.green(`Running zone desc command for VEDO running at http://${address}`));
-    client = new VedoClient(address);
-    const uid = await client.loginWithRetry(code);
+async function zoneDesc(uid: string) {
     const desc = await client.zoneDesc(uid);
     console.log(desc);
 }
 
-async function areaStatus(address: string, code: string) {
-    console.log(chalk.green(`Running area status command for VEDO running at http://${address}`));
-    client = new VedoClient(address);
-    const uid = await client.loginWithRetry(code);
+async function areaStatus(uid: string) {
     const stats = await client.areaStatus(uid);
     console.log(stats);
 }
 
-async function zoneStatus(address: string, code: string) {
-    console.log(chalk.green(`Running zone status command for VEDO running at http://${address}`));
-    client = new VedoClient(address);
-    const uid = await client.loginWithRetry(code);
+async function zoneStatus(uid: string) {
     const stats = await client.zoneStatus(uid);
     console.log(stats);
 }
 
-async function activeAreas(address: string, code: string) {
-    console.log(chalk.green(`Getting active areas for VEDO running at http://${address}`));
-    client = new VedoClient(address);
-    const uid = await client.loginWithRetry(code);
+async function activeAreas(uid: string) {
     const desc = await client.findActiveAreas(uid);
     console.log(desc);
 }
 
-async function armArea(address: string, code: string, num: number = 32) {
-    console.log(chalk.green(`Arming area ${num} for VEDO running at http://${address}`));
-    client = new VedoClient(address);
-    const uid = await client.loginWithRetry(code);
-    return await client.arm(uid, num);
+async function armArea(uid: string, num: number = 32) {
+    const areas = await client.findActiveAreas(uid);
+    const isReady = areas.reduce((prev, area) => prev && area.ready, true);
+    if (isReady) {
+        return await client.arm(uid, num);
+    }
+    return Promise.reject(new Error('Area not ready'));
 }
 
-async function disarmArea(address: string, code: string, num: number = 32) {
-    console.log(chalk.green(`Disarming area ${num} for VEDO running at http://${address}`));
-    client = new VedoClient(address);
-    const uid = await client.loginWithRetry(code);
+async function disarmArea(uid: string, num: number = 32) {
     return await client.disarm(uid, num);
 }
 

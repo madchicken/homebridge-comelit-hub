@@ -85,6 +85,42 @@ export class VedoClient {
         });
     }
 
+    async logout(uid: string) {
+        const data = `logout=1`;
+
+        const options: RequestOptions = {
+            protocol: 'http:',
+            host: this.address,
+            path: '/login.cgi',
+            method: 'POST',
+            family: 4,
+            headers: {
+                Cookie: `uid=${uid}`,
+                'Content-Length': data.length,
+                'Content-Type': 'application/x-www-form-urlencoded',
+            }
+        };
+
+        return new Promise<boolean>((resolve, reject) => {
+            const req = http.request(options, (res: IncomingMessage) => {
+                let result = '';
+                res.on('data', (chunk: string) => result += chunk);
+                res.on('end', () => {
+                    if (res.statusCode === 200) {
+                        resolve(true);
+                    } else {
+                        reject(`Unknown error: ${res.statusCode}`);
+                    }
+                });
+                res.on('error', err => reject(err));
+            });
+            req.on('error', (error: Error) => reject(error));
+            req.write(data);
+            req.end();
+        });
+
+    }
+
     async loginWithRetry(code: string): Promise<string> {
         let retry = 0;
         let uid = null;
@@ -179,14 +215,14 @@ export class VedoClient {
     }
 
     async arm(uid: string, area: number) {
-        return doGet(this.address, `/action.cgi?vedo=1&tot=${area}`, uid);
+        return doGet(this.address, `/action.cgi?force=1&vedo=1&tot=${area}&_=${new Date().getTime()}`, uid);
     }
 
     async disarm(uid: string, area: number) {
-        return doGet(this.address, `/action.cgi?vedo=1&dis=${area}`, uid);
+        return doGet(this.address, `/action.cgi?force=1&vedo=1&dis=${area}&_=${new Date().getTime()}`, uid);
     }
 
-    async shutdown() {
-        return Promise.resolve();
+    async shutdown(uid: string) {
+        return this.logout(uid);
     }
 }
