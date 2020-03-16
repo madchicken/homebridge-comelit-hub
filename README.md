@@ -16,13 +16,13 @@ Currently supported devices:
 - Thermostats
 - Dehumidifiers
 - Controlled plugs
+- Vedo Alarm
 
 Missing devices:
 
 - RGB lights
 - Dimmerable lights
 - Irrigation
-- Vedo/VIP
 
 ## Configuration
 
@@ -58,6 +58,24 @@ You should get an output like this:
 Hit CTRL+C to interrupt the scan command.
 The IP you are looking for is the `Home server` one.
 
+## VEDO alarm support
+VEDO alarm is currently supported if enabled. This plugin will check with the HUB if you have it and then it will automatically
+map it as new accessory in HomeKit. Be aware to provide an alarm code in the config, otherwise the plugin won't be able
+to mount the accessory.
+
+```json
+{
+    "platform": "Comelit",
+    "name": "My Home",
+    "username": "YOUR_USERNAME",
+    "password": "YOUR_PASSWORD",
+    "broker_url": "mqtt://192.168.1.2",
+    "alarm_code": "12345678"
+}
+```
+
+You can temporary disable alarm by adding `disable_alarm: true` in your config. 
+
 ## Prometheus Metrics
 This plugin exports some Prometheus metric to allow you to monitor your house. If you have a Prometheus instance running
 with a Grafana UI, you can display useful information about your house domotic usage. All exported metrics have `comelit_` prefix.
@@ -76,6 +94,15 @@ To enable metrics, specify `export_prometheus_metrics: true` in the platform con
     "exporter_http_port": 3002
 }
 ```
+
+## Version History
+
+1.0.0 - Initial version
+1.0.1 - Bug Fixes
+1.0.2 - Bug Fixes
+1.0.3 - Bug Fixes
+1.0.4 - Shutter timing fixes
+1.1.0 - VEDO alarm support and various fixes
 
 ## Screenshots
 ![Home application screenshot](https://github.com/madchicken/homebridge-comelit-hub/raw/master/images/home.png)

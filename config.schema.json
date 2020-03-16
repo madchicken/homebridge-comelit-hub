@@ -46,23 +46,22 @@
         "required": false,
         "default": 35
       },
-      "client_id": {
-        "title": "Client ID",
+      "keep_alive": {
+        "title": "Number of milliseconds for keep alive message",
+        "type": "number",
+        "required": false,
+        "default": 120000
+      },
+      "alarm_code": {
+        "title": "Secret code for VEDO alarm (if present)",
         "type": "string",
         "required": false,
-        "default": "A98FAF87-3348-48E8-A3AB-693D8E53E353"
       },
-      "export_prometheus_metrics": {
-        "title": "Export Prometheus Metrics",
+      "disable_alarm": {
+        "title": "Disable VEDO alarm accessory",
         "type": "boolean",
         "required": false,
         "default": false
-      },
-      "exporter_http_port": {
-        "title": "Prometheus exporter HTTP port",
-        "type": "number",
-        "required": false,
-        "default": 3002
       }
     }
   }

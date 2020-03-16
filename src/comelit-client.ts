@@ -228,15 +228,19 @@ export interface ThermostatDeviceData extends DeviceData {
 }
 
 export interface SupplierDeviceData extends DeviceData {
-    "label_value": string,
-    "label_price": string,
-    "prod": string,
-    "count_div": string,
-    "cost": string,
-    "kCO2": string,
-    "compare": string,
-    "groupOrder": string,
-    "instant_power": string,
+    label_value: string,
+    label_price: string,
+    prod: string,
+    count_div: string,
+    cost: string,
+    kCO2: string,
+    compare: string,
+    groupOrder: string,
+    instant_power: string,
+}
+
+export interface AlarmDeviceData {
+    status: string;
 }
 
 export interface MqttMessage {
