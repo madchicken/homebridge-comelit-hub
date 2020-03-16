@@ -1,5 +1,5 @@
 import {ComelitAccessory} from "./comelit";
-import {BlindDeviceData, ComelitClient, ObjectStatus} from "../comelit-client";
+import {BlindDeviceData, ComelitClient, ObjectStatus} from "comelit-client";
 import {Callback, Categories, Characteristic, CharacteristicEventTypes, Service} from "hap-nodejs";
 import {HomebridgeAPI} from "../index";
 import {PositionState} from "hap-nodejs/dist/lib/gen/HomeKit";

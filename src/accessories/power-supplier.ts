@@ -1,6 +1,6 @@
 import {ComelitAccessory} from "./comelit";
 import {Categories, Service} from "hap-nodejs";
-import {ComelitClient, SupplierDeviceData} from "../comelit-client";
+import {ComelitClient, SupplierDeviceData} from "comelit-client";
 import client from "prom-client";
 
 const consumption = new client.Gauge({ name: 'comelit_total_consumption', help: 'Consumption in Wh' });

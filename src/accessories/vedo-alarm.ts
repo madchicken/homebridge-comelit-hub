@@ -1,6 +1,6 @@
 import {Callback, Categories, Characteristic, CharacteristicEventTypes, Service} from "hap-nodejs";
 import {HomebridgeAPI} from "../index";
-import {AlarmArea, VedoClient} from "../vedo-client";
+import {AlarmArea, VedoClient} from "comelit-client";
 import {SecuritySystemCurrentState, SecuritySystemTargetState} from "hap-nodejs/dist/lib/gen/HomeKit";
 import Timeout = NodeJS.Timeout;
 

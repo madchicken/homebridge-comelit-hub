@@ -1,5 +1,5 @@
 import {ComelitAccessory} from "./comelit";
-import {ComelitClient, OutletDeviceData} from "../comelit-client";
+import {ComelitClient, OutletDeviceData} from "comelit-client";
 import {Categories, Characteristic, CharacteristicEventTypes, Formats, Perms, Service} from "hap-nodejs";
 import {HomebridgeAPI} from "../index";
 import client from "prom-client";

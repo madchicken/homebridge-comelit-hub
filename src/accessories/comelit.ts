@@ -1,4 +1,4 @@
-import {ComelitClient, DeviceData} from "../comelit-client";
+import {ComelitClient, DeviceData} from "comelit-client";
 import {Categories, Characteristic, Service} from "hap-nodejs";
 import {HomebridgeAPI} from "../index";
 

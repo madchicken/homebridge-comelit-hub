@@ -3,10 +3,9 @@ import {
     ClimaMode,
     ComelitClient,
     OBJECT_SUBTYPE,
-    ObjectStatus,
     ThermoSeason,
     ThermostatDeviceData
-} from "../comelit-client";
+} from "comelit-client";
 import {Categories, Characteristic, CharacteristicEventTypes, Service, VoidCallback} from "hap-nodejs";
 import {HomebridgeAPI} from "../index";
 import {
