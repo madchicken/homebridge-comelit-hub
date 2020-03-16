@@ -1,3 +1,5 @@
+[![npm version](https://badge.fury.io/js/homebridge-comelit-platform.svg)](https://badge.fury.io/js/homebridge-comelit-platform)
+
 # Comelit HUB integration for Homebridge
 
 This is an Homebridge platform plugin to expose Comelit Home Automation to Apple HomeKit and use it with Siri.
