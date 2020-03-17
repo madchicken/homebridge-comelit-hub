@@ -135,6 +135,7 @@ export class ComelitPlatform {
                     const alarmPort = parameters.find(p => p.param_name === 'alarmLocalPort').param_value;
                     this.log(`Alarm is enabled, mapping it at ${alarmAddress} port ${alarmPort}`);
                     callback([...this.mappedAccessories.values(), new VedoAlarm(this.log, alarmAddress, this.config.alarm_code)]);
+                    return;
                 } else {
                     this.log('Alarm enabled but not properly configured: missing access code');
                 }
