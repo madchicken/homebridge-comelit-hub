@@ -41,7 +41,7 @@ export function doGet<T = any>(address: string, path: string, uid: string): Prom
             res.on('end', () => {
                 if (res.statusCode >= 200 && res.statusCode < 400) {
                     if (result) {
-                        console.log(`GET on ${options.protocol}//${options.host}${path} successfully executed. Content is ${result}`);
+                        console.log(`GET on ${options.protocol}//${options.host}${path} successfully executed. Content length ${result.length}`);
                         resolve(JSON.parse(result) as T);
                     } else {
                         console.log(`GET on ${options.protocol}//${options.host}${path} successfully executed. No content`);
