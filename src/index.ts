@@ -1,5 +1,5 @@
-import { Homebridge } from "./types";
 import { ComelitPlatform } from "./comelit-platform";
+import { Homebridge } from "../types";
 
 export let HomebridgeAPI: Homebridge;
 

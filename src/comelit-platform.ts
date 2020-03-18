@@ -1,15 +1,16 @@
-import { Homebridge } from "./types";
 import { ComelitClient, DeviceData, ROOT_ID } from "comelit-client";
+import express, { Express } from "express";
+import client, { register } from "prom-client";
+import * as http from "http";
 import { ComelitAccessory } from "./accessories/comelit";
 import { Lightbulb } from "./accessories/lightbulb";
 import { Thermostat } from "./accessories/thermostat";
 import { Blind } from "./accessories/blind";
 import { Outlet } from "./accessories/outlet";
 import { PowerSupplier } from "./accessories/power-supplier";
-import express, { Express } from "express";
-import client, { register } from "prom-client";
-import * as http from "http";
 import { VedoAlarm } from "./accessories/vedo-alarm";
+import { Homebridge } from "../types";
+
 import Timeout = NodeJS.Timeout;
 
 const Sentry = require("@sentry/node");
@@ -44,15 +45,22 @@ expr.get("/metrics", (req, res) => {
 
 export class ComelitPlatform {
   static KEEP_ALIVE_TIMEOUT = 120000;
+
   public mappedAccessories: Map<string, ComelitAccessory<DeviceData>> = new Map<
     string,
     ComelitAccessory<DeviceData>
   >();
+
   private readonly log: (message?: any, ...optionalParams: any[]) => void;
+
   private readonly homebridge: Homebridge;
+
   private client: ComelitClient;
+
   private readonly config: HubConfig;
+
   private keepAliveTimer: Timeout;
+
   private server: http.Server;
 
   constructor(
@@ -70,7 +78,7 @@ export class ComelitPlatform {
     this.config = config;
     // Save the API object as plugin needs to register new accessory via this object
     this.homebridge = homebridge;
-    this.log("homebridge API version: " + homebridge.version);
+    this.log(`homebridge API version: ${homebridge.version}`);
   }
 
   async accessories(callback: (array: any[]) => void) {
@@ -214,7 +222,7 @@ export class ComelitPlatform {
 
   private async loginWithRetry() {
     uptime.set(0);
-    let logged = await this.login();
+    const logged = await this.login();
     while (!logged) {
       setTimeout(() => this.loginWithRetry(), 5000);
     }

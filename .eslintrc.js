@@ -5,9 +5,7 @@ module.exports = {
   },
   extends: [
     "eslint:recommended",
-    "airbnb-base",
-    "plugin:@typescript-eslint/eslint-recommended",
-    "plugin:prettier/recommended"
+    "plugin:@typescript-eslint/eslint-recommended"
   ],
   globals: {
     Atomics: "readonly",
@@ -20,7 +18,6 @@ module.exports = {
   },
   plugins: ["@typescript-eslint"],
   rules: {
-    "prettier/prettier": "error",
     "no-unused-vars": "off",
     "@typescript-eslint/no-unused-vars": [
       "error",

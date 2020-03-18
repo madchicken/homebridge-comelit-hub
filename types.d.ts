@@ -3,15 +3,23 @@ import { BinaryLike } from "crypto";
 
 export declare class PlatformAccessory {
   displayName: string;
+
   reachable: boolean;
+
   services: Service[];
 
   constructor(displayName: string, UUID: string, category: Categories);
+
   addService(service: Service): Service;
+
   removeService(service: Service): void;
+
   getService(name: string): Service;
+
   getServiceByUUIDAndSubType(UUID: string, subtype: string): Service;
+
   updateReachability(reachable: boolean): void;
+
   configureCameraSource(cameraSource: any): void;
 }
 
