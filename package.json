@@ -45,7 +45,7 @@
     "@sentry/node": "5.12.2",
     "async-mqtt": "^2.4.2",
     "chalk": "^3.0.0",
-    "comelit-client": "link:../comelit-client",
+    "comelit-client": "1.0.0",
     "express": "^4.17.1",
     "homebridge": "^0.4.50",
     "lodash": "^4.17.15",
