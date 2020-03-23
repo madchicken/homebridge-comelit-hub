@@ -153,10 +153,14 @@ export class VedoAlarm {
   }
 
   private async checkAlarm() {
-    const uid = await this.client.loginWithRetry(this.code);
-    if (uid) {
-      const alarmAreas = await this.client.findActiveAreas(uid);
-      this.update(alarmAreas);
+    try {
+      const uid = await this.client.loginWithRetry(this.code);
+      if (uid) {
+        const alarmAreas = await this.client.findActiveAreas(uid);
+        this.update(alarmAreas);
+      }
+    } catch (e) {
+      this.log(e.message);
     }
     this.timeout.refresh();
   }
