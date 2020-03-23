@@ -25,6 +25,7 @@ export class VedoAlarm {
   private securityService: Service;
   private timeout: Timeout;
   private readonly checkFrequency: number;
+  private lastUID: string;
 
   constructor(
     log: Function,
@@ -154,12 +155,13 @@ export class VedoAlarm {
 
   private async checkAlarm() {
     try {
-      const uid = await this.client.loginWithRetry(this.code);
+      const uid = this.lastUID || (await this.client.loginWithRetry(this.code));
       if (uid) {
         const alarmAreas = await this.client.findActiveAreas(uid);
         this.update(alarmAreas);
       }
     } catch (e) {
+      this.lastUID = null;
       this.log(e.message);
     }
     this.timeout.refresh();
