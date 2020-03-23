@@ -157,6 +157,7 @@ export class VedoAlarm {
     try {
       const uid = this.lastUID || (await this.client.loginWithRetry(this.code));
       if (uid) {
+        this.lastUID = uid;
         const alarmAreas = await this.client.findActiveAreas(uid);
         this.update(alarmAreas);
       }
