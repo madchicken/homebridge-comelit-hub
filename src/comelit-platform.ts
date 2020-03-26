@@ -1,19 +1,19 @@
-import { ComelitClient, DeviceData, ROOT_ID } from "comelit-client";
-import express, { Express } from "express";
-import client, { register } from "prom-client";
-import * as http from "http";
-import { ComelitAccessory } from "./accessories/comelit";
-import { Lightbulb } from "./accessories/lightbulb";
-import { Thermostat } from "./accessories/thermostat";
-import { Blind } from "./accessories/blind";
-import { Outlet } from "./accessories/outlet";
-import { PowerSupplier } from "./accessories/power-supplier";
-import { VedoAlarm } from "./accessories/vedo-alarm";
-import { Homebridge } from "../types";
+import { ComelitClient, DeviceData, ROOT_ID } from 'comelit-client';
+import express, { Express } from 'express';
+import client, { register } from 'prom-client';
+import * as http from 'http';
+import { ComelitAccessory } from './accessories/comelit';
+import { Lightbulb } from './accessories/lightbulb';
+import { Thermostat } from './accessories/thermostat';
+import { Blind } from './accessories/blind';
+import { Outlet } from './accessories/outlet';
+import { PowerSupplier } from './accessories/power-supplier';
+import { VedoAlarm } from './accessories/vedo-alarm';
+import { Homebridge } from '../types';
 
 import Timeout = NodeJS.Timeout;
 
-const Sentry = require("@sentry/node");
+const Sentry = require('@sentry/node');
 
 export interface HubConfig {
   username: string;
@@ -32,14 +32,14 @@ export interface HubConfig {
 }
 
 const uptime = new client.Gauge({
-  name: "comelit_uptime",
-  help: "Client client uptime"
+  name: 'comelit_uptime',
+  help: 'Client client uptime',
 });
 
 const DEFAULT_HTTP_PORT = 3002;
 const expr: Express = express();
-expr.get("/metrics", (req, res) => {
-  res.set("Content-Type", register.contentType);
+expr.get('/metrics', (req, res) => {
+  res.set('Content-Type', register.contentType);
   res.end(register.metrics());
 });
 
@@ -74,7 +74,7 @@ export class ComelitPlatform {
       Sentry.captureException = () => null;
     }
     this.log = (str: string) => log(`[COMELIT HUB] ${str}`);
-    this.log("Initializing platform: ", config);
+    this.log('Initializing platform: ', config);
     this.config = config;
     // Save the API object as plugin needs to register new accessory via this object
     this.homebridge = homebridge;
@@ -84,10 +84,10 @@ export class ComelitPlatform {
   async accessories(callback: (array: any[]) => void) {
     const login = await this.login();
     if (!login || this.client.isLogged()) {
-      this.log("Not logged, returning empty accessory array");
+      this.log('Not logged, returning empty accessory array');
       this.mappedAccessories = new Map<string, ComelitAccessory<DeviceData>>();
     }
-    this.log("Building accessories list...");
+    this.log('Building accessories list...');
     const rootElementInfo = await this.client.device(ROOT_ID);
     const homeIndex = this.client.mapHome(rootElementInfo);
     const lightIds = [...homeIndex.lightsIndex.keys()];
@@ -99,12 +99,7 @@ export class ComelitPlatform {
         this.log(`Light ID: ${id}, ${deviceData.descrizione}`);
         this.mappedAccessories.set(
           id,
-          new Lightbulb(
-            this.log,
-            deviceData,
-            `Light ${deviceData.descrizione}`,
-            this.client
-          )
+          new Lightbulb(this.log, deviceData, `Light ${deviceData.descrizione}`, this.client)
         );
       }
     });
@@ -116,12 +111,7 @@ export class ComelitPlatform {
         this.log(`Thermostat ID: ${id}, ${deviceData.descrizione}`);
         this.mappedAccessories.set(
           id,
-          new Thermostat(
-            this.log,
-            deviceData,
-            `Thermostat ${deviceData.descrizione}`,
-            this.client
-          )
+          new Thermostat(this.log, deviceData, `Thermostat ${deviceData.descrizione}`, this.client)
         );
       }
     });
@@ -151,12 +141,7 @@ export class ComelitPlatform {
         this.log(`Outlet ID: ${id}, ${deviceData.descrizione}`);
         this.mappedAccessories.set(
           id,
-          new Outlet(
-            this.log,
-            deviceData,
-            `Outlet ${deviceData.descrizione}`,
-            this.client
-          )
+          new Outlet(this.log, deviceData, `Outlet ${deviceData.descrizione}`, this.client)
         );
       }
     });
@@ -168,36 +153,35 @@ export class ComelitPlatform {
         this.log(`Supplier ID: ${id}, ${deviceData.descrizione}`);
         this.mappedAccessories.set(
           id,
-          new PowerSupplier(
-            this.log,
-            deviceData,
-            `Supplier ${deviceData.descrizione}`,
-            this.client
-          )
+          new PowerSupplier(this.log, deviceData, `Supplier ${deviceData.descrizione}`, this.client)
         );
       }
     });
 
     this.log(`Found ${this.mappedAccessories.size} accessories`);
-    this.log("Subscribed to root object");
+    this.log('Subscribed to root object');
 
-        if (!this.config.disable_alarm) {
-            const parameters = await this.client.readParameters();
-            const alarmEnabled = parameters.find(p => p.param_name === 'alarmEnable').param_value === '1';
-            if (alarmEnabled) {
-                if (this.config.alarm_code) {
-                    const alarmAddress = parameters.find(p => p.param_name === 'alarmLocalAddress').param_value;
-                    const alarmPort = parameters.find(p => p.param_name === 'alarmLocalPort').param_value;
-                    this.log(`Alarm is enabled, mapping it at ${alarmAddress} port ${alarmPort}`);
-                    callback([...this.mappedAccessories.values(), new VedoAlarm(this.log, alarmAddress, this.config.alarm_code)]);
-                    return;
-                } else {
-                    this.log('Alarm enabled but not properly configured: missing access code');
-                }
-            }
+    if (!this.config.disable_alarm) {
+      const parameters = await this.client.readParameters();
+      const alarmEnabled = parameters.find(p => p.param_name === 'alarmEnable').param_value === '1';
+      if (alarmEnabled) {
+        if (this.config.alarm_code) {
+          const alarmAddress = parameters.find(p => p.param_name === 'alarmLocalAddress')
+            .param_value;
+          const alarmPort = parameters.find(p => p.param_name === 'alarmLocalPort').param_value;
+          this.log(`Alarm is enabled, mapping it at ${alarmAddress} port ${alarmPort}`);
+          callback([
+            ...this.mappedAccessories.values(),
+            new VedoAlarm(this.log, alarmAddress, this.config.alarm_code),
+          ]);
+          return;
+        } else {
+          this.log('Alarm enabled but not properly configured: missing access code');
         }
-        callback([...this.mappedAccessories.values()]);
+      }
     }
+    callback([...this.mappedAccessories.values()]);
+  }
 
   updateAccessory(id: string, data: DeviceData) {
     const accessory = this.mappedAccessories.get(id);
@@ -231,10 +215,8 @@ export class ComelitPlatform {
   private async login(): Promise<boolean> {
     try {
       await this.shutdown();
-      this.log("Creating client and logging in...");
-      this.client =
-        this.client ||
-        new ComelitClient(this.updateAccessory.bind(this), this.log);
+      this.log('Creating client and logging in...');
+      this.client = this.client || new ComelitClient(this.updateAccessory.bind(this), this.log);
       await this.client.init(
         this.config.broker_url,
         this.config.username,
@@ -244,12 +226,10 @@ export class ComelitPlatform {
         this.config.client_id
       );
       if (!this.server && this.config.export_prometheus_metrics) {
-        this.server = expr.listen(
-          this.config.exporter_http_port || DEFAULT_HTTP_PORT
-        );
+        this.server = expr.listen(this.config.exporter_http_port || DEFAULT_HTTP_PORT);
       }
     } catch (e) {
-      this.log("Error initializing MQTT client", e);
+      this.log('Error initializing MQTT client', e);
       Sentry.captureException(e);
       return false;
     }
@@ -260,7 +240,7 @@ export class ComelitPlatform {
       this.keepAlive();
       return true;
     } catch (e) {
-      this.log("Error logging in", e);
+      this.log('Error logging in', e);
       Sentry.captureException(e);
       return false;
     }
@@ -268,7 +248,7 @@ export class ComelitPlatform {
 
   private async shutdown() {
     if (this.client) {
-      this.log("Shutting down old client...");
+      this.log('Shutting down old client...');
       if (this.keepAliveTimer) {
         clearTimeout(this.keepAliveTimer);
         this.keepAliveTimer = null;
