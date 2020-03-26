@@ -101,7 +101,9 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
           : TargetHeatingCoolingState.COOL
       );
 
-    let targetState = TargetHeatingCoolingState.OFF;
+    let targetState = this.isManualMode()
+      ? TargetHeatingCoolingState.OFF
+      : TargetHeatingCoolingState.AUTO;
     if (this.isRunning()) {
       if (this.isWinter()) {
         targetState = TargetHeatingCoolingState.HEAT;
