@@ -89,7 +89,7 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
               case TargetHeatingCoolingState.OFF:
                 await this.client.toggleThermostatDehumidifierStatus(
                   this.device.id,
-                  ClimaOnOff.OFF
+                  ClimaOnOff.OFF_THERMO
                 );
                 break;
             }
