@@ -120,7 +120,6 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
   }
 
   public update(data: ThermostatDeviceData): void {
-    console.log(`Updating thermostat ${JSON.stringify(data)}`);
     const currentCoolingState = this.isOff()
       ? TargetHeatingCoolingState.OFF
       : this.isWinter()
