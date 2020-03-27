@@ -53,9 +53,14 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
       .getCharacteristic(Characteristic.TargetTemperature)
       .on(CharacteristicEventTypes.SET, async (temperature: number, callback: VoidCallback) => {
         try {
+          const currentTemperature = this.thermostatService.getCharacteristic(
+            Characteristic.TargetTemperature
+          ).value;
           const normalizedTemp = temperature * 10;
-          await this.client.setTemperature(this.device.id, normalizedTemp);
-          this.device.temperatura = `${normalizedTemp}`;
+          if (currentTemperature !== temperature) {
+            await this.client.setTemperature(this.device.id, normalizedTemp);
+            this.device.temperatura = `${normalizedTemp}`;
+          }
           callback();
         } catch (e) {
           callback(e);
@@ -65,21 +70,29 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
     this.thermostatService
       .getCharacteristic(Characteristic.TargetHeatingCoolingState)
       .on(CharacteristicEventTypes.SET, async (state: number, callback: VoidCallback) => {
+        const currentState = this.thermostatService.getCharacteristic(
+          Characteristic.TargetHeatingCoolingState
+        ).value;
         try {
-          this.log(`Modifying state of ${this.name} to ${state}`);
-          switch (state) {
-            case TargetHeatingCoolingState.AUTO:
-              await this.client.switchThermostatMode(this.device.id, ClimaMode.AUTO);
-              break;
-            case TargetHeatingCoolingState.COOL:
-              await this.client.switchThermostatSeason(this.device.id, ThermoSeason.SUMMER);
-              break;
-            case TargetHeatingCoolingState.HEAT:
-              await this.client.switchThermostatSeason(this.device.id, ThermoSeason.WINTER);
-              break;
-            case TargetHeatingCoolingState.OFF:
-              await this.client.toggleThermostatDehumidifierStatus(this.device.id, ClimaOnOff.OFF);
-              break;
+          if (currentState !== state) {
+            this.log(`Modifying state of ${this.name} to ${state}`);
+            switch (state) {
+              case TargetHeatingCoolingState.AUTO:
+                await this.client.switchThermostatMode(this.device.id, ClimaMode.AUTO);
+                break;
+              case TargetHeatingCoolingState.COOL:
+                await this.client.switchThermostatSeason(this.device.id, ThermoSeason.SUMMER);
+                break;
+              case TargetHeatingCoolingState.HEAT:
+                await this.client.switchThermostatSeason(this.device.id, ThermoSeason.WINTER);
+                break;
+              case TargetHeatingCoolingState.OFF:
+                await this.client.toggleThermostatDehumidifierStatus(
+                  this.device.id,
+                  ClimaOnOff.OFF
+                );
+                break;
+            }
           }
           callback();
         } catch (e) {
@@ -101,8 +114,12 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
           : TargetHeatingCoolingState.COOL
       );
 
-    let targetState = this.isOff() ? TargetHeatingCoolingState.OFF : TargetHeatingCoolingState.AUTO;
-    if (this.isRunning()) {
+    let targetState;
+    if (this.isOff()) {
+      targetState = TargetHeatingCoolingState.OFF;
+    } else if (this.isAuto()) {
+      targetState = TargetHeatingCoolingState.AUTO;
+    } else {
       if (this.isWinter()) {
         targetState = TargetHeatingCoolingState.HEAT;
       } else {
@@ -143,10 +160,8 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
     return this.device.status === STATUS_ON;
   }
 
-  isManualMode(): boolean {
-    return (
-      this.device.auto_man === ClimaMode.OFF_MANUAL || this.device.auto_man === ClimaMode.MANUAL
-    );
+  isAuto(): boolean {
+    return this.device.auto_man === ClimaMode.OFF_AUTO || this.device.auto_man === ClimaMode.AUTO;
   }
 
   isWinter(): boolean {
