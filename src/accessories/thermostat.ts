@@ -120,15 +120,15 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
   }
 
   public update(data: ThermostatDeviceData): void {
+    console.log(`Updating thermostat ${JSON.stringify(data)}`);
+    const currentCoolingState = this.isOff()
+      ? TargetHeatingCoolingState.OFF
+      : this.isWinter()
+      ? TargetHeatingCoolingState.HEAT
+      : TargetHeatingCoolingState.COOL;
     this.thermostatService
       .getCharacteristic(Characteristic.CurrentHeatingCoolingState)
-      .updateValue(
-        this.isOff()
-          ? TargetHeatingCoolingState.OFF
-          : this.isWinter()
-          ? TargetHeatingCoolingState.HEAT
-          : TargetHeatingCoolingState.COOL
-      );
+      .updateValue(currentCoolingState);
 
     let targetState;
     if (this.isOff()) {
@@ -146,6 +146,9 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
       .getCharacteristic(Characteristic.TargetHeatingCoolingState)
       .updateValue(targetState);
 
+    console.log(
+      `Current cooling state is now ${currentCoolingState}, target state is ${targetState}`
+    );
     const temperature = data.temperatura ? parseFloat(data.temperatura) / 10 : 0;
     this.log(`Temperature for ${this.name} is ${temperature}`);
     this.thermostatService
