@@ -84,6 +84,14 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
               );
             }
 
+            if (
+              currentState === TargetHeatingCoolingState.AUTO &&
+              state !== TargetHeatingCoolingState.OFF
+            ) {
+              // if in AUTO mode, switch to MANUAL here
+              await this.client.switchThermostatMode(this.device.id, ClimaMode.MANUAL);
+            }
+
             switch (state) {
               case TargetHeatingCoolingState.AUTO:
                 await this.client.switchThermostatMode(this.device.id, ClimaMode.AUTO);
