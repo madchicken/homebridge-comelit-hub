@@ -76,6 +76,14 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
         try {
           if (currentState !== state) {
             this.log(`Modifying state of ${this.name} to ${state}`);
+            if (currentState === TargetHeatingCoolingState.OFF) {
+              // before doing anything, we need to turn on the thermostat
+              await this.client.toggleThermostatDehumidifierStatus(
+                this.device.id,
+                ClimaOnOff.ON_THERMO
+              );
+            }
+
             switch (state) {
               case TargetHeatingCoolingState.AUTO:
                 await this.client.switchThermostatMode(this.device.id, ClimaMode.AUTO);
