@@ -88,8 +88,7 @@ export class ComelitPlatform {
       this.mappedAccessories = new Map<string, ComelitAccessory<DeviceData>>();
     }
     this.log('Building accessories list...');
-    const rootElementInfo = await this.client.device(ROOT_ID);
-    const homeIndex = this.client.mapHome(rootElementInfo);
+    const homeIndex = await this.client.fecthHomeIndex();
     const lightIds = [...homeIndex.lightsIndex.keys()];
     this.log(`Found ${lightIds.length} lights`);
 
@@ -99,7 +98,7 @@ export class ComelitPlatform {
         this.log(`Light ID: ${id}, ${deviceData.descrizione}`);
         this.mappedAccessories.set(
           id,
-          new Lightbulb(this.log, deviceData, `Light ${deviceData.descrizione}`, this.client)
+          new Lightbulb(this.log, deviceData, deviceData.descrizione, this.client)
         );
       }
     });
@@ -111,7 +110,7 @@ export class ComelitPlatform {
         this.log(`Thermostat ID: ${id}, ${deviceData.descrizione}`);
         this.mappedAccessories.set(
           id,
-          new Thermostat(this.log, deviceData, `Thermostat ${deviceData.descrizione}`, this.client)
+          new Thermostat(this.log, deviceData, deviceData.descrizione, this.client)
         );
       }
     });
@@ -126,7 +125,7 @@ export class ComelitPlatform {
           new Blind(
             this.log,
             deviceData,
-            `Blind ${deviceData.descrizione}`,
+            deviceData.descrizione,
             this.client,
             this.config.blind_closing_time
           )
@@ -141,7 +140,7 @@ export class ComelitPlatform {
         this.log(`Outlet ID: ${id}, ${deviceData.descrizione}`);
         this.mappedAccessories.set(
           id,
-          new Outlet(this.log, deviceData, `Outlet ${deviceData.descrizione}`, this.client)
+          new Outlet(this.log, deviceData, deviceData.descrizione, this.client)
         );
       }
     });
@@ -153,7 +152,7 @@ export class ComelitPlatform {
         this.log(`Supplier ID: ${id}, ${deviceData.descrizione}`);
         this.mappedAccessories.set(
           id,
-          new PowerSupplier(this.log, deviceData, `Supplier ${deviceData.descrizione}`, this.client)
+          new PowerSupplier(this.log, deviceData, deviceData.descrizione, this.client)
         );
       }
     });
