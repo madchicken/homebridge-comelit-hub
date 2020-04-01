@@ -19,7 +19,7 @@ export class Dehumidifier extends ComelitAccessory<ThermostatDeviceData> {
   private dehumidifierService: Service;
 
   constructor(log: Function, device: ThermostatDeviceData, name: string, client: ComelitClient) {
-    super(log, device, name, client, Categories.AIR_DEHUMIDIFIER);
+    super(log, device, name, client, Categories.AIR_CONDITIONER);
     this.uuid_base = `${device.objectId}#D`;
   }
 
