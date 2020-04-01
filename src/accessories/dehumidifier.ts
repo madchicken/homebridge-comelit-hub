@@ -16,11 +16,6 @@ import {
 } from 'hap-nodejs/dist/lib/gen/HomeKit';
 
 export class Dehumidifier extends ComelitAccessory<ThermostatDeviceData> {
-  static readonly ON = '1';
-  static readonly DEHUMIDIFIER_ON = '6';
-  static readonly OFF = '0';
-  static readonly AUTO_MODE = '2';
-
   private dehumidifierService: Service;
 
   constructor(log: Function, device: ThermostatDeviceData, name: string, client: ComelitClient) {

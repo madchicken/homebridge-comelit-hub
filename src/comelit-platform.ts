@@ -1,4 +1,4 @@
-import { ComelitClient, DeviceData, HomeIndex, ROOT_ID } from 'comelit-client';
+import { ComelitClient, DeviceData, HomeIndex, OBJECT_SUBTYPE, ROOT_ID } from 'comelit-client';
 import express, { Express } from 'express';
 import client, { register } from 'prom-client';
 import * as http from 'http';
@@ -11,6 +11,7 @@ import { PowerSupplier } from './accessories/power-supplier';
 import { VedoAlarm } from './accessories/vedo-alarm';
 import { Homebridge } from '../types';
 import Timeout = NodeJS.Timeout;
+import { Dehumidifier } from './accessories/dehumidifier';
 
 const Sentry = require('@sentry/node');
 
@@ -183,6 +184,12 @@ export class ComelitPlatform {
           id,
           new Thermostat(this.log, deviceData, deviceData.descrizione, this.client)
         );
+        if (deviceData.sub_type === OBJECT_SUBTYPE.CLIMA_THERMOSTAT_DEHUMIDIFIER) {
+          this.mappedAccessories.set(
+            `${id}#D`,
+            new Dehumidifier(this.log, deviceData, deviceData.descrizione, this.client)
+          );
+        }
       }
     });
   }
@@ -207,6 +214,9 @@ export class ComelitPlatform {
     const accessory = this.mappedAccessories.get(id);
     if (accessory) {
       accessory.update(data);
+      if (data.sub_type === OBJECT_SUBTYPE.CLIMA_THERMOSTAT_DEHUMIDIFIER) {
+        this.mappedAccessories.get(`${id}#D`).update(data);
+      }
     }
   }
 
