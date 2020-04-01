@@ -1,6 +1,6 @@
-import { ComelitClient, DeviceData } from "comelit-client";
-import { Categories, Characteristic, Service } from "hap-nodejs";
-import { HomebridgeAPI } from "../index";
+import { ComelitClient, DeviceData } from 'comelit-client';
+import { Categories, Characteristic, Service } from 'hap-nodejs';
+import { HomebridgeAPI } from '../index';
 
 export abstract class ComelitAccessory<T extends DeviceData> {
   readonly uuid_base: string;
@@ -39,15 +39,12 @@ export abstract class ComelitAccessory<T extends DeviceData> {
   }
 
   protected initAccessoryInformation(): Service {
-    const accessoryInformation = new HomebridgeAPI.hap.Service.AccessoryInformation(
-      null,
-      null
-    );
+    const accessoryInformation = new HomebridgeAPI.hap.Service.AccessoryInformation(null, null);
     accessoryInformation
       .setCharacteristic(Characteristic.Name, this.name)
-      .setCharacteristic(Characteristic.Manufacturer, "Comelit")
-      .setCharacteristic(Characteristic.Model, "None")
-      .setCharacteristic(Characteristic.FirmwareRevision, "None")
+      .setCharacteristic(Characteristic.Manufacturer, 'Comelit')
+      .setCharacteristic(Characteristic.Model, 'None')
+      .setCharacteristic(Characteristic.FirmwareRevision, 'None')
       .setCharacteristic(Characteristic.SerialNumber, this.device.objectId);
     return accessoryInformation;
   }

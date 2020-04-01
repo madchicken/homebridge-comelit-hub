@@ -1,4 +1,4 @@
-import { ComelitClient, DeviceData, ROOT_ID } from 'comelit-client';
+import { ComelitClient, DeviceData, HomeIndex, ROOT_ID } from 'comelit-client';
 import express, { Express } from 'express';
 import client, { register } from 'prom-client';
 import * as http from 'http';
@@ -10,7 +10,6 @@ import { Outlet } from './accessories/outlet';
 import { PowerSupplier } from './accessories/power-supplier';
 import { VedoAlarm } from './accessories/vedo-alarm';
 import { Homebridge } from '../types';
-
 import Timeout = NodeJS.Timeout;
 
 const Sentry = require('@sentry/node');
@@ -73,7 +72,7 @@ export class ComelitPlatform {
     } else if (config) {
       Sentry.captureException = () => null;
     }
-    this.log = (str: string) => log(`[COMELIT HUB] ${str}`);
+    this.log = log;
     this.log('Initializing platform: ', config);
     this.config = config;
     // Save the API object as plugin needs to register new accessory via this object
@@ -85,35 +84,76 @@ export class ComelitPlatform {
     const login = await this.login();
     if (!login || this.client.isLogged()) {
       this.log('Not logged, returning empty accessory array');
-      this.mappedAccessories = new Map<string, ComelitAccessory<DeviceData>>();
+      callback([...this.mappedAccessories.values()]);
+      return;
     }
     this.log('Building accessories list...');
     const homeIndex = await this.client.fecthHomeIndex();
-    const lightIds = [...homeIndex.lightsIndex.keys()];
-    this.log(`Found ${lightIds.length} lights`);
+    this.mapLights(homeIndex);
+    this.mapThermostats(homeIndex);
+    this.mapBlinds(homeIndex);
+    this.mapOutlets(homeIndex);
+    this.mapSuppliers(homeIndex);
+    this.log(`Found ${this.mappedAccessories.size} accessories`);
+    this.log('Subscribed to root object');
+    const alarm: VedoAlarm = await this.mapAlarm();
+    if (alarm) {
+      callback([...this.mappedAccessories.values(), alarm]);
+    } else {
+      callback([...this.mappedAccessories.values()]);
+    }
+  }
 
-    lightIds.forEach(id => {
-      const deviceData = homeIndex.lightsIndex.get(id);
+  private mapSuppliers(homeIndex: HomeIndex) {
+    const supplierIds = [...homeIndex.supplierIndex.keys()];
+    this.log(`Found ${supplierIds.length} suppliers`);
+    supplierIds.forEach(id => {
+      const deviceData = homeIndex.supplierIndex.get(id);
       if (deviceData) {
-        this.log(`Light ID: ${id}, ${deviceData.descrizione}`);
+        this.log(`Supplier ID: ${id}, ${deviceData.descrizione}`);
         this.mappedAccessories.set(
           id,
-          new Lightbulb(this.log, deviceData, deviceData.descrizione, this.client)
+          new PowerSupplier(this.log, deviceData, deviceData.descrizione, this.client)
         );
       }
     });
-    const thermostatIds = [...homeIndex.thermostatsIndex.keys()];
-    this.log(`Found ${thermostatIds.length} thermostats`);
-    thermostatIds.forEach(id => {
-      const deviceData = homeIndex.thermostatsIndex.get(id);
+  }
+
+  private async mapAlarm(): Promise<VedoAlarm> {
+    if (!this.config.disable_alarm) {
+      const parameters = await this.client.readParameters();
+      const alarmEnabled = parameters.find(p => p.param_name === 'alarmEnable').param_value === '1';
+      if (alarmEnabled) {
+        if (this.config.alarm_code) {
+          const alarmAddress = parameters.find(p => p.param_name === 'alarmLocalAddress')
+            .param_value;
+          const alarmPort = parameters.find(p => p.param_name === 'alarmLocalPort').param_value;
+          this.log(`Alarm is enabled, mapping it at ${alarmAddress} port ${alarmPort}`);
+          return new VedoAlarm(this.log, alarmAddress, this.config.alarm_code);
+        } else {
+          this.log('Alarm enabled but not properly configured: missing access code');
+        }
+      }
+    }
+    return null;
+  }
+
+  private mapOutlets(homeIndex: HomeIndex) {
+    const outletIds = [...homeIndex.outletsIndex.keys()];
+    this.log(`Found ${outletIds.length} outlets`);
+    outletIds.forEach(id => {
+      const deviceData = homeIndex.outletsIndex.get(id);
       if (deviceData) {
-        this.log(`Thermostat ID: ${id}, ${deviceData.descrizione}`);
+        this.log(`Outlet ID: ${id}, ${deviceData.descrizione}`);
         this.mappedAccessories.set(
           id,
-          new Thermostat(this.log, deviceData, deviceData.descrizione, this.client)
+          new Outlet(this.log, deviceData, deviceData.descrizione, this.client)
         );
       }
     });
+  }
+
+  private mapBlinds(homeIndex: HomeIndex) {
     const shadeIds = [...homeIndex.blindsIndex.keys()];
     this.log(`Found ${shadeIds.length} shades`);
     shadeIds.forEach(id => {
@@ -132,54 +172,37 @@ export class ComelitPlatform {
         );
       }
     });
-    const outletIds = [...homeIndex.outletsIndex.keys()];
-    this.log(`Found ${outletIds.length} outlets`);
-    outletIds.forEach(id => {
-      const deviceData = homeIndex.outletsIndex.get(id);
+  }
+
+  private mapThermostats(homeIndex: HomeIndex) {
+    const thermostatIds = [...homeIndex.thermostatsIndex.keys()];
+    this.log(`Found ${thermostatIds.length} thermostats`);
+    thermostatIds.forEach(id => {
+      const deviceData = homeIndex.thermostatsIndex.get(id);
       if (deviceData) {
-        this.log(`Outlet ID: ${id}, ${deviceData.descrizione}`);
+        this.log(`Thermostat ID: ${id}, ${deviceData.descrizione}`);
         this.mappedAccessories.set(
           id,
-          new Outlet(this.log, deviceData, deviceData.descrizione, this.client)
+          new Thermostat(this.log, deviceData, deviceData.descrizione, this.client)
         );
       }
     });
-    const supplierIds = [...homeIndex.supplierIndex.keys()];
-    this.log(`Found ${supplierIds.length} suppliers`);
-    supplierIds.forEach(id => {
-      const deviceData = homeIndex.supplierIndex.get(id);
+  }
+
+  private mapLights(homeIndex: HomeIndex) {
+    const lightIds = [...homeIndex.lightsIndex.keys()];
+    this.log(`Found ${lightIds.length} lights`);
+
+    lightIds.forEach(id => {
+      const deviceData = homeIndex.lightsIndex.get(id);
       if (deviceData) {
-        this.log(`Supplier ID: ${id}, ${deviceData.descrizione}`);
+        this.log(`Light ID: ${id}, ${deviceData.descrizione}`);
         this.mappedAccessories.set(
           id,
-          new PowerSupplier(this.log, deviceData, deviceData.descrizione, this.client)
+          new Lightbulb(this.log, deviceData, deviceData.descrizione, this.client)
         );
       }
     });
-
-    this.log(`Found ${this.mappedAccessories.size} accessories`);
-    this.log('Subscribed to root object');
-
-    if (!this.config.disable_alarm) {
-      const parameters = await this.client.readParameters();
-      const alarmEnabled = parameters.find(p => p.param_name === 'alarmEnable').param_value === '1';
-      if (alarmEnabled) {
-        if (this.config.alarm_code) {
-          const alarmAddress = parameters.find(p => p.param_name === 'alarmLocalAddress')
-            .param_value;
-          const alarmPort = parameters.find(p => p.param_name === 'alarmLocalPort').param_value;
-          this.log(`Alarm is enabled, mapping it at ${alarmAddress} port ${alarmPort}`);
-          callback([
-            ...this.mappedAccessories.values(),
-            new VedoAlarm(this.log, alarmAddress, this.config.alarm_code),
-          ]);
-          return;
-        } else {
-          this.log('Alarm enabled but not properly configured: missing access code');
-        }
-      }
-    }
-    callback([...this.mappedAccessories.values()]);
   }
 
   updateAccessory(id: string, data: DeviceData) {

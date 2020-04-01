@@ -1,11 +1,5 @@
 import { ComelitAccessory } from './comelit';
-import {
-  ClimaMode,
-  ComelitClient,
-  OBJECT_SUBTYPE,
-  ThermoSeason,
-  ThermostatDeviceData,
-} from 'comelit-client';
+import { ClimaMode, ComelitClient, ThermostatDeviceData } from 'comelit-client';
 import {
   Categories,
   Characteristic,
@@ -16,24 +10,10 @@ import {
 import { HomebridgeAPI } from '../index';
 import {
   Active,
-  CurrentHeatingCoolingState,
   CurrentHumidifierDehumidifierState,
   TargetHeatingCoolingState,
   TargetHumidifierDehumidifierState,
-  TemperatureDisplayUnits,
 } from 'hap-nodejs/dist/lib/gen/HomeKit';
-import client from 'prom-client';
-
-const dehumidifierStatus = new client.Gauge({
-  name: 'comelit_dehumidifier_status',
-  help: 'Dehumidifier on/off',
-  labelNames: ['dehumidifier_name'],
-});
-const dehumidifierHumidity = new client.Gauge({
-  name: 'comelit_dehumidifier_humidity',
-  help: 'Humidity level',
-  labelNames: ['dehumidifier_name'],
-});
 
 export class Dehumidifier extends ComelitAccessory<ThermostatDeviceData> {
   static readonly ON = '1';

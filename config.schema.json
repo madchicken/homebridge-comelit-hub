@@ -1,4 +1,7 @@
 {
+  "headerDisplay": "Make sure to give set the right IP address for the HUB",
+  "footerDisplay": "See [homebridge-comelit](https://github.com/madchicken/homebridge-comelit) for more information and instructions.",
+  "singular": false,
   "pluginAlias": "Comelit",
   "pluginType": "platform",
   "schema": {
@@ -55,7 +58,7 @@
       "alarm_code": {
         "title": "Secret code for VEDO alarm (if present)",
         "type": "string",
-        "required": false,
+        "required": false
       },
       "disable_alarm": {
         "title": "Disable VEDO alarm accessory",
