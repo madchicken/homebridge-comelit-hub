@@ -3,7 +3,7 @@ import { Categories, Characteristic, Service } from 'hap-nodejs';
 import { HomebridgeAPI } from '../index';
 
 export abstract class ComelitAccessory<T extends DeviceData> {
-  readonly uuid_base: string;
+  uuid_base: string;
   readonly log: Function;
   readonly name: string;
   readonly category: Categories;
