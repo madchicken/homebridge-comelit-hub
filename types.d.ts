@@ -1,5 +1,5 @@
-import { Categories, Characteristic, Service } from "hap-nodejs";
-import { BinaryLike } from "crypto";
+import { Categories, Characteristic, Service } from 'hap-nodejs';
+import { BinaryLike } from 'crypto';
 
 export declare class PlatformAccessory {
   displayName: string;
@@ -26,12 +26,7 @@ export declare class PlatformAccessory {
 export interface Homebridge {
   version: string;
   platformAccessory: typeof PlatformAccessory;
-  registerPlatform: (
-    longName: string,
-    name: string,
-    platform: Function,
-    dynamic: boolean
-  ) => void;
+  registerPlatform: (longName: string, name: string, platform: Function, dynamic: boolean) => void;
   registerPlatformAccessories: (
     pluginName: string,
     platformName: string,
@@ -52,4 +47,17 @@ export interface Homebridge {
     };
   };
   on: (message: string, callback: Function) => void;
+}
+
+export declare interface Logger {
+  debug(message?: any, ...optionalParams: any[]);
+  error(message?: any, ...optionalParams: any[]);
+  info(message?: any, ...optionalParams: any[]);
+  log(message?: any, ...optionalParams: any[]);
+}
+
+export declare interface LoggerConstructor {
+  new (prefix: string): Logger;
+  withPrefix(prefix: string): Logger;
+  log(message?: any, ...optionalParams: any[]): void;
 }

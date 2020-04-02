@@ -16,7 +16,6 @@ import {
 } from 'hap-nodejs';
 import { HomebridgeAPI } from '../index';
 import {
-  CurrentHeatingCoolingState,
   TargetHeatingCoolingState,
   TemperatureDisplayUnits,
 } from 'hap-nodejs/dist/lib/gen/HomeKit';
