@@ -18,10 +18,10 @@ Currently supported devices:
 - Thermostats (summer/winter mode)
 - Controlled plugs
 - Vedo Alarm
+- Dehumidifiers
 
 Missing devices:
 
-- Dehumidifiers
 - RGB lights
 - Dimmerable lights
 - Irrigation
