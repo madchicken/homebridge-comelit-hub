@@ -31,6 +31,9 @@ export class Dehumidifier extends ComelitAccessory<ThermostatDeviceData> {
     this.dehumidifierService.addOptionalCharacteristic(
       Characteristic.RelativeHumidityDehumidifierThreshold
     );
+    this.dehumidifierService.addOptionalCharacteristic(
+      Characteristic.RelativeHumidityHumidifierThreshold
+    );
     this.dehumidifierService.addOptionalCharacteristic(Characteristic.Active);
     this.update(this.device);
 
@@ -107,6 +110,9 @@ export class Dehumidifier extends ComelitAccessory<ThermostatDeviceData> {
 
     this.dehumidifierService
       .getCharacteristic(Characteristic.CurrentRelativeHumidity)
+      .updateValue(parseInt(data.umidita));
+    this.dehumidifierService
+      .getCharacteristic(Characteristic.RelativeHumidityHumidifierThreshold)
       .updateValue(parseInt(data.umidita));
     this.dehumidifierService
       .getCharacteristic(Characteristic.RelativeHumidityDehumidifierThreshold)
