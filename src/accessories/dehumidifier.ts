@@ -107,6 +107,9 @@ export class Dehumidifier extends ComelitAccessory<ThermostatDeviceData> {
       .getCharacteristic(Characteristic.CurrentRelativeHumidity)
       .updateValue(parseInt(data.umidita));
     this.dehumidifierService
+      .getCharacteristic(Characteristic.RelativeHumidityDehumidifierThreshold)
+      .updateValue(parseInt(data.soglia_attiva_umi));
+    this.dehumidifierService
       .getCharacteristic(Characteristic.CurrentHumidifierDehumidifierState)
       .updateValue(
         isDehumidifierOff
