@@ -1,5 +1,5 @@
 import { ComelitAccessory } from './comelit';
-import { ClimaMode, ComelitClient, ThermostatDeviceData } from 'comelit-client';
+import { ClimaMode, ClimaOnOff, ComelitClient, ThermostatDeviceData } from 'comelit-client';
 import {
   Categories,
   Characteristic,
@@ -11,7 +11,6 @@ import { HomebridgeAPI } from '../index';
 import {
   Active,
   CurrentHumidifierDehumidifierState,
-  TargetHeatingCoolingState,
   TargetHumidifierDehumidifierState,
 } from 'hap-nodejs/dist/lib/gen/HomeKit';
 
@@ -80,7 +79,10 @@ export class Dehumidifier extends ComelitAccessory<ThermostatDeviceData> {
               await this.client.switchHumidifierMode(this.device.id, ClimaMode.MANUAL);
               break;
             case Active.INACTIVE:
-              await this.client.switchHumidifierMode(this.device.id, ClimaMode.OFF_MANUAL);
+              await this.client.toggleThermostatDehumidifierStatus(
+                this.device.id,
+                ClimaOnOff.OFF_HUMI
+              );
               break;
           }
           callback();
