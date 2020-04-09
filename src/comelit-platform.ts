@@ -80,21 +80,17 @@ export class ComelitPlatform {
 
   async accessories(callback: (array: any[]) => void) {
     if (this.config && this.config.broker_url && this.config.username && this.config.password) {
-      const login = await this.login();
-      if (!login || this.client.isLogged()) {
-        this.log('Not logged, returning empty accessory array');
-      } else {
-        this.log('Building accessories list...');
-        const homeIndex = await this.client.fecthHomeIndex();
-        this.mapLights(homeIndex);
-        this.mapThermostats(homeIndex);
-        this.mapBlinds(homeIndex);
-        this.mapOutlets(homeIndex);
-        this.mapSuppliers(homeIndex);
-        this.log(`Found ${this.mappedAccessories.size} accessories`);
-        this.log('Subscribed to root object');
-        callback([...this.mappedAccessories.values()]);
-      }
+      await this.login();
+      this.log('Building accessories list...');
+      const homeIndex = await this.client.fecthHomeIndex();
+      this.mapLights(homeIndex);
+      this.mapThermostats(homeIndex);
+      this.mapBlinds(homeIndex);
+      this.mapOutlets(homeIndex);
+      this.mapSuppliers(homeIndex);
+      this.log(`Found ${this.mappedAccessories.size} accessories`);
+      this.log('Subscribed to root object');
+      callback([...this.mappedAccessories.values()]);
     }
   }
 
