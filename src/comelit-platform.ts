@@ -8,10 +8,9 @@ import { Thermostat } from './accessories/thermostat';
 import { Blind } from './accessories/blind';
 import { Outlet } from './accessories/outlet';
 import { PowerSupplier } from './accessories/power-supplier';
-import { VedoAlarm } from './accessories/vedo-alarm';
 import { Homebridge } from '../types';
-import Timeout = NodeJS.Timeout;
 import { Dehumidifier } from './accessories/dehumidifier';
+import Timeout = NodeJS.Timeout;
 
 const Sentry = require('@sentry/node');
 
@@ -26,8 +25,6 @@ export interface HubConfig {
   exporter_http_port?: number;
   sentry_dsn?: string;
   blind_closing_time?: number;
-  disable_alarm?: boolean;
-  alarm_code?: string;
   keep_alive?: number;
 }
 
@@ -86,20 +83,17 @@ export class ComelitPlatform {
       const login = await this.login();
       if (!login || this.client.isLogged()) {
         this.log('Not logged, returning empty accessory array');
-      }
-      this.log('Building accessories list...');
-      const homeIndex = await this.client.fecthHomeIndex();
-      this.mapLights(homeIndex);
-      this.mapThermostats(homeIndex);
-      this.mapBlinds(homeIndex);
-      this.mapOutlets(homeIndex);
-      this.mapSuppliers(homeIndex);
-      this.log(`Found ${this.mappedAccessories.size} accessories`);
-      this.log('Subscribed to root object');
-      const alarm: VedoAlarm = await this.mapAlarm();
-      if (alarm) {
-        callback([...this.mappedAccessories.values(), alarm]);
+        callback([]);
       } else {
+        this.log('Building accessories list...');
+        const homeIndex = await this.client.fecthHomeIndex();
+        this.mapLights(homeIndex);
+        this.mapThermostats(homeIndex);
+        this.mapBlinds(homeIndex);
+        this.mapOutlets(homeIndex);
+        this.mapSuppliers(homeIndex);
+        this.log(`Found ${this.mappedAccessories.size} accessories`);
+        this.log('Subscribed to root object');
         callback([...this.mappedAccessories.values()]);
       }
     }
@@ -118,25 +112,6 @@ export class ComelitPlatform {
         );
       }
     });
-  }
-
-  private async mapAlarm(): Promise<VedoAlarm> {
-    if (!this.config.disable_alarm) {
-      const parameters = await this.client.readParameters();
-      const alarmEnabled = parameters.find(p => p.param_name === 'alarmEnable').param_value === '1';
-      if (alarmEnabled) {
-        if (this.config.alarm_code) {
-          const alarmAddress = parameters.find(p => p.param_name === 'alarmLocalAddress')
-            .param_value;
-          const alarmPort = parameters.find(p => p.param_name === 'alarmLocalPort').param_value;
-          this.log(`Alarm is enabled, mapping it at ${alarmAddress} port ${alarmPort}`);
-          return new VedoAlarm(this.log, alarmAddress, this.config.alarm_code);
-        } else {
-          this.log('Alarm enabled but not properly configured: missing access code');
-        }
-      }
-    }
-    return null;
   }
 
   private mapOutlets(homeIndex: HomeIndex) {

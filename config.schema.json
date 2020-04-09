@@ -54,17 +54,6 @@
         "type": "number",
         "required": false,
         "default": 120000
-      },
-      "alarm_code": {
-        "title": "Secret code for VEDO alarm (if present)",
-        "type": "string",
-        "required": false
-      },
-      "disable_alarm": {
-        "title": "Disable VEDO alarm accessory",
-        "type": "boolean",
-        "required": false,
-        "default": false
       }
     }
   }
