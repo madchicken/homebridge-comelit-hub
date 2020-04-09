@@ -83,7 +83,6 @@ export class ComelitPlatform {
       const login = await this.login();
       if (!login || this.client.isLogged()) {
         this.log('Not logged, returning empty accessory array');
-        callback([]);
       } else {
         this.log('Building accessories list...');
         const homeIndex = await this.client.fecthHomeIndex();
