@@ -20,22 +20,27 @@
         "default": ""
       },
       "password": {
-        "title": "Comelit username",
+        "title": "Password",
         "type": "string",
         "required": true,
-        "default": ""
+        "default": "",
+        "x-schema-form": {
+          "type": "password",
+          "placeholder": ""
+        }
       },
       "hub_username": {
         "title": "Comelit HUB username",
         "type": "string",
-        "required": false,
-        "default": ""
+        "required": false
       },
       "hub_password": {
         "title": "Comelit HUB password",
         "type": "string",
         "required": false,
-        "default": ""
+        "x-schema-form": {
+          "type": "password"
+        }
       },
       "broker_url": {
         "title": "Broker URL",
