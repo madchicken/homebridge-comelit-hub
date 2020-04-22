@@ -64,28 +64,28 @@
         "title": "Avoid mapping different devices with the same name",
         "type": "boolean",
         "default": false
-      },
-      "layout": [
-        {
-          "type": "fieldset",
-          "expandable": false,
-          "title": "Main settings",
-          "items": ["name", "username", "password", "broker_url"]
-        },
-        {
-          "type": "fieldset",
-          "expandable": true,
-          "expanded": false,
-          "title": "Advanced settings",
-          "items": [
-            "hub_username",
-            "hub_password",
-            "blind_closing_time",
-            "keep_alive",
-            "avoid_duplicates"
-          ]
-        }
+      }
+    }
+  },
+  "layout": [
+    {
+      "type": "fieldset",
+      "expandable": false,
+      "title": "Main settings",
+      "items": ["name", "username", "password", "broker_url"]
+    },
+    {
+      "type": "fieldset",
+      "expandable": true,
+      "expanded": false,
+      "title": "Advanced settings",
+      "items": [
+        "hub_username",
+        "hub_password",
+        "blind_closing_time",
+        "keep_alive",
+        "avoid_duplicates"
       ]
     }
-  }
+  ]
 }
