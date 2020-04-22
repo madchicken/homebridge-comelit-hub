@@ -44,7 +44,7 @@ export class Dehumidifier extends ComelitAccessory<ThermostatDeviceData> {
           this.log(
             `Modifying target humidity threshold of ${this.name}-dehumidifier to ${humidity}%`
           );
-          await this.client.setHumidifierTemperature(this.device.id, humidity);
+          await this.client.setHumidity(this.device.id, humidity);
           this.device.soglia_attiva_umi = `${humidity}`;
           callback();
         } catch (e) {
@@ -82,10 +82,7 @@ export class Dehumidifier extends ComelitAccessory<ThermostatDeviceData> {
               await this.client.switchHumidifierMode(this.device.id, ClimaMode.MANUAL);
               break;
             case Active.INACTIVE:
-              await this.client.toggleThermostatDehumidifierStatus(
-                this.device.id,
-                ClimaOnOff.OFF_HUMI
-              );
+              await this.client.toggleHumidifierStatus(this.device.id, ClimaOnOff.OFF_HUMI);
               break;
           }
           callback();
