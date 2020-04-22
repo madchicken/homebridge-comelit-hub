@@ -8,7 +8,7 @@ import { Thermostat } from './accessories/thermostat';
 import { Blind } from './accessories/blind';
 import { Outlet } from './accessories/outlet';
 import { PowerSupplier } from './accessories/power-supplier';
-import { Homebridge } from '../types';
+import { Homebridge, Logger } from '../types';
 import { Dehumidifier } from './accessories/dehumidifier';
 import Timeout = NodeJS.Timeout;
 
@@ -26,6 +26,7 @@ export interface HubConfig {
   sentry_dsn?: string;
   blind_closing_time?: number;
   keep_alive?: number;
+  avoid_duplicates?: boolean;
 }
 
 const uptime = new client.Gauge({
@@ -48,7 +49,7 @@ export class ComelitPlatform {
     ComelitAccessory<DeviceData>
   >();
 
-  private readonly log: (message?: any, ...optionalParams: any[]) => void;
+  private readonly log: Logger;
 
   private readonly homebridge: Homebridge;
 
@@ -60,11 +61,9 @@ export class ComelitPlatform {
 
   private server: http.Server;
 
-  constructor(
-    log: (message?: any, ...optionalParams: any[]) => void,
-    config: HubConfig,
-    homebridge: Homebridge
-  ) {
+  private mappedNames: { [key: string]: boolean };
+
+  constructor(log: Logger, config: HubConfig, homebridge: Homebridge) {
     if (config && config.sentry_dsn) {
       Sentry.init({ dsn: config.sentry_dsn });
     } else if (config) {
@@ -80,6 +79,7 @@ export class ComelitPlatform {
 
   async accessories(callback: (array: any[]) => void) {
     if (this.config && this.config.broker_url && this.config.username && this.config.password) {
+      this.mappedNames = {};
       await this.login();
       this.log('Building accessories list...');
       const homeIndex = await this.client.fecthHomeIndex();
@@ -94,6 +94,19 @@ export class ComelitPlatform {
     }
   }
 
+  getDeviceName(deviceData: DeviceData): string {
+    let key = deviceData.descrizione;
+    if (this.config.avoid_duplicates) {
+      let index = 0;
+      while (this.mappedNames[key] !== undefined) {
+        index++;
+        key = `${deviceData.descrizione} (${index})`;
+      }
+      this.mappedNames[key] = true;
+    }
+    return key;
+  }
+
   private mapSuppliers(homeIndex: HomeIndex) {
     const supplierIds = [...homeIndex.supplierIndex.keys()];
     this.log(`Found ${supplierIds.length} suppliers`);
@@ -103,7 +116,7 @@ export class ComelitPlatform {
         this.log(`Supplier ID: ${id}, ${deviceData.descrizione}`);
         this.mappedAccessories.set(
           id,
-          new PowerSupplier(this.log, deviceData, deviceData.descrizione, this.client)
+          new PowerSupplier(this.log, deviceData, this.getDeviceName(deviceData), this.client)
         );
       }
     });
@@ -118,7 +131,7 @@ export class ComelitPlatform {
         this.log(`Outlet ID: ${id}, ${deviceData.descrizione}`);
         this.mappedAccessories.set(
           id,
-          new Outlet(this.log, deviceData, deviceData.descrizione, this.client)
+          new Outlet(this.log, deviceData, this.getDeviceName(deviceData), this.client)
         );
       }
     });
@@ -136,7 +149,7 @@ export class ComelitPlatform {
           new Blind(
             this.log,
             deviceData,
-            deviceData.descrizione,
+            this.getDeviceName(deviceData),
             this.client,
             this.config.blind_closing_time
           )
@@ -154,12 +167,12 @@ export class ComelitPlatform {
         this.log(`Thermostat ID: ${id}, ${deviceData.descrizione}`);
         this.mappedAccessories.set(
           id,
-          new Thermostat(this.log, deviceData, deviceData.descrizione, this.client)
+          new Thermostat(this.log, deviceData, this.getDeviceName(deviceData), this.client)
         );
         if (deviceData.sub_type === OBJECT_SUBTYPE.CLIMA_THERMOSTAT_DEHUMIDIFIER) {
           this.mappedAccessories.set(
             `${id}#D`,
-            new Dehumidifier(this.log, deviceData, deviceData.descrizione, this.client)
+            new Dehumidifier(this.log, deviceData, this.getDeviceName(deviceData), this.client)
           );
         }
       }
@@ -176,7 +189,7 @@ export class ComelitPlatform {
         this.log(`Light ID: ${id}, ${deviceData.descrizione}`);
         this.mappedAccessories.set(
           id,
-          new Lightbulb(this.log, deviceData, deviceData.descrizione, this.client)
+          new Lightbulb(this.log, deviceData, this.getDeviceName(deviceData), this.client)
         );
       }
     });

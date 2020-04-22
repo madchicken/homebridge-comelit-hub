@@ -49,11 +49,14 @@ export interface Homebridge {
   on: (message: string, callback: Function) => void;
 }
 
-export declare interface Logger {
+export interface Logger {
+  prefix: string;
+  (message?: any, ...optionalParams: any[]): void;
   debug(message?: any, ...optionalParams: any[]);
   error(message?: any, ...optionalParams: any[]);
   info(message?: any, ...optionalParams: any[]);
   log(message?: any, ...optionalParams: any[]);
+  warn(message?: any, ...optionalParams: any[]);
 }
 
 export declare interface LoggerConstructor {
