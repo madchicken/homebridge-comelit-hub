@@ -42,7 +42,7 @@
     "comelit-client": "1.6.0",
     "express": "^4.17.1",
     "hap-nodejs": "^0.5.9",
-    "homebridge": "^0.4.54-beta.15",
+    "homebridge": "^0.4.53",
     "lodash": "^4.17.15",
     "mqtt": "^3.0.0",
     "mqtt-packet": "^6.3.0",
