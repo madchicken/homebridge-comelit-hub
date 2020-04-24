@@ -1,6 +1,6 @@
 {
   "name": "homebridge-comelit-platform",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "author": "Pierpaolo Follia",
   "repository": {
     "type": "git",
@@ -14,7 +14,7 @@
   ],
   "engines": {
     "node": ">8.15.1",
-    "homebridge": ">=0.2.0"
+    "homebridge": ">=0.4.5"
   },
   "main": "dist/index.js",
   "files": [
@@ -22,20 +22,14 @@
     "config.schema.json"
   ],
   "scripts": {
-    "start": "yarn run serve",
-    "build": "yarn run build-ts && yarn run lint",
-    "serve": "node dist/index.js",
-    "watch-node": "nodemon dist/index.js",
-    "watch": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"yellow.bold,cyan.bold,green.bold\" \"yarn run watch-ts\" \"yarn run watch-node\"",
+    "build": "yarn clean && yarn build-ts && yarn lint",
     "test": "jest --forceExit --coverage --verbose",
     "watch-test": "yarn run test -- --watchAll",
     "build-ts": "tsc",
     "watch-ts": "tsc -w",
     "lint": "tsc --noEmit && eslint \"src/*.{js,ts}\" --quiet --fix",
-    "debug": "yarn run build && yarn run watch-debug",
-    "serve-debug": "nodemon --inspect dist/index.js",
-    "watch-debug": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"yellow.bold,cyan.bold,green.bold\" \"yarn run watch-ts\" \"yarn run serve-debug\"",
-    "prettier": "prettier --single-quote --trailing-comma es5 --write \"{src,__{tests,mocks}__}/**/*.ts\""
+    "prettier": "prettier --single-quote --trailing-comma es5 --write \"{src,__{tests,mocks}__}/**/*.ts\"",
+    "clean": "rimraf dist/"
   },
   "husky": {
     "hooks": {
@@ -45,38 +39,31 @@
   "dependencies": {
     "@sentry/node": "5.12.2",
     "async-mqtt": "^2.4.2",
-    "chalk": "^3.0.0",
-    "comelit-client": "1.3.0",
+    "comelit-client": "1.6.2",
     "express": "^4.17.1",
-    "hap-nodejs": "^0.5.7",
-    "homebridge": "^0.4.54-beta.10",
+    "hap-nodejs": "^0.5.9",
+    "homebridge": "^0.4.53",
     "lodash": "^4.17.15",
     "mqtt": "^3.0.0",
     "mqtt-packet": "^6.3.0",
     "prom-client": "^11.5.3",
-    "typescript": "^3.7.4",
-    "yargs": "^15.1.0"
+    "typescript": "^3.7.4"
   },
   "devDependencies": {
-    "@types/chalk": "^2.2.0",
     "@types/express": "^4.17.2",
     "@types/lodash": "^4.14.149",
     "@types/mqtt": "^2.5.0",
     "@types/node": "^11.15.3",
-    "@types/yargs": "^15.0.0",
     "@typescript-eslint/eslint-plugin": "^2.14.0",
     "@typescript-eslint/parser": "^2.14.0",
-    "concurrently": "^5.0.0",
     "eslint": "^6.4.0",
-    "eslint-config-airbnb-base": "^14.1.0",
     "eslint-config-prettier": "^6.10.0",
     "eslint-plugin-prettier": "^3.1.2",
     "husky": "^4.2.3",
     "jest": "^24.9.0",
     "nock": "^12.0.2",
-    "nodemon": "^2.0.2",
     "prettier": "^1.19.1",
     "pretty-quick": "^2.0.1",
-    "ts-node": "^8.4.1"
+    "rimraf": "^3.0.2"
   }
 }

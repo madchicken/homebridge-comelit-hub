@@ -8,10 +8,9 @@ import { Thermostat } from './accessories/thermostat';
 import { Blind } from './accessories/blind';
 import { Outlet } from './accessories/outlet';
 import { PowerSupplier } from './accessories/power-supplier';
-import { VedoAlarm } from './accessories/vedo-alarm';
-import { Homebridge } from '../types';
-import Timeout = NodeJS.Timeout;
+import { Homebridge, Logger } from '../types';
 import { Dehumidifier } from './accessories/dehumidifier';
+import Timeout = NodeJS.Timeout;
 
 const Sentry = require('@sentry/node');
 
@@ -26,9 +25,8 @@ export interface HubConfig {
   exporter_http_port?: number;
   sentry_dsn?: string;
   blind_closing_time?: number;
-  disable_alarm?: boolean;
-  alarm_code?: string;
   keep_alive?: number;
+  avoid_duplicates?: boolean;
 }
 
 const uptime = new client.Gauge({
@@ -51,7 +49,7 @@ export class ComelitPlatform {
     ComelitAccessory<DeviceData>
   >();
 
-  private readonly log: (message?: any, ...optionalParams: any[]) => void;
+  private readonly log: Logger;
 
   private readonly homebridge: Homebridge;
 
@@ -63,11 +61,9 @@ export class ComelitPlatform {
 
   private server: http.Server;
 
-  constructor(
-    log: (message?: any, ...optionalParams: any[]) => void,
-    config: HubConfig,
-    homebridge: Homebridge
-  ) {
+  private mappedNames: { [key: string]: boolean };
+
+  constructor(log: Logger, config: HubConfig, homebridge: Homebridge) {
     if (config && config.sentry_dsn) {
       Sentry.init({ dsn: config.sentry_dsn });
     } else if (config) {
@@ -83,10 +79,8 @@ export class ComelitPlatform {
 
   async accessories(callback: (array: any[]) => void) {
     if (this.config && this.config.broker_url && this.config.username && this.config.password) {
-      const login = await this.login();
-      if (!login || this.client.isLogged()) {
-        this.log('Not logged, returning empty accessory array');
-      }
+      this.mappedNames = {};
+      await this.login();
       this.log('Building accessories list...');
       const homeIndex = await this.client.fecthHomeIndex();
       this.mapLights(homeIndex);
@@ -96,13 +90,21 @@ export class ComelitPlatform {
       this.mapSuppliers(homeIndex);
       this.log(`Found ${this.mappedAccessories.size} accessories`);
       this.log('Subscribed to root object');
-      const alarm: VedoAlarm = await this.mapAlarm();
-      if (alarm) {
-        callback([...this.mappedAccessories.values(), alarm]);
-      } else {
-        callback([...this.mappedAccessories.values()]);
-      }
+      callback([...this.mappedAccessories.values()]);
     }
+  }
+
+  getDeviceName(deviceData: DeviceData): string {
+    let key = deviceData.descrizione;
+    if (this.config.avoid_duplicates) {
+      let index = 0;
+      while (this.mappedNames[key] !== undefined) {
+        index++;
+        key = `${deviceData.descrizione} (${index})`;
+      }
+      this.mappedNames[key] = true;
+    }
+    return key;
   }
 
   private mapSuppliers(homeIndex: HomeIndex) {
@@ -114,29 +116,10 @@ export class ComelitPlatform {
         this.log(`Supplier ID: ${id}, ${deviceData.descrizione}`);
         this.mappedAccessories.set(
           id,
-          new PowerSupplier(this.log, deviceData, deviceData.descrizione, this.client)
+          new PowerSupplier(this.log, deviceData, this.getDeviceName(deviceData), this.client)
         );
       }
     });
-  }
-
-  private async mapAlarm(): Promise<VedoAlarm> {
-    if (!this.config.disable_alarm) {
-      const parameters = await this.client.readParameters();
-      const alarmEnabled = parameters.find(p => p.param_name === 'alarmEnable').param_value === '1';
-      if (alarmEnabled) {
-        if (this.config.alarm_code) {
-          const alarmAddress = parameters.find(p => p.param_name === 'alarmLocalAddress')
-            .param_value;
-          const alarmPort = parameters.find(p => p.param_name === 'alarmLocalPort').param_value;
-          this.log(`Alarm is enabled, mapping it at ${alarmAddress} port ${alarmPort}`);
-          return new VedoAlarm(this.log, alarmAddress, this.config.alarm_code);
-        } else {
-          this.log('Alarm enabled but not properly configured: missing access code');
-        }
-      }
-    }
-    return null;
   }
 
   private mapOutlets(homeIndex: HomeIndex) {
@@ -148,7 +131,7 @@ export class ComelitPlatform {
         this.log(`Outlet ID: ${id}, ${deviceData.descrizione}`);
         this.mappedAccessories.set(
           id,
-          new Outlet(this.log, deviceData, deviceData.descrizione, this.client)
+          new Outlet(this.log, deviceData, this.getDeviceName(deviceData), this.client)
         );
       }
     });
@@ -166,7 +149,7 @@ export class ComelitPlatform {
           new Blind(
             this.log,
             deviceData,
-            deviceData.descrizione,
+            this.getDeviceName(deviceData),
             this.client,
             this.config.blind_closing_time
           )
@@ -184,12 +167,12 @@ export class ComelitPlatform {
         this.log(`Thermostat ID: ${id}, ${deviceData.descrizione}`);
         this.mappedAccessories.set(
           id,
-          new Thermostat(this.log, deviceData, deviceData.descrizione, this.client)
+          new Thermostat(this.log, deviceData, this.getDeviceName(deviceData), this.client)
         );
         if (deviceData.sub_type === OBJECT_SUBTYPE.CLIMA_THERMOSTAT_DEHUMIDIFIER) {
           this.mappedAccessories.set(
             `${id}#D`,
-            new Dehumidifier(this.log, deviceData, deviceData.descrizione, this.client)
+            new Dehumidifier(this.log, deviceData, this.getDeviceName(deviceData), this.client)
           );
         }
       }
@@ -206,7 +189,7 @@ export class ComelitPlatform {
         this.log(`Light ID: ${id}, ${deviceData.descrizione}`);
         this.mappedAccessories.set(
           id,
-          new Lightbulb(this.log, deviceData, deviceData.descrizione, this.client)
+          new Lightbulb(this.log, deviceData, this.getDeviceName(deviceData), this.client)
         );
       }
     });

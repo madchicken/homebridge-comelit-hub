@@ -77,10 +77,7 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
             this.log(`Modifying state of ${this.name} to ${state}`);
             if (currentState === TargetHeatingCoolingState.OFF) {
               // before doing anything, we need to turn on the thermostat
-              await this.client.toggleThermostatDehumidifierStatus(
-                this.device.id,
-                ClimaOnOff.ON_THERMO
-              );
+              await this.client.toggleThermostatStatus(this.device.id, ClimaOnOff.ON_THERMO);
             }
 
             if (
@@ -102,10 +99,7 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
                 await this.client.switchThermostatSeason(this.device.id, ThermoSeason.WINTER);
                 break;
               case TargetHeatingCoolingState.OFF:
-                await this.client.toggleThermostatDehumidifierStatus(
-                  this.device.id,
-                  ClimaOnOff.OFF_THERMO
-                );
+                await this.client.toggleThermostatStatus(this.device.id, ClimaOnOff.OFF_THERMO);
                 break;
             }
           }

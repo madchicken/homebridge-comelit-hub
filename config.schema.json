@@ -20,22 +20,27 @@
         "default": ""
       },
       "password": {
-        "title": "Comelit username",
+        "title": "Password",
         "type": "string",
         "required": true,
-        "default": ""
+        "default": "",
+        "x-schema-form": {
+          "type": "password",
+          "placeholder": ""
+        }
       },
       "hub_username": {
         "title": "Comelit HUB username",
         "type": "string",
-        "required": false,
-        "default": ""
+        "required": false
       },
       "hub_password": {
         "title": "Comelit HUB password",
         "type": "string",
         "required": false,
-        "default": ""
+        "x-schema-form": {
+          "type": "password"
+        }
       },
       "broker_url": {
         "title": "Broker URL",
@@ -55,17 +60,32 @@
         "required": false,
         "default": 120000
       },
-      "alarm_code": {
-        "title": "Secret code for VEDO alarm (if present)",
-        "type": "string",
-        "required": false
-      },
-      "disable_alarm": {
-        "title": "Disable VEDO alarm accessory",
+      "avoid_duplicates": {
+        "title": "Avoid mapping different devices with the same name",
         "type": "boolean",
-        "required": false,
         "default": false
       }
     }
-  }
+  },
+  "layout": [
+    {
+      "type": "fieldset",
+      "expandable": false,
+      "title": "Main settings",
+      "items": ["name", "username", "password", "broker_url"]
+    },
+    {
+      "type": "fieldset",
+      "expandable": true,
+      "expanded": false,
+      "title": "Advanced settings",
+      "items": [
+        "hub_username",
+        "hub_password",
+        "blind_closing_time",
+        "keep_alive",
+        "avoid_duplicates"
+      ]
+    }
+  ]
 }
