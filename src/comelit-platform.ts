@@ -172,7 +172,12 @@ export class ComelitPlatform {
         if (deviceData.sub_type === OBJECT_SUBTYPE.CLIMA_THERMOSTAT_DEHUMIDIFIER) {
           this.mappedAccessories.set(
             `${id}#D`,
-            new Dehumidifier(this.log, deviceData, this.getDeviceName(deviceData), this.client)
+            new Dehumidifier(
+              this.log,
+              deviceData,
+              `${this.getDeviceName(deviceData)} (dehumidifier)`,
+              this.client
+            )
           );
         }
       }
