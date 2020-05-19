@@ -19,5 +19,5 @@
     "outDir": "dist"
   },
   "lib": ["esnext"],
-  "include": ["src", "types.d.ts"]
+  "include": ["src"]
 }

@@ -1,7 +1,9 @@
 import { ComelitAccessory } from './comelit';
-import { Categories, Service } from 'hap-nodejs';
+import { Service } from 'hap-nodejs';
 import { ComelitClient, SupplierDeviceData } from 'comelit-client';
 import client from 'prom-client';
+import { ComelitPlatform } from '../comelit-platform';
+import { PlatformAccessory } from 'homebridge';
 
 const consumption = new client.Gauge({
   name: 'comelit_total_consumption',
@@ -9,8 +11,8 @@ const consumption = new client.Gauge({
 });
 
 export class PowerSupplier extends ComelitAccessory<SupplierDeviceData> {
-  constructor(log: Function, device: SupplierDeviceData, name: string, client: ComelitClient) {
-    super(log, device, name, client, Categories.OTHER);
+  constructor(platform: ComelitPlatform, accessory: PlatformAccessory, client: ComelitClient) {
+    super(platform, accessory, client);
   }
 
   protected initServices(): Service[] {
@@ -18,7 +20,7 @@ export class PowerSupplier extends ComelitAccessory<SupplierDeviceData> {
   }
 
   update(data: SupplierDeviceData): void {
-    this.log(`Reporting instant consumption of ${data.instant_power}Wh`);
+    this.log.info(`Reporting instant consumption of ${data.instant_power}Wh`);
     consumption.set(parseFloat(data.instant_power));
   }
 }

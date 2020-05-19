@@ -1,3 +1,14 @@
+import {
+  API,
+  APIEvent,
+  Categories,
+  Characteristic,
+  DynamicPlatformPlugin,
+  Logger,
+  PlatformAccessory,
+  PlatformConfig,
+  Service,
+} from 'homebridge';
 import { ComelitClient, DeviceData, HomeIndex, OBJECT_SUBTYPE, ROOT_ID } from 'comelit-client';
 import express, { Express } from 'express';
 import client, { register } from 'prom-client';
@@ -8,13 +19,12 @@ import { Thermostat } from './accessories/thermostat';
 import { Blind } from './accessories/blind';
 import { Outlet } from './accessories/outlet';
 import { PowerSupplier } from './accessories/power-supplier';
-import { Homebridge, Logger } from '../types';
 import { Dehumidifier } from './accessories/dehumidifier';
 import Timeout = NodeJS.Timeout;
 
 const Sentry = require('@sentry/node');
 
-export interface HubConfig {
+export interface HubConfig extends PlatformConfig {
   username: string;
   password: string;
   hub_username: string;
@@ -27,6 +37,12 @@ export interface HubConfig {
   blind_closing_time?: number;
   keep_alive?: number;
   avoid_duplicates?: boolean;
+  hide_lights?: boolean;
+  hide_blinds?: boolean;
+  hide_thermostats?: boolean;
+  hide_dehumidifiers?: boolean;
+  hide_power_suppliers?: boolean;
+  hide_outlets?: boolean;
 }
 
 const uptime = new client.Gauge({
@@ -41,17 +57,21 @@ expr.get('/metrics', (req, res) => {
   res.end(register.metrics());
 });
 
-export class ComelitPlatform {
+export class ComelitPlatform implements DynamicPlatformPlugin {
   static KEEP_ALIVE_TIMEOUT = 120000;
+
+  public readonly Service: typeof Service;
+  public readonly Characteristic: typeof Characteristic;
+  public readonly PlatformAccessory: typeof PlatformAccessory;
 
   public mappedAccessories: Map<string, ComelitAccessory<DeviceData>> = new Map<
     string,
     ComelitAccessory<DeviceData>
   >();
 
-  private readonly log: Logger;
+  readonly log: Logger;
 
-  private readonly homebridge: Homebridge;
+  private readonly api: API;
 
   private client: ComelitClient;
 
@@ -63,35 +83,62 @@ export class ComelitPlatform {
 
   private mappedNames: { [key: string]: boolean };
 
-  constructor(log: Logger, config: HubConfig, homebridge: Homebridge) {
+  public readonly accessories: PlatformAccessory[] = [];
+
+  constructor(log: Logger, config: HubConfig, api: API) {
     if (config && config.sentry_dsn) {
       Sentry.init({ dsn: config.sentry_dsn });
     } else if (config) {
       Sentry.captureException = () => null;
     }
     this.log = log;
-    this.log('Initializing platform: ', config);
+    this.log.info('Initializing platform: ', config);
     this.config = config;
     // Save the API object as plugin needs to register new accessory via this object
-    this.homebridge = homebridge;
-    this.log(`homebridge API version: ${homebridge.version}`);
+    this.api = api;
+    this.log.info(`homebridge API version: ${api.version}`);
+    this.Service = this.api.hap.Service;
+    this.Characteristic = this.api.hap.Characteristic;
+    this.PlatformAccessory = this.api.platformAccessory;
+    this.api.on(APIEvent.DID_FINISH_LAUNCHING, () => this.discoverDevices());
+    this.api.on(APIEvent.SHUTDOWN, () => this.shutdown());
   }
 
-  async accessories(callback: (array: any[]) => void) {
-    if (this.config && this.config.broker_url && this.config.username && this.config.password) {
+  async discoverDevices() {
+    if (this.hasValidConfig()) {
       this.mappedNames = {};
       await this.login();
-      this.log('Building accessories list...');
+      this.log.info('Building accessories list...');
       const homeIndex = await this.client.fecthHomeIndex();
-      this.mapLights(homeIndex);
-      this.mapThermostats(homeIndex);
-      this.mapBlinds(homeIndex);
-      this.mapOutlets(homeIndex);
-      this.mapSuppliers(homeIndex);
-      this.log(`Found ${this.mappedAccessories.size} accessories`);
-      this.log('Subscribed to root object');
-      callback([...this.mappedAccessories.values()]);
+      if (this.config.hide_lights !== true) {
+        this.mapLights(homeIndex);
+      }
+      if (this.config.hide_thermostats !== true) {
+        this.mapThermostats(homeIndex);
+      }
+      if (this.config.hide_blinds !== true) {
+        this.mapBlinds(homeIndex);
+      }
+      if (this.config.hide_outlets !== true) {
+        this.mapOutlets(homeIndex);
+      }
+      if (this.config.hide_power_suppliers !== true) {
+        this.mapSuppliers(homeIndex);
+      }
+      this.log.info(`Found ${this.mappedAccessories.size} accessories`);
+      this.log.info('Subscribed to root object');
     }
+  }
+
+  configureAccessory(accessory: PlatformAccessory): void {
+    this.log.info('Loading accessory from cache:', accessory.displayName);
+
+    // add the restored accessory to the accessories cache so we can track if it has already been registered
+    this.accessories.push(accessory);
+  }
+
+  private hasValidConfig() {
+    return this.config && this.config.broker_url && this.config.username && this.config.password;
   }
 
   getDeviceName(deviceData: DeviceData): string {
@@ -109,50 +156,41 @@ export class ComelitPlatform {
 
   private mapSuppliers(homeIndex: HomeIndex) {
     const supplierIds = [...homeIndex.supplierIndex.keys()];
-    this.log(`Found ${supplierIds.length} suppliers`);
+    this.log.info(`Found ${supplierIds.length} suppliers`);
     supplierIds.forEach(id => {
       const deviceData = homeIndex.supplierIndex.get(id);
       if (deviceData) {
-        this.log(`Supplier ID: ${id}, ${deviceData.descrizione}`);
-        this.mappedAccessories.set(
-          id,
-          new PowerSupplier(this.log, deviceData, this.getDeviceName(deviceData), this.client)
-        );
+        this.log.debug(`Supplier ID: ${id}, ${deviceData.descrizione}`);
+        const accessory = this.createHapAccessory(deviceData, Categories.OTHER);
+        this.mappedAccessories.set(id, new PowerSupplier(this, accessory, this.client));
       }
     });
   }
 
   private mapOutlets(homeIndex: HomeIndex) {
     const outletIds = [...homeIndex.outletsIndex.keys()];
-    this.log(`Found ${outletIds.length} outlets`);
+    this.log.info(`Found ${outletIds.length} outlets`);
     outletIds.forEach(id => {
       const deviceData = homeIndex.outletsIndex.get(id);
       if (deviceData) {
-        this.log(`Outlet ID: ${id}, ${deviceData.descrizione}`);
-        this.mappedAccessories.set(
-          id,
-          new Outlet(this.log, deviceData, this.getDeviceName(deviceData), this.client)
-        );
+        this.log.debug(`Outlet ID: ${id}, ${deviceData.descrizione}`);
+        const accessory = this.createHapAccessory(deviceData, Categories.OUTLET);
+        this.mappedAccessories.set(id, new Outlet(this, accessory, this.client));
       }
     });
   }
 
   private mapBlinds(homeIndex: HomeIndex) {
     const shadeIds = [...homeIndex.blindsIndex.keys()];
-    this.log(`Found ${shadeIds.length} shades`);
+    this.log.info(`Found ${shadeIds.length} shades`);
     shadeIds.forEach(id => {
       const deviceData = homeIndex.blindsIndex.get(id);
       if (deviceData) {
-        this.log(`Blind ID: ${id}, ${deviceData.descrizione}`);
+        this.log.debug(`Blind ID: ${id}, ${deviceData.descrizione}`);
+        const accessory = this.createHapAccessory(deviceData, Categories.WINDOW_COVERING);
         this.mappedAccessories.set(
           id,
-          new Blind(
-            this.log,
-            deviceData,
-            this.getDeviceName(deviceData),
-            this.client,
-            this.config.blind_closing_time
-          )
+          new Blind(this, accessory, this.client, this.config.blind_closing_time)
         );
       }
     });
@@ -160,24 +198,25 @@ export class ComelitPlatform {
 
   private mapThermostats(homeIndex: HomeIndex) {
     const thermostatIds = [...homeIndex.thermostatsIndex.keys()];
-    this.log(`Found ${thermostatIds.length} thermostats`);
+    this.log.info(`Found ${thermostatIds.length} thermostats`);
     thermostatIds.forEach(id => {
       const deviceData = homeIndex.thermostatsIndex.get(id);
       if (deviceData) {
-        this.log(`Thermostat ID: ${id}, ${deviceData.descrizione}`);
-        this.mappedAccessories.set(
-          id,
-          new Thermostat(this.log, deviceData, this.getDeviceName(deviceData), this.client)
-        );
-        if (deviceData.sub_type === OBJECT_SUBTYPE.CLIMA_THERMOSTAT_DEHUMIDIFIER) {
+        this.log.debug(`Thermostat ID: ${id}, ${deviceData.descrizione}`);
+        const accessory = this.createHapAccessory(deviceData, Categories.THERMOSTAT);
+        this.mappedAccessories.set(id, new Thermostat(this, accessory, this.client));
+        if (
+          deviceData.sub_type === OBJECT_SUBTYPE.CLIMA_THERMOSTAT_DEHUMIDIFIER &&
+          this.config.hide_dehumidifiers !== true
+        ) {
+          const thermoAccessory = this.createHapAccessory(
+            deviceData,
+            Categories.AIR_DEHUMIDIFIER,
+            `${deviceData.objectId}#D`
+          );
           this.mappedAccessories.set(
             `${id}#D`,
-            new Dehumidifier(
-              this.log,
-              deviceData,
-              `${this.getDeviceName(deviceData)} (dehumidifier)`,
-              this.client
-            )
+            new Dehumidifier(this, thermoAccessory, this.client)
           );
         }
       }
@@ -186,24 +225,38 @@ export class ComelitPlatform {
 
   private mapLights(homeIndex: HomeIndex) {
     const lightIds = [...homeIndex.lightsIndex.keys()];
-    this.log(`Found ${lightIds.length} lights`);
+    this.log.info(`Found ${lightIds.length} lights`);
 
     lightIds.forEach(id => {
       const deviceData = homeIndex.lightsIndex.get(id);
       if (deviceData) {
-        this.log(`Light ID: ${id}, ${deviceData.descrizione}`);
-        this.mappedAccessories.set(
-          id,
-          new Lightbulb(this.log, deviceData, this.getDeviceName(deviceData), this.client)
-        );
+        this.log.debug(`Light ID: ${id}, ${deviceData.descrizione}`);
+        const accessory = this.createHapAccessory(deviceData, Categories.LIGHTBULB);
+        this.mappedAccessories.set(id, new Lightbulb(this, accessory, this.client));
       }
     });
   }
 
+  private createHapAccessory(deviceData: DeviceData, category: Categories, id?: string) {
+    const uuid = this.api.hap.uuid.generate(id || deviceData.id);
+    const existingAccessory = this.accessories.find(accessory => accessory.UUID === uuid);
+    const accessory =
+      existingAccessory ||
+      new this.PlatformAccessory(this.getDeviceName(deviceData), uuid, category);
+    accessory.context = deviceData;
+    if (existingAccessory) {
+      this.log.debug(`Reuse accessory from cache with uuid ${uuid} of type ${category}`);
+    } else {
+      this.log.debug(`Registering new accessory with uuid ${uuid} of type ${category}`);
+      this.api.registerPlatformAccessories('homebridge-comelit-platform', 'Comelit', [accessory]);
+    }
+    return accessory;
+  }
+
   updateAccessory(id: string, data: DeviceData) {
-    const accessory = this.mappedAccessories.get(id);
-    if (accessory) {
-      accessory.update(data);
+    const comelitAccessory = this.mappedAccessories.get(id);
+    if (comelitAccessory) {
+      comelitAccessory.update(data);
       if (data.sub_type === OBJECT_SUBTYPE.CLIMA_THERMOSTAT_DEHUMIDIFIER) {
         this.mappedAccessories.get(`${id}#D`).update(data);
       }
@@ -217,7 +270,7 @@ export class ComelitPlatform {
         uptime.set(1);
         this.keepAlive();
       } catch (e) {
-        this.log(e);
+        this.log.error(e);
         Sentry.captureException(e);
         this.loginWithRetry();
       }
@@ -235,7 +288,7 @@ export class ComelitPlatform {
   private async login(): Promise<boolean> {
     try {
       await this.shutdown();
-      this.log('Creating client and logging in...');
+      this.log.info('Creating MQTT client and logging in...');
       this.client = this.client || new ComelitClient(this.updateAccessory.bind(this), this.log);
       await this.client.init(
         this.config.broker_url,
@@ -249,7 +302,7 @@ export class ComelitPlatform {
         this.server = expr.listen(this.config.exporter_http_port || DEFAULT_HTTP_PORT);
       }
     } catch (e) {
-      this.log('Error initializing MQTT client', e);
+      this.log.error('Error initializing MQTT client', e);
       Sentry.captureException(e);
       return false;
     }
@@ -260,7 +313,7 @@ export class ComelitPlatform {
       this.keepAlive();
       return true;
     } catch (e) {
-      this.log('Error logging in', e);
+      this.log.error('Error logging in', e);
       Sentry.captureException(e);
       return false;
     }
@@ -268,7 +321,7 @@ export class ComelitPlatform {
 
   private async shutdown() {
     if (this.client) {
-      this.log('Shutting down old client...');
+      this.log.info('Shutting down MQTT client...');
       if (this.keepAliveTimer) {
         clearTimeout(this.keepAliveTimer);
         this.keepAliveTimer = null;

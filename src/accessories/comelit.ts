@@ -1,12 +1,12 @@
 import { ComelitClient, DeviceData } from 'comelit-client';
-import { Categories, Characteristic, Service } from 'hap-nodejs';
-import { HomebridgeAPI } from '../index';
+import { Characteristic, Controller, Service } from 'hap-nodejs';
+import { AccessoryPlugin, Logger, PlatformAccessory } from 'homebridge';
+import { ComelitPlatform } from '../comelit-platform';
 
-export abstract class ComelitAccessory<T extends DeviceData> {
-  uuid_base: string;
-  readonly log: Function;
-  readonly name: string;
-  readonly category: Categories;
+export abstract class ComelitAccessory<T extends DeviceData> implements AccessoryPlugin {
+  readonly platform: ComelitPlatform;
+  readonly accessory: PlatformAccessory;
+  readonly log: Logger;
   readonly device: T;
   readonly client: ComelitClient;
 
@@ -14,38 +14,39 @@ export abstract class ComelitAccessory<T extends DeviceData> {
   reachable: boolean;
 
   protected constructor(
-    log: Function,
-    device: T,
-    name: string,
-    client: ComelitClient,
-    category: Categories
+    platform: ComelitPlatform,
+    accessory: PlatformAccessory,
+    client: ComelitClient
   ) {
-    this.log = (str: string) => log(`[${device.id}] ${str}`);
-    this.device = device;
+    this.platform = platform;
+    this.accessory = accessory;
+    this.device = this.accessory.context as T;
+    this.log = platform.log;
     this.client = client;
-    this.name = name;
-    this.uuid_base = device.objectId;
     this.services = this.initServices();
     this.reachable = true;
-    this.category = category;
   }
 
   getServices(): Service[] {
     return this.services;
   }
 
-  identify(callback: Function) {
-    callback();
+  getControllers(): Controller[] {
+    return [];
   }
 
+  identify(): void {}
+
   protected initAccessoryInformation(): Service {
-    const accessoryInformation = new HomebridgeAPI.hap.Service.AccessoryInformation(null, null);
-    accessoryInformation
-      .setCharacteristic(Characteristic.Name, this.name)
+    const accessoryInformation = this.accessory.getService(
+      this.platform.Service.AccessoryInformation
+    );
+    accessoryInformation!
+      .setCharacteristic(Characteristic.Name, this.accessory.displayName)
       .setCharacteristic(Characteristic.Manufacturer, 'Comelit')
       .setCharacteristic(Characteristic.Model, 'None')
       .setCharacteristic(Characteristic.FirmwareRevision, 'None')
-      .setCharacteristic(Characteristic.SerialNumber, this.device.objectId);
+      .setCharacteristic(Characteristic.SerialNumber, this.accessory.context.objectId);
     return accessoryInformation;
   }
 

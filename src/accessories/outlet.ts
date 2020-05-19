@@ -1,15 +1,10 @@
 import { ComelitAccessory } from './comelit';
 import { ComelitClient, OutletDeviceData } from 'comelit-client';
-import {
-  Categories,
-  Characteristic,
-  CharacteristicEventTypes,
-  Formats,
-  Perms,
-  Service,
-} from 'hap-nodejs';
+import { Characteristic, CharacteristicEventTypes, Formats, Perms, Service } from 'hap-nodejs';
 import { HomebridgeAPI } from '../index';
 import client from 'prom-client';
+import { ComelitPlatform } from '../comelit-platform';
+import { PlatformAccessory } from 'homebridge';
 
 const singleConsumption = new client.Gauge({
   name: 'comelit_plug_consumption',
@@ -36,14 +31,26 @@ export class Outlet extends ComelitAccessory<OutletDeviceData> {
 
   private outletService: Service;
 
-  constructor(log: Function, device: OutletDeviceData, name: string, client: ComelitClient) {
-    super(log, device, name, client, Categories.OUTLET);
+  constructor(platform: ComelitPlatform, accessory: PlatformAccessory, client: ComelitClient) {
+    super(platform, accessory, client);
+  }
+
+  public update(data: OutletDeviceData) {
+    const status = parseInt(data.status);
+    this.outletService.getCharacteristic(Characteristic.On).updateValue(status > 0);
+    const power = parseFloat(data.instant_power);
+    this.outletService.getCharacteristic(Characteristic.InUse).updateValue(power > 0);
+    this.outletService.getCharacteristic(Consumption).updateValue(`${data.instant_power} W`);
+    this.log.info(`Reporting consumption for ${data.descrizione}: ${data.instant_power}Wh`);
+    singleConsumption.set({ plug_name: data.descrizione }, power);
   }
 
   protected initServices(): Service[] {
     const accessoryInformation = this.initAccessoryInformation();
 
-    this.outletService = new HomebridgeAPI.hap.Service.Outlet(this.device.descrizione, null);
+    this.outletService =
+      this.accessory.getService(this.platform.Service.Outlet) ||
+      this.accessory.addService(this.platform.Service.Outlet);
     this.outletService.addOptionalCharacteristic(Consumption);
     this.update(this.device);
     this.outletService
@@ -71,15 +78,5 @@ export class Outlet extends ComelitAccessory<OutletDeviceData> {
       });
 
     return [accessoryInformation, this.outletService];
-  }
-
-  public update(data: OutletDeviceData) {
-    const status = parseInt(data.status);
-    this.outletService.getCharacteristic(Characteristic.On).updateValue(status > 0);
-    const power = parseFloat(data.instant_power);
-    this.outletService.getCharacteristic(Characteristic.InUse).updateValue(power > 0);
-    this.outletService.getCharacteristic(Consumption).updateValue(`${data.instant_power} W`);
-    this.log(`Reporting consumption for ${data.descrizione}: ${data.instant_power}Wh`);
-    singleConsumption.set({ plug_name: data.descrizione }, power);
   }
 }

@@ -1,6 +1,6 @@
 {
   "headerDisplay": "Make sure to give set the right IP address for the HUB",
-  "footerDisplay": "See [homebridge-comelit](https://github.com/madchicken/homebridge-comelit) for more information and instructions.",
+  "footerDisplay": "See [homebridge-comelit-hub](https://github.com/madchicken/homebridge-comelit-hub) for more information and instructions.",
   "singular": false,
   "pluginAlias": "Comelit",
   "pluginType": "platform",
@@ -11,7 +11,27 @@
         "title": "Installation name",
         "type": "string",
         "required": true,
-        "default": "My Home"
+        "default": "Comelit"
+      },
+      "broker_url": {
+        "title": "MQTT Broker URL",
+        "Description": "URL of the Comelit HUB on your private network. You can use the Comelit CLI tool to discover it",
+        "type": "string",
+        "required": true,
+        "default": "mqtt://192.168.0.66"
+      },
+      "hub_username": {
+        "title": "MQTT Broker Username",
+        "type": "string",
+        "required": false
+      },
+      "hub_password": {
+        "title": "MQTT Broker Password",
+        "type": "string",
+        "required": false,
+        "x-schema-form": {
+          "type": "password"
+        }
       },
       "username": {
         "title": "Username",
@@ -29,25 +49,6 @@
           "placeholder": ""
         }
       },
-      "hub_username": {
-        "title": "Comelit HUB username",
-        "type": "string",
-        "required": false
-      },
-      "hub_password": {
-        "title": "Comelit HUB password",
-        "type": "string",
-        "required": false,
-        "x-schema-form": {
-          "type": "password"
-        }
-      },
-      "broker_url": {
-        "title": "Broker URL",
-        "type": "string",
-        "required": true,
-        "default": "mqtt://192.168.0.66"
-      },
       "blind_closing_time": {
         "title": "Time spent by the blind to get fully closed from open position (default 35 seconds)",
         "type": "number",
@@ -62,6 +63,36 @@
       },
       "avoid_duplicates": {
         "title": "Avoid mapping different devices with the same name",
+        "type": "boolean",
+        "default": false
+      },
+      "hide_lights": {
+        "title": "Avoid mapping lights",
+        "type": "boolean",
+        "default": false
+      },
+      "hide_blinds": {
+        "title": "Avoid mapping blinds",
+        "type": "boolean",
+        "default": false
+      },
+      "hide_thermostats": {
+        "title": "Avoid mapping thermostats (along with dehumidifiers)",
+        "type": "boolean",
+        "default": false
+      },
+      "hide_dehumidifiers": {
+        "title": "Avoid mapping dehumidifiers",
+        "type": "boolean",
+        "default": false
+      },
+      "hide_power_suppliers": {
+        "title": "Avoid mapping different power supplier devices (controllo carichi)",
+        "type": "boolean",
+        "default": false
+      },
+      "hide_outlets": {
+        "title": "Avoid mapping outlets",
         "type": "boolean",
         "default": false
       }
@@ -84,7 +115,13 @@
         "hub_password",
         "blind_closing_time",
         "keep_alive",
-        "avoid_duplicates"
+        "avoid_duplicates",
+        "hide_lights",
+        "hide_blinds",
+        "hide_thermostats",
+        "hide_dehumidifiers",
+        "hide_power_suppliers",
+        "hide_outlets"
       ]
     }
   ]
