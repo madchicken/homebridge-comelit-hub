@@ -52,11 +52,7 @@ export class Lightbulb extends ComelitAccessory<LightDeviceData> {
       this.accessory.getService(this.platform.Service.Lightbulb) ||
       this.accessory.addService(this.platform.Service.Lightbulb);
 
-    this.lightbulbService.addCharacteristic(Characteristic.StatusActive);
-
-    this.lightbulbService
-      .setCharacteristic(Characteristic.StatusActive, true)
-      .setCharacteristic(Characteristic.On, status === ObjectStatus.ON);
+    this.lightbulbService.setCharacteristic(Characteristic.On, status === ObjectStatus.ON);
 
     this.lightbulbService
       .getCharacteristic(Characteristic.On)
