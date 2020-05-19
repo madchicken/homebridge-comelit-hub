@@ -27,7 +27,7 @@ export class Blind extends ComelitAccessory<BlindDeviceData> {
   ) {
     super(platform, accessory, client);
     this.closingTime = (closingTime || Blind.OPENING_CLOSING_TIME) * 1000;
-    this.log.info(`Blind ${accessory.context.device.id} has closing time of ${this.closingTime}`);
+    this.log.info(`Blind ${accessory.context.id} has closing time of ${this.closingTime}`);
   }
 
   protected initServices(): Service[] {

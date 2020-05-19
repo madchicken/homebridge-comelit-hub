@@ -37,6 +37,12 @@ export interface HubConfig extends PlatformConfig {
   blind_closing_time?: number;
   keep_alive?: number;
   avoid_duplicates?: boolean;
+  hide_lights?: boolean;
+  hide_blinds?: boolean;
+  hide_thermostats?: boolean;
+  hide_dehumidifiers?: boolean;
+  hide_power_suppliers?: boolean;
+  hide_outlets?: boolean;
 }
 
 const uptime = new client.Gauge({
@@ -92,11 +98,11 @@ export class ComelitPlatform implements StaticPlatformPlugin {
     this.Service = this.api.hap.Service;
     this.Characteristic = this.api.hap.Characteristic;
     this.PlatformAccessory = this.api.platformAccessory;
-    this.api.on(APIEvent.DID_FINISH_LAUNCHING, () => this.discoverDevices());
     this.api.on(APIEvent.SHUTDOWN, () => this.shutdown());
   }
 
-  accessories(callback: (foundAccessories: AccessoryPlugin[]) => void): void {
+  async accessories(callback: (foundAccessories: AccessoryPlugin[]) => void): Promise<void> {
+    await this.discoverDevices();
     const platformAccessories = [...this.mappedAccessories.values()];
     callback(platformAccessories);
   }
@@ -107,11 +113,21 @@ export class ComelitPlatform implements StaticPlatformPlugin {
       await this.login();
       this.log.info('Building accessories list...');
       const homeIndex = await this.client.fecthHomeIndex();
-      this.mapLights(homeIndex);
-      this.mapThermostats(homeIndex);
-      this.mapBlinds(homeIndex);
-      this.mapOutlets(homeIndex);
-      this.mapSuppliers(homeIndex);
+      if (this.config.hide_lights !== true) {
+        this.mapLights(homeIndex);
+      }
+      if (this.config.hide_thermostats !== true) {
+        this.mapThermostats(homeIndex);
+      }
+      if (this.config.hide_blinds !== true) {
+        this.mapBlinds(homeIndex);
+      }
+      if (this.config.hide_outlets !== true) {
+        this.mapOutlets(homeIndex);
+      }
+      if (this.config.hide_power_suppliers !== true) {
+        this.mapSuppliers(homeIndex);
+      }
       this.log.info(`Found ${this.mappedAccessories.size} accessories`);
       this.log.info('Subscribed to root object');
     }
@@ -185,7 +201,10 @@ export class ComelitPlatform implements StaticPlatformPlugin {
         this.log.info(`Thermostat ID: ${id}, ${deviceData.descrizione}`);
         const accessory = this.createHapAccessory(deviceData);
         this.mappedAccessories.set(id, new Thermostat(this, accessory, this.client));
-        if (deviceData.sub_type === OBJECT_SUBTYPE.CLIMA_THERMOSTAT_DEHUMIDIFIER) {
+        if (
+          deviceData.sub_type === OBJECT_SUBTYPE.CLIMA_THERMOSTAT_DEHUMIDIFIER &&
+          this.config.hide_dehumidifiers !== true
+        ) {
           const uuid = this.api.hap.uuid.generate(`${deviceData.objectId}#D`);
           const thermoAccessory = new this.PlatformAccessory(
             `${accessory.displayName} (dehumidifier)`,

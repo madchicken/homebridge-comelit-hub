@@ -20,11 +20,11 @@ export abstract class ComelitAccessory<T extends DeviceData> implements Accessor
   ) {
     this.platform = platform;
     this.accessory = accessory;
+    this.device = this.accessory.context as T;
     this.log = platform.log;
     this.client = client;
     this.services = this.initServices();
     this.reachable = true;
-    this.device = this.accessory.context as T;
   }
 
   getServices(): Service[] {
@@ -46,7 +46,7 @@ export abstract class ComelitAccessory<T extends DeviceData> implements Accessor
       .setCharacteristic(Characteristic.Manufacturer, 'Comelit')
       .setCharacteristic(Characteristic.Model, 'None')
       .setCharacteristic(Characteristic.FirmwareRevision, 'None')
-      .setCharacteristic(Characteristic.SerialNumber, this.device.objectId);
+      .setCharacteristic(Characteristic.SerialNumber, this.accessory.context.objectId);
     return accessoryInformation;
   }
 
