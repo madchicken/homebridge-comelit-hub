@@ -1,9 +1,9 @@
 import { ComelitPlatform } from './comelit-platform';
-import { Homebridge } from '../types';
+import { API } from 'homebridge';
 
-export let HomebridgeAPI: Homebridge;
+export let HomebridgeAPI: API;
 
-export default function(homebridge: Homebridge) {
+export default function(homebridge: API) {
   HomebridgeAPI = homebridge;
-  homebridge.registerPlatform('homebridge-comelit-hub', 'Comelit', ComelitPlatform, false);
+  homebridge.registerPlatform('Comelit', ComelitPlatform);
 }

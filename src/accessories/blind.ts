@@ -1,14 +1,10 @@
 import { ComelitAccessory } from './comelit';
 import { BlindDeviceData, ComelitClient, ObjectStatus } from 'comelit-client';
-import {
-  Callback,
-  Categories,
-  Characteristic,
-  CharacteristicEventTypes,
-  Service,
-} from 'hap-nodejs';
+import { Callback, Characteristic, CharacteristicEventTypes, Service } from 'hap-nodejs';
 import { HomebridgeAPI } from '../index';
 import { PositionState } from 'hap-nodejs/dist/lib/gen/HomeKit';
+import { ComelitPlatform } from '../comelit-platform';
+import { PlatformAccessory } from 'homebridge';
 import Timeout = NodeJS.Timeout;
 
 export class Blind extends ComelitAccessory<BlindDeviceData> {
@@ -24,15 +20,14 @@ export class Blind extends ComelitAccessory<BlindDeviceData> {
   private positionState: number;
 
   constructor(
-    log: Function,
-    device: BlindDeviceData,
-    name: string,
+    platform: ComelitPlatform,
+    accessory: PlatformAccessory,
     client: ComelitClient,
     closingTime?: number
   ) {
-    super(log, device, name, client, Categories.WINDOW_COVERING);
+    super(platform, accessory, client);
     this.closingTime = (closingTime || Blind.OPENING_CLOSING_TIME) * 1000;
-    this.log(`Blind ${device.id} has closing time of ${this.closingTime}`);
+    this.log.info(`Blind ${accessory.context.device.id} has closing time of ${this.closingTime}`);
   }
 
   protected initServices(): Service[] {
@@ -63,7 +58,7 @@ export class Blind extends ComelitAccessory<BlindDeviceData> {
           ).value as number;
           const status = position < currentPosition ? ObjectStatus.OFF : ObjectStatus.ON;
           const delta = currentPosition - position;
-          this.log(
+          this.log.info(
             `Setting position to ${position}%. Current position is ${currentPosition}. Delta is ${delta}`
           );
           if (delta !== 0) {
@@ -85,7 +80,7 @@ export class Blind extends ComelitAccessory<BlindDeviceData> {
   private async resetTimeout() {
     // A timeout was set, this means that we are already opening or closing the blind
     // Stop the blind and calculate a rough position
-    this.log(`Stopping blind`);
+    this.log.info(`Stopping blind`);
     clearTimeout(this.timeout);
     this.timeout = null;
     await this.client.toggleDeviceStatus(
@@ -105,7 +100,7 @@ export class Blind extends ComelitAccessory<BlindDeviceData> {
       case ObjectStatus.OFF: {
         const position = this.positionFromTime();
         this.lastCommandTime = 0;
-        this.log(
+        this.log.info(
           `Blind is now at position ${position} (it was ${
             this.positionState === PositionState.DECREASING ? 'going down' : 'going up'
           })`
@@ -125,7 +120,7 @@ export class Blind extends ComelitAccessory<BlindDeviceData> {
         this.positionState = PositionState.DECREASING;
         break;
     }
-    this.log(
+    this.log.info(
       `Blind update: status ${status}, state ${this.positionState}, ts ${this.lastCommandTime}`
     );
   }
@@ -138,7 +133,7 @@ export class Blind extends ComelitAccessory<BlindDeviceData> {
       .value as number;
     // Calculate the percentage of movement
     const deltaPercentage = Math.round(delta / (this.closingTime / 100));
-    this.log(
+    this.log.info(
       `Current position ${currentPosition}, delta is ${delta} (${deltaPercentage}%). State ${this.positionState}`
     );
     if (this.positionState === PositionState.DECREASING) {

@@ -1,8 +1,9 @@
 import { ComelitAccessory } from './comelit';
-import { ComelitClient, DeviceData, LightDeviceData, ObjectStatus } from 'comelit-client';
-import { Categories, Characteristic, CharacteristicEventTypes, Service } from 'hap-nodejs';
-import { HomebridgeAPI } from '../index';
+import { ComelitClient, LightDeviceData, ObjectStatus } from 'comelit-client';
+import { Characteristic, CharacteristicEventTypes, Service } from 'hap-nodejs';
 import client from 'prom-client';
+import { PlatformAccessory } from 'homebridge';
+import { ComelitPlatform } from '../comelit-platform';
 
 const lightStatus = new client.Gauge({
   name: 'comelit_light_status',
@@ -21,22 +22,20 @@ export class Lightbulb extends ComelitAccessory<LightDeviceData> {
 
   private lightbulbService: Service;
 
-  constructor(log: Function, device: DeviceData, name: string, client: ComelitClient) {
-    super(log, device, name, client, Categories.LIGHTBULB);
+  constructor(platform: ComelitPlatform, accessory: PlatformAccessory, client: ComelitClient) {
+    super(platform, accessory, client);
   }
 
-  async identify(callback: Function) {
+  async identify() {
     if (this.isOn()) {
       this.lightbulbService.setCharacteristic(Characteristic.On, false);
       setTimeout(() => {
         this.lightbulbService.setCharacteristic(Characteristic.On, true);
-        callback();
       }, 1000);
     } else {
       this.lightbulbService.setCharacteristic(Characteristic.On, true);
       setTimeout(() => {
         this.lightbulbService.setCharacteristic(Characteristic.On, false);
-        callback();
       }, 1000);
     }
   }
@@ -49,7 +48,9 @@ export class Lightbulb extends ComelitAccessory<LightDeviceData> {
     const accessoryInformation = this.initAccessoryInformation(); // common info about the accessory
 
     const status = parseInt(this.device.status);
-    this.lightbulbService = new HomebridgeAPI.hap.Service.Lightbulb(this.name, null);
+    this.lightbulbService =
+      this.accessory.getService(this.platform.Service.Lightbulb) ||
+      this.accessory.addService(this.platform.Service.Lightbulb);
 
     this.lightbulbService.addCharacteristic(Characteristic.StatusActive);
 
@@ -75,7 +76,7 @@ export class Lightbulb extends ComelitAccessory<LightDeviceData> {
 
   public update(data: LightDeviceData) {
     const status = parseInt(data.status) === ObjectStatus.ON;
-    this.log(`Updating status of light ${this.device.id}. New status is ${status}`);
+    this.log.info(`Updating status of light ${this.device.id}. New status is ${status}`);
     lightStatus.set({ light_name: data.descrizione }, parseInt(data.status));
     if (status) {
       lightCount.inc({ light_name: data.descrizione });
