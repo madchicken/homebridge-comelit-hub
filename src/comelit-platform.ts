@@ -209,13 +209,11 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
           deviceData.sub_type === OBJECT_SUBTYPE.CLIMA_THERMOSTAT_DEHUMIDIFIER &&
           this.config.hide_dehumidifiers !== true
         ) {
-          const uuid = this.api.hap.uuid.generate(`${deviceData.objectId}#D`);
-          const thermoAccessory = new this.PlatformAccessory(
-            `${accessory.displayName} (dehumidifier)`,
-            uuid,
-            Categories.AIR_DEHUMIDIFIER
+          const thermoAccessory = this.createHapAccessory(
+            deviceData,
+            Categories.AIR_DEHUMIDIFIER,
+            `${deviceData.objectId}#D`
           );
-          thermoAccessory.context = deviceData;
           this.mappedAccessories.set(
             `${id}#D`,
             new Dehumidifier(this, thermoAccessory, this.client)
@@ -239,8 +237,8 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
     });
   }
 
-  private createHapAccessory(deviceData: DeviceData, category: Categories) {
-    const uuid = this.api.hap.uuid.generate(deviceData.id);
+  private createHapAccessory(deviceData: DeviceData, category: Categories, id?: string) {
+    const uuid = this.api.hap.uuid.generate(id || deviceData.id);
     const existingAccessory = this.accessories.find(accessory => accessory.UUID === uuid);
     const accessory =
       existingAccessory ||
