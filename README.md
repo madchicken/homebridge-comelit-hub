@@ -1,6 +1,10 @@
 [![npm version](https://badge.fury.io/js/homebridge-comelit-platform.svg)](https://badge.fury.io/js/homebridge-comelit-platform)
 
+![Homebridge](https://github.com/madchicken/homebridge-comelit-hub/raw/master/images/homebridge.png)
+
 # Comelit HUB integration for Homebridge
+
+![Comelit](https://github.com/madchicken/homebridge-comelit-hub/raw/master/images/comelit.png)
 
 This is an Homebridge platform plugin to expose Comelit Home Automation to Apple HomeKit and use it with Siri.
 The code is based on the reverse engineering of the official protocol, so expect bugs.
@@ -72,13 +76,13 @@ The plugin offers some extra configuration flag. Here is the list
 - sentry_dsn: string - DSN for Sentry monitoring (see https://sentry.com)
 - blind_closing_time: number - number of seconds your blinds take to go from fully open to fully closed (default 35)
 - keep_alive?: number - number of seconds for the MQTT keep alive message
-- avoid_duplicates?: boolean - set this to true to avoid mapping different devices with the same name (it will append a numeric postfix to the name)
-- hide_lights?: boolean - true to hide lights to HomeKit
-- hide_blinds?: boolean - true to hide blinds to HomeKit
-- hide_thermostats?: boolean - true to hide thermostats to HomeKit
-- hide_dehumidifiers?: boolean - true to hide dehumidifiers to HomeKit
-- hide_power_suppliers?: boolean - true to hide power suppliers (aka "Controllo Carichi") to HomeKit
-- hide_outlets?: boolean - true to hide outlets to HomeKit
+- avoid_duplicates: boolean - set this to true to avoid mapping different devices with the same name (it will append a numeric postfix to the name)
+- hide_lights: boolean - true to hide lights to HomeKit
+- hide_blinds: boolean - true to hide blinds to HomeKit
+- hide_thermostats: boolean - true to hide thermostats to HomeKit
+- hide_dehumidifiers: boolean - true to hide dehumidifiers to HomeKit
+- hide_power_suppliers: boolean - true to hide power suppliers (aka "Controllo Carichi") to HomeKit
+- hide_outlets: boolean - true to hide outlets to HomeKit
 
 **Note**: When hiding thermostats you will automatically exclude dehumidifiers
 
