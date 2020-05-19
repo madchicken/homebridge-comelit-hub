@@ -246,7 +246,10 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
       existingAccessory ||
       new this.PlatformAccessory(this.getDeviceName(deviceData), uuid, category);
     accessory.context = deviceData;
-    if (!existingAccessory) {
+    if (existingAccessory) {
+      this.log.info(`Reuse accessory from cache with uuid ${uuid} of type ${category}`);
+    } else {
+      this.log.info(`Registering new accessory with uuid ${uuid} of type ${category}`);
       this.api.registerPlatformAccessories('homebridge-comelit-platform', 'Comelit', [accessory]);
     }
     return accessory;
