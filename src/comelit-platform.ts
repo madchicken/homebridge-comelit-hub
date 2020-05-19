@@ -136,11 +136,11 @@ export class ComelitPlatform implements StaticPlatformPlugin {
 
   private mapSuppliers(homeIndex: HomeIndex) {
     const supplierIds = [...homeIndex.supplierIndex.keys()];
-    this.log.debug(`Found ${supplierIds.length} suppliers`);
+    this.log.info(`Found ${supplierIds.length} suppliers`);
     supplierIds.forEach(id => {
       const deviceData = homeIndex.supplierIndex.get(id);
       if (deviceData) {
-        this.log.debug(`Supplier ID: ${id}, ${deviceData.descrizione}`);
+        this.log.info(`Supplier ID: ${id}, ${deviceData.descrizione}`);
         const accessory = this.createHapAccessory(deviceData);
         this.mappedAccessories.set(id, new PowerSupplier(this, accessory, this.client));
       }
@@ -149,7 +149,7 @@ export class ComelitPlatform implements StaticPlatformPlugin {
 
   private mapOutlets(homeIndex: HomeIndex) {
     const outletIds = [...homeIndex.outletsIndex.keys()];
-    this.log.debug(`Found ${outletIds.length} outlets`);
+    this.log.info(`Found ${outletIds.length} outlets`);
     outletIds.forEach(id => {
       const deviceData = homeIndex.outletsIndex.get(id);
       if (deviceData) {
@@ -162,11 +162,11 @@ export class ComelitPlatform implements StaticPlatformPlugin {
 
   private mapBlinds(homeIndex: HomeIndex) {
     const shadeIds = [...homeIndex.blindsIndex.keys()];
-    this.log.debug(`Found ${shadeIds.length} shades`);
+    this.log.info(`Found ${shadeIds.length} shades`);
     shadeIds.forEach(id => {
       const deviceData = homeIndex.blindsIndex.get(id);
       if (deviceData) {
-        this.log.debug(`Blind ID: ${id}, ${deviceData.descrizione}`);
+        this.log.info(`Blind ID: ${id}, ${deviceData.descrizione}`);
         const accessory = this.createHapAccessory(deviceData);
         this.mappedAccessories.set(
           id,
@@ -178,11 +178,11 @@ export class ComelitPlatform implements StaticPlatformPlugin {
 
   private mapThermostats(homeIndex: HomeIndex) {
     const thermostatIds = [...homeIndex.thermostatsIndex.keys()];
-    this.log.debug(`Found ${thermostatIds.length} thermostats`);
+    this.log.info(`Found ${thermostatIds.length} thermostats`);
     thermostatIds.forEach(id => {
       const deviceData = homeIndex.thermostatsIndex.get(id);
       if (deviceData) {
-        this.log.debug(`Thermostat ID: ${id}, ${deviceData.descrizione}`);
+        this.log.info(`Thermostat ID: ${id}, ${deviceData.descrizione}`);
         const accessory = this.createHapAccessory(deviceData);
         this.mappedAccessories.set(id, new Thermostat(this, accessory, this.client));
         if (deviceData.sub_type === OBJECT_SUBTYPE.CLIMA_THERMOSTAT_DEHUMIDIFIER) {
@@ -203,7 +203,7 @@ export class ComelitPlatform implements StaticPlatformPlugin {
 
   private mapLights(homeIndex: HomeIndex) {
     const lightIds = [...homeIndex.lightsIndex.keys()];
-    this.log.debug(`Found ${lightIds.length} lights`);
+    this.log.info(`Found ${lightIds.length} lights`);
 
     lightIds.forEach(id => {
       const deviceData = homeIndex.lightsIndex.get(id);
