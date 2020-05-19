@@ -160,7 +160,7 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
     supplierIds.forEach(id => {
       const deviceData = homeIndex.supplierIndex.get(id);
       if (deviceData) {
-        this.log.info(`Supplier ID: ${id}, ${deviceData.descrizione}`);
+        this.log.debug(`Supplier ID: ${id}, ${deviceData.descrizione}`);
         const accessory = this.createHapAccessory(deviceData, Categories.OTHER);
         this.mappedAccessories.set(id, new PowerSupplier(this, accessory, this.client));
       }
@@ -173,7 +173,7 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
     outletIds.forEach(id => {
       const deviceData = homeIndex.outletsIndex.get(id);
       if (deviceData) {
-        this.log.info(`Outlet ID: ${id}, ${deviceData.descrizione}`);
+        this.log.debug(`Outlet ID: ${id}, ${deviceData.descrizione}`);
         const accessory = this.createHapAccessory(deviceData, Categories.OUTLET);
         this.mappedAccessories.set(id, new Outlet(this, accessory, this.client));
       }
@@ -186,7 +186,7 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
     shadeIds.forEach(id => {
       const deviceData = homeIndex.blindsIndex.get(id);
       if (deviceData) {
-        this.log.info(`Blind ID: ${id}, ${deviceData.descrizione}`);
+        this.log.debug(`Blind ID: ${id}, ${deviceData.descrizione}`);
         const accessory = this.createHapAccessory(deviceData, Categories.WINDOW_COVERING);
         this.mappedAccessories.set(
           id,
@@ -202,7 +202,7 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
     thermostatIds.forEach(id => {
       const deviceData = homeIndex.thermostatsIndex.get(id);
       if (deviceData) {
-        this.log.info(`Thermostat ID: ${id}, ${deviceData.descrizione}`);
+        this.log.debug(`Thermostat ID: ${id}, ${deviceData.descrizione}`);
         const accessory = this.createHapAccessory(deviceData, Categories.THERMOSTAT);
         this.mappedAccessories.set(id, new Thermostat(this, accessory, this.client));
         if (
@@ -230,7 +230,7 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
     lightIds.forEach(id => {
       const deviceData = homeIndex.lightsIndex.get(id);
       if (deviceData) {
-        this.log.info(`Light ID: ${id}, ${deviceData.descrizione}`);
+        this.log.debug(`Light ID: ${id}, ${deviceData.descrizione}`);
         const accessory = this.createHapAccessory(deviceData, Categories.LIGHTBULB);
         this.mappedAccessories.set(id, new Lightbulb(this, accessory, this.client));
       }
@@ -245,9 +245,9 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
       new this.PlatformAccessory(this.getDeviceName(deviceData), uuid, category);
     accessory.context = deviceData;
     if (existingAccessory) {
-      this.log.info(`Reuse accessory from cache with uuid ${uuid} of type ${category}`);
+      this.log.debug(`Reuse accessory from cache with uuid ${uuid} of type ${category}`);
     } else {
-      this.log.info(`Registering new accessory with uuid ${uuid} of type ${category}`);
+      this.log.debug(`Registering new accessory with uuid ${uuid} of type ${category}`);
       this.api.registerPlatformAccessories('homebridge-comelit-platform', 'Comelit', [accessory]);
     }
     return accessory;
@@ -288,7 +288,7 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
   private async login(): Promise<boolean> {
     try {
       await this.shutdown();
-      this.log.info('Creating client and logging in...');
+      this.log.info('Creating MQTT client and logging in...');
       this.client = this.client || new ComelitClient(this.updateAccessory.bind(this), this.log);
       await this.client.init(
         this.config.broker_url,

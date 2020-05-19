@@ -34,7 +34,7 @@ Add the following section to the platform array in the Homebridge config.json fi
 ```json
 {
   "platform": "Comelit",
-  "name": "My Home",
+  "name": "Comelit",
   "username": "YOUR_USERNAME",
   "password": "YOUR_PASSWORD",
   "broker_url": "mqtt://192.168.1.2"
@@ -63,22 +63,24 @@ The IP you are looking for is the `Home server` one.
 
 ## VEDO alarm support
 
-VEDO alarm is currently supported if enabled. This plugin will check with the HUB if you have it and then it will automatically
-map it as new accessory in HomeKit. Be aware to provide an alarm code in the config, otherwise the plugin won't be able
-to mount the accessory.
+VEDO alarm supported has been moved to a separate plugin: https://github.com/madchicken/homebridge-comelit-vedo
 
-```json
-{
-  "platform": "Comelit",
-  "name": "My Home",
-  "username": "YOUR_USERNAME",
-  "password": "YOUR_PASSWORD",
-  "broker_url": "mqtt://192.168.1.2",
-  "alarm_code": "12345678"
-}
-```
+## Advanced configuration
 
-You can temporary disable alarm by adding `disable_alarm: true` in your config.
+The plugin offers some extra configuration flag. Here is the list
+
+- sentry_dsn: string - DSN for Sentry monitoring (see https://sentry.com)
+- blind_closing_time: number - number of seconds your blinds take to go from fully open to fully closed (default 35)
+- keep_alive?: number - number of seconds for the MQTT keep alive message
+- avoid_duplicates?: boolean - set this to true to avoid mapping different devices with the same name (it will append a numeric postfix to the name)
+- hide_lights?: boolean - true to hide lights to HomeKit
+- hide_blinds?: boolean - true to hide blinds to HomeKit
+- hide_thermostats?: boolean - true to hide thermostats to HomeKit
+- hide_dehumidifiers?: boolean - true to hide dehumidifiers to HomeKit
+- hide_power_suppliers?: boolean - true to hide power suppliers (aka "Controllo Carichi") to HomeKit
+- hide_outlets?: boolean - true to hide outlets to HomeKit
+
+**Note**: When hiding thermostats you will automatically exclude dehumidifiers
 
 ## Prometheus Metrics
 
@@ -109,6 +111,7 @@ To enable metrics, specify `export_prometheus_metrics: true` in the platform con
 1.0.4 - Shutter timing fixes
 1.1.0 - VEDO alarm support and various fixes
 1.2.0 - Switch to use external comelit-client dependency
+2.0.0 - Major update to support Homebridge 1.1.0
 
 ## Screenshots
 
