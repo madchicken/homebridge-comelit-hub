@@ -32,10 +32,10 @@ export class Dehumidifier extends ComelitAccessory<ThermostatDeviceData> {
 
   protected initServices(): Service[] {
     const accessoryInformation = this.initAccessoryInformation();
-    this.dehumidifierService = new HomebridgeAPI.hap.Service.HumidifierDehumidifier(
-      this.device.descrizione,
-      null
-    );
+    this.dehumidifierService =
+      this.accessory.getService(this.platform.Service.HumidifierDehumidifier) ||
+      this.accessory.addService(this.platform.Service.HumidifierDehumidifier);
+
     this.dehumidifierService.addOptionalCharacteristic(
       Characteristic.RelativeHumidityDehumidifierThreshold
     );

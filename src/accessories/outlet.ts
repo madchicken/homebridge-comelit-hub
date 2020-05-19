@@ -48,7 +48,9 @@ export class Outlet extends ComelitAccessory<OutletDeviceData> {
   protected initServices(): Service[] {
     const accessoryInformation = this.initAccessoryInformation();
 
-    this.outletService = new HomebridgeAPI.hap.Service.Outlet(this.device.descrizione, null);
+    this.outletService =
+      this.accessory.getService(this.platform.Service.Outlet) ||
+      this.accessory.addService(this.platform.Service.Outlet);
     this.outletService.addOptionalCharacteristic(Consumption);
     this.update(this.device);
     this.outletService

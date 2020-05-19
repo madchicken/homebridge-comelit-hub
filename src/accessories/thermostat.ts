@@ -38,10 +38,9 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
   protected initServices(): Service[] {
     const accessoryInformation = this.initAccessoryInformation();
 
-    this.thermostatService = new HomebridgeAPI.hap.Service.Thermostat(
-      this.device.descrizione,
-      null
-    );
+    this.thermostatService =
+      this.accessory.getService(this.platform.Service.Thermostat) ||
+      this.accessory.addService(this.platform.Service.Thermostat);
     this.update(this.device);
 
     this.thermostatService

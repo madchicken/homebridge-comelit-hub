@@ -1,6 +1,7 @@
 import {
   API,
   APIEvent,
+  Categories,
   Characteristic,
   DynamicPlatformPlugin,
   Logger,
@@ -161,7 +162,7 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
       const deviceData = homeIndex.supplierIndex.get(id);
       if (deviceData) {
         this.log.info(`Supplier ID: ${id}, ${deviceData.descrizione}`);
-        const accessory = this.createHapAccessory(deviceData);
+        const accessory = this.createHapAccessory(deviceData, Categories.OTHER);
         this.mappedAccessories.set(id, new PowerSupplier(this, accessory, this.client));
       }
     });
@@ -174,7 +175,7 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
       const deviceData = homeIndex.outletsIndex.get(id);
       if (deviceData) {
         this.log.info(`Outlet ID: ${id}, ${deviceData.descrizione}`);
-        const accessory = this.createHapAccessory(deviceData);
+        const accessory = this.createHapAccessory(deviceData, Categories.OUTLET);
         this.mappedAccessories.set(id, new Outlet(this, accessory, this.client));
       }
     });
@@ -187,7 +188,7 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
       const deviceData = homeIndex.blindsIndex.get(id);
       if (deviceData) {
         this.log.info(`Blind ID: ${id}, ${deviceData.descrizione}`);
-        const accessory = this.createHapAccessory(deviceData);
+        const accessory = this.createHapAccessory(deviceData, Categories.WINDOW_COVERING);
         this.mappedAccessories.set(
           id,
           new Blind(this, accessory, this.client, this.config.blind_closing_time)
@@ -203,7 +204,7 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
       const deviceData = homeIndex.thermostatsIndex.get(id);
       if (deviceData) {
         this.log.info(`Thermostat ID: ${id}, ${deviceData.descrizione}`);
-        const accessory = this.createHapAccessory(deviceData);
+        const accessory = this.createHapAccessory(deviceData, Categories.THERMOSTAT);
         this.mappedAccessories.set(id, new Thermostat(this, accessory, this.client));
         if (
           deviceData.sub_type === OBJECT_SUBTYPE.CLIMA_THERMOSTAT_DEHUMIDIFIER &&
@@ -212,7 +213,8 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
           const uuid = this.api.hap.uuid.generate(`${deviceData.objectId}#D`);
           const thermoAccessory = new this.PlatformAccessory(
             `${accessory.displayName} (dehumidifier)`,
-            uuid
+            uuid,
+            Categories.AIR_DEHUMIDIFIER
           );
           thermoAccessory.context = deviceData;
           this.mappedAccessories.set(
@@ -232,15 +234,15 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
       const deviceData = homeIndex.lightsIndex.get(id);
       if (deviceData) {
         this.log.info(`Light ID: ${id}, ${deviceData.descrizione}`);
-        const accessory = this.createHapAccessory(deviceData);
+        const accessory = this.createHapAccessory(deviceData, Categories.LIGHTBULB);
         this.mappedAccessories.set(id, new Lightbulb(this, accessory, this.client));
       }
     });
   }
 
-  private createHapAccessory(deviceData: DeviceData) {
+  private createHapAccessory(deviceData: DeviceData, category: Categories) {
     const uuid = this.api.hap.uuid.generate(deviceData.objectId);
-    const accessory = new this.PlatformAccessory(this.getDeviceName(deviceData), uuid);
+    const accessory = new this.PlatformAccessory(this.getDeviceName(deviceData), uuid, category);
     accessory.context = deviceData;
     return accessory;
   }
