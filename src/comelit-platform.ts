@@ -1,13 +1,12 @@
 import {
-  AccessoryPlugin,
   API,
   APIEvent,
   Characteristic,
+  DynamicPlatformPlugin,
   Logger,
   PlatformAccessory,
   PlatformConfig,
   Service,
-  StaticPlatformPlugin,
 } from 'homebridge';
 import { ComelitClient, DeviceData, HomeIndex, OBJECT_SUBTYPE, ROOT_ID } from 'comelit-client';
 import express, { Express } from 'express';
@@ -57,7 +56,7 @@ expr.get('/metrics', (req, res) => {
   res.end(register.metrics());
 });
 
-export class ComelitPlatform implements StaticPlatformPlugin {
+export class ComelitPlatform implements DynamicPlatformPlugin {
   static KEEP_ALIVE_TIMEOUT = 120000;
 
   public readonly Service: typeof Service;
@@ -98,13 +97,8 @@ export class ComelitPlatform implements StaticPlatformPlugin {
     this.Service = this.api.hap.Service;
     this.Characteristic = this.api.hap.Characteristic;
     this.PlatformAccessory = this.api.platformAccessory;
+    this.api.on(APIEvent.DID_FINISH_LAUNCHING, () => this.discoverDevices());
     this.api.on(APIEvent.SHUTDOWN, () => this.shutdown());
-  }
-
-  async accessories(callback: (foundAccessories: AccessoryPlugin[]) => void): Promise<void> {
-    await this.discoverDevices();
-    const platformAccessories = [...this.mappedAccessories.values()];
-    callback(platformAccessories);
   }
 
   async discoverDevices() {
@@ -130,7 +124,17 @@ export class ComelitPlatform implements StaticPlatformPlugin {
       }
       this.log.info(`Found ${this.mappedAccessories.size} accessories`);
       this.log.info('Subscribed to root object');
+      const platformAccessories = [...this.mappedAccessories.values()].map(a => a.accessory);
+      this.api.registerPlatformAccessories(
+        'homebridge-comelit-platform',
+        'Comelit',
+        platformAccessories
+      );
     }
+  }
+
+  configureAccessory(accessory: PlatformAccessory): void {
+    this.log.info('Loading accessory from cache:', accessory.displayName);
   }
 
   private hasValidConfig() {
