@@ -83,6 +83,8 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
 
   private mappedNames: { [key: string]: boolean };
 
+  public readonly accessories: PlatformAccessory[] = [];
+
   constructor(log: Logger, config: HubConfig, api: API) {
     if (config && config.sentry_dsn) {
       Sentry.init({ dsn: config.sentry_dsn });
@@ -125,17 +127,14 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
       }
       this.log.info(`Found ${this.mappedAccessories.size} accessories`);
       this.log.info('Subscribed to root object');
-      const platformAccessories = [...this.mappedAccessories.values()].map(a => a.accessory);
-      this.api.registerPlatformAccessories(
-        'homebridge-comelit-platform',
-        'Comelit',
-        platformAccessories
-      );
     }
   }
 
   configureAccessory(accessory: PlatformAccessory): void {
     this.log.info('Loading accessory from cache:', accessory.displayName);
+
+    // add the restored accessory to the accessories cache so we can track if it has already been registered
+    this.accessories.push(accessory);
   }
 
   private hasValidConfig() {
@@ -241,9 +240,15 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
   }
 
   private createHapAccessory(deviceData: DeviceData, category: Categories) {
-    const uuid = this.api.hap.uuid.generate(deviceData.objectId);
-    const accessory = new this.PlatformAccessory(this.getDeviceName(deviceData), uuid, category);
+    const uuid = this.api.hap.uuid.generate(deviceData.id);
+    const existingAccessory = this.accessories.find(accessory => accessory.UUID === uuid);
+    const accessory =
+      existingAccessory ||
+      new this.PlatformAccessory(this.getDeviceName(deviceData), uuid, category);
     accessory.context = deviceData;
+    if (!existingAccessory) {
+      this.api.registerPlatformAccessories('homebridge-comelit-platform', 'Comelit', [accessory]);
+    }
     return accessory;
   }
 
