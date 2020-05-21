@@ -1,6 +1,5 @@
 import { ComelitClient, DeviceData } from 'comelit-client';
-import { Characteristic, Controller, Service } from 'hap-nodejs';
-import { AccessoryPlugin, Logger, PlatformAccessory } from 'homebridge';
+import { AccessoryPlugin, Controller, Logger, PlatformAccessory, Service } from 'homebridge';
 import { ComelitPlatform } from '../comelit-platform';
 
 export abstract class ComelitAccessory<T extends DeviceData> implements AccessoryPlugin {
@@ -42,11 +41,14 @@ export abstract class ComelitAccessory<T extends DeviceData> implements Accessor
       this.platform.Service.AccessoryInformation
     );
     accessoryInformation!
-      .setCharacteristic(Characteristic.Name, this.accessory.displayName)
-      .setCharacteristic(Characteristic.Manufacturer, 'Comelit')
-      .setCharacteristic(Characteristic.Model, 'None')
-      .setCharacteristic(Characteristic.FirmwareRevision, 'None')
-      .setCharacteristic(Characteristic.SerialNumber, this.accessory.context.objectId);
+      .setCharacteristic(this.platform.Characteristic.Name, this.accessory.displayName)
+      .setCharacteristic(this.platform.Characteristic.Manufacturer, 'Comelit')
+      .setCharacteristic(this.platform.Characteristic.Model, 'None')
+      .setCharacteristic(this.platform.Characteristic.FirmwareRevision, 'None')
+      .setCharacteristic(
+        this.platform.Characteristic.SerialNumber,
+        this.accessory.context.objectId
+      );
     return accessoryInformation;
   }
 
