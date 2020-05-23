@@ -1,8 +1,7 @@
 import { ComelitAccessory } from './comelit';
 import { ComelitClient, LightDeviceData, ObjectStatus } from 'comelit-client';
-import { Characteristic, CharacteristicEventTypes, Service } from 'hap-nodejs';
 import client from 'prom-client';
-import { PlatformAccessory } from 'homebridge';
+import { PlatformAccessory, CharacteristicEventTypes, Service } from 'homebridge';
 import { ComelitPlatform } from '../comelit-platform';
 
 const lightStatus = new client.Gauge({
@@ -27,6 +26,7 @@ export class Lightbulb extends ComelitAccessory<LightDeviceData> {
   }
 
   async identify() {
+    const Characteristic = this.platform.Characteristic;
     if (this.isOn()) {
       this.lightbulbService.setCharacteristic(Characteristic.On, false);
       setTimeout(() => {
@@ -47,6 +47,7 @@ export class Lightbulb extends ComelitAccessory<LightDeviceData> {
   protected initServices(): Service[] {
     const accessoryInformation = this.initAccessoryInformation(); // common info about the accessory
 
+    const Characteristic = this.platform.Characteristic;
     const status = parseInt(this.device.status);
     this.lightbulbService =
       this.accessory.getService(this.platform.Service.Lightbulb) ||
@@ -71,6 +72,7 @@ export class Lightbulb extends ComelitAccessory<LightDeviceData> {
   }
 
   public update(data: LightDeviceData) {
+    const Characteristic = this.platform.Characteristic;
     const status = parseInt(data.status) === ObjectStatus.ON;
     this.log.info(`Updating status of light ${this.device.id}. New status is ${status}`);
     lightStatus.set({ light_name: data.descrizione }, parseInt(data.status));

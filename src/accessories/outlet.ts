@@ -1,29 +1,14 @@
 import { ComelitAccessory } from './comelit';
 import { ComelitClient, OutletDeviceData } from 'comelit-client';
-import { Characteristic, CharacteristicEventTypes, Formats, Perms, Service } from 'hap-nodejs';
-import { HomebridgeAPI } from '../index';
 import client from 'prom-client';
 import { ComelitPlatform } from '../comelit-platform';
-import { PlatformAccessory } from 'homebridge';
+import { PlatformAccessory, CharacteristicEventTypes, Service } from 'homebridge';
 
 const singleConsumption = new client.Gauge({
   name: 'comelit_plug_consumption',
   help: 'Consumption for single line in Wh',
   labelNames: ['plug_name'],
 });
-
-class Consumption extends Characteristic {
-  static readonly UUID: string = '00000029-0000-2000-8000-0026BB765291';
-
-  constructor() {
-    super('Power consumption', Consumption.UUID);
-    this.setProps({
-      format: Formats.STRING,
-      perms: [Perms.READ, Perms.WRITE, Perms.NOTIFY],
-    });
-    this.value = this.getDefaultValue();
-  }
-}
 
 export class Outlet extends ComelitAccessory<OutletDeviceData> {
   static readonly ON = 1;
@@ -36,22 +21,21 @@ export class Outlet extends ComelitAccessory<OutletDeviceData> {
   }
 
   public update(data: OutletDeviceData) {
+    const Characteristic = this.platform.Characteristic;
     const status = parseInt(data.status);
     this.outletService.getCharacteristic(Characteristic.On).updateValue(status > 0);
     const power = parseFloat(data.instant_power);
     this.outletService.getCharacteristic(Characteristic.InUse).updateValue(power > 0);
-    this.outletService.getCharacteristic(Consumption).updateValue(`${data.instant_power} W`);
-    this.log.info(`Reporting consumption for ${data.descrizione}: ${data.instant_power}Wh`);
     singleConsumption.set({ plug_name: data.descrizione }, power);
   }
 
   protected initServices(): Service[] {
     const accessoryInformation = this.initAccessoryInformation();
 
+    const Characteristic = this.platform.Characteristic;
     this.outletService =
       this.accessory.getService(this.platform.Service.Outlet) ||
       this.accessory.addService(this.platform.Service.Outlet);
-    this.outletService.addOptionalCharacteristic(Consumption);
     this.update(this.device);
     this.outletService
       .getCharacteristic(Characteristic.InUse)
@@ -71,12 +55,6 @@ export class Outlet extends ComelitAccessory<OutletDeviceData> {
           callback(e);
         }
       });
-    this.outletService
-      .getCharacteristic(Consumption)
-      .on(CharacteristicEventTypes.GET, async (callback: Function) => {
-        callback(null, `${this.device.instant_power} W`);
-      });
-
     return [accessoryInformation, this.outletService];
   }
 }

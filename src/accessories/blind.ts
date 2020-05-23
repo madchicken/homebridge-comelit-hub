@@ -1,10 +1,8 @@
 import { ComelitAccessory } from './comelit';
 import { BlindDeviceData, ComelitClient, ObjectStatus } from 'comelit-client';
-import { Callback, Characteristic, CharacteristicEventTypes, Service } from 'hap-nodejs';
-import { HomebridgeAPI } from '../index';
-import { PositionState } from 'hap-nodejs/dist/lib/gen/HomeKit';
 import { ComelitPlatform } from '../comelit-platform';
-import { PlatformAccessory } from 'homebridge';
+import { PlatformAccessory, Callback, CharacteristicEventTypes, Service } from 'homebridge';
+import { PositionState } from './hap';
 import Timeout = NodeJS.Timeout;
 
 export class Blind extends ComelitAccessory<BlindDeviceData> {
@@ -33,6 +31,7 @@ export class Blind extends ComelitAccessory<BlindDeviceData> {
   protected initServices(): Service[] {
     const accessoryInformation = this.initAccessoryInformation();
 
+    const Characteristic = this.platform.Characteristic;
     this.coveringService =
       this.accessory.getService(this.platform.Service.WindowCovering) ||
       this.accessory.addService(this.platform.Service.WindowCovering);
@@ -89,6 +88,7 @@ export class Blind extends ComelitAccessory<BlindDeviceData> {
   }
 
   public update(data: BlindDeviceData) {
+    const Characteristic = this.platform.Characteristic;
     const status = parseInt(data.status);
     const now = new Date().getTime();
     switch (status) {
@@ -125,6 +125,7 @@ export class Blind extends ComelitAccessory<BlindDeviceData> {
   }
 
   private positionFromTime() {
+    const Characteristic = this.platform.Characteristic;
     const now = new Date().getTime();
     // Calculate the number of milliseconds the blind moved
     const delta = now - this.lastCommandTime;

@@ -1,9 +1,8 @@
 import { ComelitAccessory } from './comelit';
-import { Service } from 'hap-nodejs';
 import { ComelitClient, SupplierDeviceData } from 'comelit-client';
 import client from 'prom-client';
 import { ComelitPlatform } from '../comelit-platform';
-import { PlatformAccessory } from 'homebridge';
+import { PlatformAccessory, Service } from 'homebridge';
 
 const consumption = new client.Gauge({
   name: 'comelit_total_consumption',

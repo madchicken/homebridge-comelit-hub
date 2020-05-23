@@ -1,15 +1,13 @@
 import { ComelitAccessory } from './comelit';
 import { ClimaMode, ClimaOnOff, ComelitClient, ThermostatDeviceData } from 'comelit-client';
-import { Characteristic, CharacteristicEventTypes, Service, VoidCallback } from 'hap-nodejs';
-import { HomebridgeAPI } from '../index';
+import client from 'prom-client';
+import { ComelitPlatform } from '../comelit-platform';
+import { CharacteristicEventTypes, PlatformAccessory, Service, VoidCallback } from 'homebridge';
 import {
   Active,
   CurrentHumidifierDehumidifierState,
   TargetHumidifierDehumidifierState,
-} from 'hap-nodejs/dist/lib/gen/HomeKit';
-import client from 'prom-client';
-import { ComelitPlatform } from '../comelit-platform';
-import { PlatformAccessory } from 'homebridge';
+} from './hap';
 
 const dehumidifierStatus = new client.Gauge({
   name: 'comelit_dehumidifier_status',
@@ -27,10 +25,10 @@ export class Dehumidifier extends ComelitAccessory<ThermostatDeviceData> {
 
   constructor(platform: ComelitPlatform, accessory: PlatformAccessory, client: ComelitClient) {
     super(platform, accessory, client);
-    // this.uuid_base = `${device.objectId}#D`;
   }
 
   protected initServices(): Service[] {
+    const Characteristic = this.platform.Characteristic;
     const accessoryInformation = this.initAccessoryInformation();
     this.dehumidifierService =
       this.accessory.getService(this.platform.Service.HumidifierDehumidifier) ||
@@ -106,6 +104,7 @@ export class Dehumidifier extends ComelitAccessory<ThermostatDeviceData> {
   }
 
   public update(data: ThermostatDeviceData): void {
+    const Characteristic = this.platform.Characteristic;
     const isOff = this.isOff(data);
     const isAuto = this.isAuto(data);
     this.log.info(
