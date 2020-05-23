@@ -7,15 +7,10 @@ import {
   ThermoSeason,
   ThermostatDeviceData,
 } from 'comelit-client';
-import { Characteristic, CharacteristicEventTypes, Service, VoidCallback } from 'hap-nodejs';
-import { HomebridgeAPI } from '../index';
-import {
-  TargetHeatingCoolingState,
-  TemperatureDisplayUnits,
-} from 'hap-nodejs/dist/lib/gen/HomeKit';
+import { TargetHeatingCoolingState, TemperatureDisplayUnits } from './hap';
 import client from 'prom-client';
 import { ComelitPlatform } from '../comelit-platform';
-import { PlatformAccessory } from 'homebridge';
+import { PlatformAccessory, CharacteristicEventTypes, Service, VoidCallback } from 'homebridge';
 
 const thermostatStatus = new client.Gauge({
   name: 'comelit_thermostat_status',
@@ -38,6 +33,7 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
   protected initServices(): Service[] {
     const accessoryInformation = this.initAccessoryInformation();
 
+    const Characteristic = this.platform.Characteristic;
     this.thermostatService =
       this.accessory.getService(this.platform.Service.Thermostat) ||
       this.accessory.addService(this.platform.Service.Thermostat);
@@ -108,6 +104,7 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
   }
 
   public update(data: ThermostatDeviceData): void {
+    const Characteristic = this.platform.Characteristic;
     const currentCoolingState = this.isOff()
       ? TargetHeatingCoolingState.OFF
       : this.isWinter()
