@@ -118,7 +118,7 @@ export class Dehumidifier extends ComelitAccessory<ThermostatDeviceData> {
     const isAuto = auto_man === ClimaMode.OFF_AUTO || auto_man === ClimaMode.AUTO;
     const isWorking = isOn && data.status === STATUS_ON;
 
-    console.log(
+    this.log.info(
       `Dehumidifier status is ${isOff ? 'OFF' : 'ON'}, ${
         isAuto ? 'auto mode' : 'manual mode'
       }, Humidity level ${parseInt(data.umidita)}%, threshold ${
@@ -149,7 +149,7 @@ export class Dehumidifier extends ComelitAccessory<ThermostatDeviceData> {
       .updateValue(TargetHumidifierDehumidifierState.DEHUMIDIFIER);
     this.dehumidifierService
       .getCharacteristic(Characteristic.Active)
-      .updateValue(isWorking ? Active.INACTIVE : Active.ACTIVE);
+      .updateValue(isWorking ? Active.ACTIVE : Active.INACTIVE);
 
     dehumidifierStatus.set({ dehumidifier_name: data.descrizione }, isWorking ? 0 : 1);
     dehumidifierHumidity.set({ dehumidifier_name: data.descrizione }, parseInt(data.umidita));
