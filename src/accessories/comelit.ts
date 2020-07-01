@@ -1,8 +1,15 @@
 import { ComelitClient, DeviceData } from 'comelit-client';
-import { AccessoryPlugin, Controller, Logger, PlatformAccessory, Service } from 'homebridge';
+import {
+  AccessoryPlugin,
+  Controller,
+  Logger,
+  PlatformAccessory,
+  PlatformAccessoryEvent,
+  Service,
+} from 'homebridge';
 import { ComelitPlatform } from '../comelit-platform';
 
-export abstract class ComelitAccessory<T extends DeviceData> implements AccessoryPlugin {
+export abstract class ComelitAccessory<T extends DeviceData> {
   readonly platform: ComelitPlatform;
   readonly accessory: PlatformAccessory;
   readonly log: Logger;
@@ -24,6 +31,7 @@ export abstract class ComelitAccessory<T extends DeviceData> implements Accessor
     this.client = client;
     this.services = this.initServices();
     this.reachable = true;
+    this.accessory.on(PlatformAccessoryEvent.IDENTIFY, () => this.identify());
   }
 
   getServices(): Service[] {
