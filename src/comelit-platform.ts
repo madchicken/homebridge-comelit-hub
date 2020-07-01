@@ -109,7 +109,7 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
       this.mappedNames = {};
       await this.login();
       this.log.info('Building accessories list...');
-      const homeIndex = await this.client.fecthHomeIndex();
+      const homeIndex = await this.client.fetchHomeIndex();
       if (this.config.hide_lights !== true) {
         this.mapLights(homeIndex);
       }
@@ -290,14 +290,14 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
       await this.shutdown();
       this.log.info('Creating MQTT client and logging in...');
       this.client = this.client || new ComelitClient(this.updateAccessory.bind(this), this.log);
-      await this.client.init(
-        this.config.broker_url,
-        this.config.username,
-        this.config.password,
-        this.config.hub_username,
-        this.config.hub_password,
-        this.config.client_id
-      );
+      await this.client.init({
+        host: this.config.broker_url,
+        username: this.config.username,
+        password: this.config.password,
+        hub_username: this.config.hub_username,
+        hub_password: this.config.hub_password,
+        clientId: this.config.client_id,
+      });
       if (!this.server && this.config.export_prometheus_metrics) {
         this.server = expr.listen(this.config.exporter_http_port || DEFAULT_HTTP_PORT);
       }

@@ -1,6 +1,6 @@
 {
   "name": "homebridge-comelit-platform",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "author": "Pierpaolo Follia",
   "repository": {
     "type": "git",
@@ -38,13 +38,13 @@
   },
   "dependencies": {
     "@sentry/node": "5.12.2",
-    "async-mqtt": "^2.4.2",
-    "comelit-client": "1.6.2",
+    "async-mqtt": "^2.6.1",
+    "comelit-client": "1.7.2",
     "express": "^4.17.1",
     "lodash": "^4.17.15",
-    "mqtt": "^3.0.0",
-    "mqtt-packet": "^6.3.0",
-    "prom-client": "^11.5.3",
+    "mqtt": "^4.1.0",
+    "mqtt-packet": "^6.3.2",
+    "prom-client": "^12.0.0",
     "typescript": "^3.7.4"
   },
   "devDependencies": {
@@ -52,6 +52,7 @@
     "@types/lodash": "^4.14.149",
     "@types/mqtt": "^2.5.0",
     "@types/node": "^11.15.3",
+    "@types/jest": "^25.2.3",
     "@typescript-eslint/eslint-plugin": "^2.14.0",
     "@typescript-eslint/parser": "^2.14.0",
     "hap-nodejs": "^0.7.3",
