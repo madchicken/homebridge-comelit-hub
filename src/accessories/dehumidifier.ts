@@ -4,12 +4,18 @@ import {
   ClimaOnOff,
   ComelitClient,
   STATUS_ON,
-  ThermoSeason,
   ThermostatDeviceData,
 } from 'comelit-client';
 import client from 'prom-client';
 import { ComelitPlatform } from '../comelit-platform';
-import { CharacteristicEventTypes, PlatformAccessory, Service, VoidCallback } from 'homebridge';
+import {
+  CharacteristicEventTypes,
+  CharacteristicSetCallback,
+  CharacteristicGetCallback,
+  PlatformAccessory,
+  Service,
+  VoidCallback,
+} from 'homebridge';
 import {
   Active,
   CurrentHumidifierDehumidifierState,
@@ -29,6 +35,7 @@ const dehumidifierHumidity = new client.Gauge({
 
 export class Dehumidifier extends ComelitAccessory<ThermostatDeviceData> {
   private dehumidifierService: Service;
+  private humiditySensor: Service;
 
   constructor(platform: ComelitPlatform, accessory: PlatformAccessory, client: ComelitClient) {
     super(platform, accessory, client);
@@ -89,23 +96,33 @@ export class Dehumidifier extends ComelitAccessory<ThermostatDeviceData> {
 
     this.dehumidifierService
       .getCharacteristic(Characteristic.Active)
-      .on(CharacteristicEventTypes.SET, async (state: number, callback: VoidCallback) => {
-        try {
-          this.log.info(
-            `Modifying active state of ${this.accessory.displayName}-dehumidifier to ${state}`
-          );
-          switch (state) {
-            case Active.ACTIVE:
-              await this.client.switchHumidifierMode(this.device.id, ClimaMode.MANUAL);
-              break;
-            case Active.INACTIVE:
-              await this.client.toggleHumidifierStatus(this.device.id, ClimaOnOff.OFF_HUMI);
-              break;
+      .on(
+        CharacteristicEventTypes.SET,
+        async (state: number, callback: CharacteristicSetCallback) => {
+          try {
+            this.log.info(
+              `Modifying active state of ${this.accessory.displayName}-dehumidifier to ${state}`
+            );
+            switch (state) {
+              case Active.ACTIVE:
+                await this.client.switchHumidifierMode(this.device.id, ClimaMode.MANUAL);
+                break;
+              case Active.INACTIVE:
+                await this.client.toggleHumidifierStatus(this.device.id, ClimaOnOff.OFF_HUMI);
+                break;
+            }
+            callback();
+          } catch (e) {
+            callback(e);
           }
-          callback();
-        } catch (e) {
-          callback(e);
         }
+      );
+
+    this.humiditySensor = this.accessory.getService(this.platform.Service.HumiditySensor);
+    this.humiditySensor
+      .getCharacteristic(Characteristic.CurrentRelativeHumidity)
+      .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
+        callback(null, parseInt(this.device.umidita));
       });
     return [accessoryInformation, this.dehumidifierService];
   }
@@ -149,7 +166,7 @@ export class Dehumidifier extends ComelitAccessory<ThermostatDeviceData> {
       .updateValue(TargetHumidifierDehumidifierState.DEHUMIDIFIER);
     this.dehumidifierService
       .getCharacteristic(Characteristic.Active)
-      .updateValue(isWorking ? Active.ACTIVE : Active.INACTIVE);
+      .updateValue(isOn ? Active.ACTIVE : Active.INACTIVE);
 
     dehumidifierStatus.set({ dehumidifier_name: data.descrizione }, isWorking ? 0 : 1);
     dehumidifierHumidity.set({ dehumidifier_name: data.descrizione }, parseInt(data.umidita));
