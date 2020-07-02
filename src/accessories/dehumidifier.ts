@@ -118,7 +118,9 @@ export class Dehumidifier extends ComelitAccessory<ThermostatDeviceData> {
         }
       );
 
-    this.humiditySensor = this.accessory.getService(this.platform.Service.HumiditySensor);
+    this.humiditySensor =
+      this.accessory.getService(this.platform.Service.HumiditySensor) ||
+      this.accessory.addService(this.platform.Service.HumiditySensor);
     this.humiditySensor
       .getCharacteristic(Characteristic.CurrentRelativeHumidity)
       .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
