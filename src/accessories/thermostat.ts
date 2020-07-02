@@ -10,7 +10,13 @@ import {
 import { TargetHeatingCoolingState, TemperatureDisplayUnits } from './hap';
 import client from 'prom-client';
 import { ComelitPlatform } from '../comelit-platform';
-import { CharacteristicEventTypes, PlatformAccessory, Service, VoidCallback } from 'homebridge';
+import {
+  CharacteristicEventTypes,
+  CharacteristicGetCallback,
+  PlatformAccessory,
+  Service,
+  VoidCallback,
+} from 'homebridge';
 
 const thermostatStatus = new client.Gauge({
   name: 'comelit_thermostat_status',
@@ -25,6 +31,7 @@ const thermostatTemperature = new client.Gauge({
 
 export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
   private thermostatService: Service;
+  private temperatureSensor: Service;
 
   constructor(platform: ComelitPlatform, accessory: PlatformAccessory, client: ComelitClient) {
     super(platform, accessory, client);
@@ -93,7 +100,17 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
         }
       });
 
-    return [accessoryInformation, this.thermostatService];
+    this.temperatureSensor =
+      this.accessory.getService(this.platform.Service.TemperatureSensor) ||
+      this.accessory.addService(this.platform.Service.TemperatureSensor);
+
+    this.temperatureSensor
+      .getCharacteristic(Characteristic.CurrentTemperature)
+      .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
+        callback(null, parseInt(this.device.temperatura) / 10);
+      });
+
+    return [accessoryInformation, this.thermostatService, this.temperatureSensor];
   }
 
   private async setTargetTemperature(temperature: number) {
