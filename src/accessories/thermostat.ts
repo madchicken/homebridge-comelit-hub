@@ -7,16 +7,10 @@ import {
   ThermoSeason,
   ThermostatDeviceData,
 } from 'comelit-client';
-import { TargetHeatingCoolingState, TemperatureDisplayUnits } from './hap';
+import { TargetHeatingCoolingState } from './hap';
 import client from 'prom-client';
 import { ComelitPlatform } from '../comelit-platform';
-import {
-  CharacteristicEventTypes,
-  CharacteristicGetCallback,
-  PlatformAccessory,
-  Service,
-  VoidCallback,
-} from 'homebridge';
+import { CharacteristicEventTypes, PlatformAccessory, Service, VoidCallback } from 'homebridge';
 
 const thermostatStatus = new client.Gauge({
   name: 'comelit_thermostat_status',
@@ -31,7 +25,6 @@ const thermostatTemperature = new client.Gauge({
 
 export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
   private thermostatService: Service;
-  private temperatureSensor: Service;
 
   constructor(platform: ComelitPlatform, accessory: PlatformAccessory, client: ComelitClient) {
     super(platform, accessory, client);
@@ -100,17 +93,7 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
         }
       });
 
-    this.temperatureSensor =
-      this.accessory.getService(this.platform.Service.TemperatureSensor) ||
-      this.accessory.addService(this.platform.Service.TemperatureSensor);
-
-    this.temperatureSensor
-      .getCharacteristic(Characteristic.CurrentTemperature)
-      .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
-        callback(null, parseInt(this.device.temperatura) / 10);
-      });
-
-    return [accessoryInformation, this.thermostatService, this.temperatureSensor];
+    return [accessoryInformation, this.thermostatService];
   }
 
   private async setTargetTemperature(temperature: number) {
@@ -156,9 +139,10 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
         targetState = TargetHeatingCoolingState.COOL;
       }
     }
-    this.thermostatService
-      .getCharacteristic(Characteristic.TargetHeatingCoolingState)
-      .updateValue(targetState);
+    this.thermostatService.updateCharacteristic(
+      Characteristic.TargetHeatingCoolingState,
+      targetState
+    );
 
     const temperature = data.temperatura ? parseFloat(data.temperatura) / 10 : 0;
     const targetTemperature = data.soglia_attiva ? parseFloat(data.soglia_attiva) / 10 : 0;
@@ -169,16 +153,12 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
         data.est_inv === ThermoSeason.WINTER ? 'winter' : 'summer'
       }, Temperature ${temperature}°, threshold ${targetTemperature}°`
     );
-    this.thermostatService
-      .getCharacteristic(Characteristic.CurrentTemperature)
-      .updateValue(temperature);
+    this.thermostatService.updateCharacteristic(Characteristic.CurrentTemperature, temperature);
 
-    this.thermostatService
-      .getCharacteristic(Characteristic.TargetTemperature)
-      .updateValue(targetTemperature);
-    this.thermostatService
-      .getCharacteristic(Characteristic.TemperatureDisplayUnits)
-      .updateValue(TemperatureDisplayUnits.CELSIUS);
+    this.thermostatService.updateCharacteristic(
+      Characteristic.TargetTemperature,
+      targetTemperature
+    );
 
     thermostatStatus.set({ thermostat_name: data.descrizione }, isWorking ? 0 : 1);
     thermostatTemperature.set({ thermostat_name: data.descrizione }, temperature);

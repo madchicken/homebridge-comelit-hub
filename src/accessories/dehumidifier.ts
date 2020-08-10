@@ -11,7 +11,6 @@ import { ComelitPlatform } from '../comelit-platform';
 import {
   CharacteristicEventTypes,
   CharacteristicSetCallback,
-  CharacteristicGetCallback,
   PlatformAccessory,
   Service,
   VoidCallback,
@@ -35,7 +34,6 @@ const dehumidifierHumidity = new client.Gauge({
 
 export class Dehumidifier extends ComelitAccessory<ThermostatDeviceData> {
   private dehumidifierService: Service;
-  private humiditySensor: Service;
 
   constructor(platform: ComelitPlatform, accessory: PlatformAccessory, client: ComelitClient) {
     super(platform, accessory, client);
@@ -118,15 +116,7 @@ export class Dehumidifier extends ComelitAccessory<ThermostatDeviceData> {
         }
       );
 
-    this.humiditySensor =
-      this.accessory.getService(this.platform.Service.HumiditySensor) ||
-      this.accessory.addService(this.platform.Service.HumiditySensor);
-    this.humiditySensor
-      .getCharacteristic(Characteristic.CurrentRelativeHumidity)
-      .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
-        callback(null, parseInt(this.device.umidita));
-      });
-    return [accessoryInformation, this.dehumidifierService, this.humiditySensor];
+    return [accessoryInformation, this.dehumidifierService];
   }
 
   public update(data: ThermostatDeviceData): void {

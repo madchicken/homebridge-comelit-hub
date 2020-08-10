@@ -15,7 +15,11 @@ export class PowerSupplier extends ComelitAccessory<SupplierDeviceData> {
   }
 
   protected initServices(): Service[] {
-    return [this.initAccessoryInformation()];
+    const powerManagementService =
+      this.accessory.getService(this.platform.Service.PowerManagement) ||
+      this.accessory.addService(this.platform.Service.PowerManagement);
+
+    return [this.initAccessoryInformation(), powerManagementService];
   }
 
   update(data: SupplierDeviceData): void {
