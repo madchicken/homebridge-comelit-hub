@@ -139,10 +139,9 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
         targetState = TargetHeatingCoolingState.COOL;
       }
     }
-    this.thermostatService.updateCharacteristic(
-      Characteristic.TargetHeatingCoolingState,
-      targetState
-    );
+    this.thermostatService
+      .getCharacteristic(Characteristic.TargetHeatingCoolingState)
+      .updateValue(targetState);
 
     const temperature = data.temperatura ? parseFloat(data.temperatura) / 10 : 0;
     const targetTemperature = data.soglia_attiva ? parseFloat(data.soglia_attiva) / 10 : 0;
@@ -153,12 +152,13 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
         data.est_inv === ThermoSeason.WINTER ? 'winter' : 'summer'
       }, Temperature ${temperature}°, threshold ${targetTemperature}°`
     );
-    this.thermostatService.updateCharacteristic(Characteristic.CurrentTemperature, temperature);
+    this.thermostatService
+      .getCharacteristic(Characteristic.CurrentTemperature)
+      .updateValue(temperature);
 
-    this.thermostatService.updateCharacteristic(
-      Characteristic.TargetTemperature,
-      targetTemperature
-    );
+    this.thermostatService
+      .getCharacteristic(Characteristic.TargetTemperature)
+      .updateValue(targetTemperature);
 
     thermostatStatus.set({ thermostat_name: data.descrizione }, isWorking ? 0 : 1);
     thermostatTemperature.set({ thermostat_name: data.descrizione }, temperature);
