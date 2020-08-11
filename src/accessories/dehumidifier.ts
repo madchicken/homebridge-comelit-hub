@@ -158,7 +158,7 @@ export class Dehumidifier extends ComelitAccessory<ThermostatDeviceData> {
       .updateValue(TargetHumidifierDehumidifierState.DEHUMIDIFIER);
     this.dehumidifierService
       .getCharacteristic(Characteristic.Active)
-      .updateValue(isWorking ? Active.INACTIVE : Active.ACTIVE);
+      .updateValue(isWorking ? Active.ACTIVE : Active.INACTIVE);
 
     dehumidifierStatus.set({ dehumidifier_name: data.descrizione }, isWorking ? 0 : 1);
     dehumidifierHumidity.set({ dehumidifier_name: data.descrizione }, parseInt(data.umidita));
