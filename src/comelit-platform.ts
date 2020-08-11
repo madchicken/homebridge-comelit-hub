@@ -29,7 +29,7 @@ export interface HubConfig extends PlatformConfig {
   password: string;
   hub_username: string;
   hub_password: string;
-  broker_url: string;
+  broker_url?: string;
   client_id?: string;
   export_prometheus_metrics?: boolean;
   exporter_http_port?: number;
@@ -263,7 +263,7 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
     }
   }
 
-  async keepAlive() {
+  keepAlive() {
     this.keepAliveTimer = setTimeout(async () => {
       try {
         await this.client.ping();
@@ -272,7 +272,7 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
       } catch (e) {
         this.log.error(e);
         Sentry.captureException(e);
-        this.loginWithRetry();
+        await this.loginWithRetry();
       }
     }, this.config.keep_alive || ComelitPlatform.KEEP_ALIVE_TIMEOUT);
   }

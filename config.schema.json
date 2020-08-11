@@ -14,11 +14,11 @@
         "default": "Comelit"
       },
       "broker_url": {
-        "title": "MQTT Broker URL",
-        "Description": "URL of the Comelit HUB on your private network. You can use the Comelit CLI tool to discover it",
+        "title": "MQTT Broker URL (Optional)",
+        "Description": "URL of the Comelit HUB on your private network. You can use the Comelit CLI tool to discover it or leave it empty for auto discovery",
         "type": "string",
-        "required": true,
-        "default": "mqtt://192.168.0.66"
+        "required": false,
+        "default": ""
       },
       "hub_username": {
         "title": "MQTT Broker Username",
@@ -35,12 +35,14 @@
       },
       "username": {
         "title": "Username",
+        "description": "Username used to log into Comelit system",
         "type": "string",
         "required": true,
         "default": ""
       },
       "password": {
         "title": "Password",
+        "description": "Password used to log into Comelit system",
         "type": "string",
         "required": true,
         "default": "",
