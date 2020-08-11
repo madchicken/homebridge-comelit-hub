@@ -145,9 +145,6 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
     const comelitAccessory = this.mappedAccessories.get(id);
     if (comelitAccessory) {
       comelitAccessory.update(data);
-      if (data.sub_type === OBJECT_SUBTYPE.CLIMA_THERMOSTAT_DEHUMIDIFIER) {
-        this.mappedAccessories.get(`${id}#D`).update(data);
-      }
     }
   }
 
@@ -214,21 +211,19 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
       const deviceData = homeIndex.thermostatsIndex.get(id);
       if (deviceData) {
         this.log.debug(`Thermostat ID: ${id}, ${deviceData.descrizione}`);
-        const accessory = this.createHapAccessory(deviceData, Categories.THERMOSTAT);
-        this.mappedAccessories.set(id, new Thermostat(this, accessory, this.client));
-        if (
-          deviceData.sub_type === OBJECT_SUBTYPE.CLIMA_THERMOSTAT_DEHUMIDIFIER &&
-          this.config.hide_dehumidifiers !== true
-        ) {
-          const thermoAccessory = this.createHapAccessory(
-            deviceData,
-            Categories.AIR_DEHUMIDIFIER,
-            `${deviceData.objectId}#D`
-          );
-          this.mappedAccessories.set(
-            `${id}#D`,
-            new Dehumidifier(this, thermoAccessory, this.client)
-          );
+        if (deviceData.sub_type === OBJECT_SUBTYPE.CLIMA_THERMOSTAT_DEHUMIDIFIER) {
+          if (this.config.hide_dehumidifiers !== true) {
+            const thermoAccessory = this.createHapAccessory(
+              deviceData,
+              Categories.AIR_DEHUMIDIFIER
+            );
+            this.mappedAccessories.set(id, new Dehumidifier(this, thermoAccessory, this.client));
+          }
+        } else {
+          if (this.config.hide_thermostats !== true) {
+            const accessory = this.createHapAccessory(deviceData, Categories.THERMOSTAT);
+            this.mappedAccessories.set(id, new Thermostat(this, accessory, this.client));
+          }
         }
       }
     });

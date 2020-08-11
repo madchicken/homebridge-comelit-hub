@@ -1,4 +1,3 @@
-import { ComelitAccessory } from './comelit';
 import {
   ClimaMode,
   ClimaOnOff,
@@ -20,6 +19,7 @@ import {
   CurrentHumidifierDehumidifierState,
   TargetHumidifierDehumidifierState,
 } from './hap';
+import { Thermostat } from './thermostat';
 
 const dehumidifierStatus = new client.Gauge({
   name: 'comelit_dehumidifier_status',
@@ -32,7 +32,7 @@ const dehumidifierHumidity = new client.Gauge({
   labelNames: ['dehumidifier_name'],
 });
 
-export class Dehumidifier extends ComelitAccessory<ThermostatDeviceData> {
+export class Dehumidifier extends Thermostat {
   private dehumidifierService: Service;
 
   constructor(platform: ComelitPlatform, accessory: PlatformAccessory, client: ComelitClient) {
@@ -40,8 +40,9 @@ export class Dehumidifier extends ComelitAccessory<ThermostatDeviceData> {
   }
 
   protected initServices(): Service[] {
+    const services = super.initServices();
+
     const Characteristic = this.platform.Characteristic;
-    const accessoryInformation = this.initAccessoryInformation();
     this.dehumidifierService =
       this.accessory.getService(this.platform.Service.HumidifierDehumidifier) ||
       this.accessory.addService(this.platform.Service.HumidifierDehumidifier);
@@ -116,10 +117,12 @@ export class Dehumidifier extends ComelitAccessory<ThermostatDeviceData> {
         }
       );
 
-    return [accessoryInformation, this.dehumidifierService];
+    return [...services, this.dehumidifierService];
   }
 
   public update(data: ThermostatDeviceData): void {
+    super.update(data);
+
     const Characteristic = this.platform.Characteristic;
     const auto_man = data.auto_man_umi;
     const isOff = auto_man === ClimaMode.OFF_AUTO || auto_man === ClimaMode.OFF_MANUAL;
