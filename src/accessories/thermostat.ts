@@ -24,7 +24,7 @@ const thermostatTemperature = new client.Gauge({
 });
 
 export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
-  private thermostatService: Service;
+  protected thermostatService: Service;
 
   constructor(platform: ComelitPlatform, accessory: PlatformAccessory, client: ComelitClient) {
     super(platform, accessory, client);

@@ -33,7 +33,7 @@ const dehumidifierHumidity = new client.Gauge({
 });
 
 export class Dehumidifier extends Thermostat {
-  private dehumidifierService: Service;
+  protected dehumidifierService: Service;
 
   constructor(platform: ComelitPlatform, accessory: PlatformAccessory, client: ComelitClient) {
     super(platform, accessory, client);
@@ -123,47 +123,49 @@ export class Dehumidifier extends Thermostat {
   public update(data: ThermostatDeviceData): void {
     super.update(data);
 
-    const Characteristic = this.platform.Characteristic;
-    const auto_man = data.auto_man_umi;
-    const isOff = auto_man === ClimaMode.OFF_AUTO || auto_man === ClimaMode.OFF_MANUAL;
-    const isOn = auto_man === ClimaMode.AUTO || auto_man === ClimaMode.MANUAL;
-    const isAuto = auto_man === ClimaMode.OFF_AUTO || auto_man === ClimaMode.AUTO;
-    const isWorking = isOn && data.status === STATUS_ON;
+    if (this.dehumidifierService) {
+      const Characteristic = this.platform.Characteristic;
+      const auto_man = data.auto_man_umi;
+      const isOff = auto_man === ClimaMode.OFF_AUTO || auto_man === ClimaMode.OFF_MANUAL;
+      const isOn = auto_man === ClimaMode.AUTO || auto_man === ClimaMode.MANUAL;
+      const isAuto = auto_man === ClimaMode.OFF_AUTO || auto_man === ClimaMode.AUTO;
+      const isWorking = isOn && data.status === STATUS_ON;
 
-    console.log(
-      `Dehumidifier status is ${isOff ? 'OFF' : 'ON'}, ${
-        isAuto ? 'auto mode' : 'manual mode'
-      }, Humidity level ${parseInt(data.umidita)}%, threshold ${
-        data.soglia_attiva_umi
-      }%\nGeneral status is ${data.status === '1' ? 'ON' : 'OFF'}`
-    );
-
-    this.dehumidifierService
-      .getCharacteristic(Characteristic.CurrentRelativeHumidity)
-      .updateValue(parseInt(data.umidita));
-    this.dehumidifierService
-      .getCharacteristic(Characteristic.RelativeHumidityHumidifierThreshold)
-      .updateValue(parseInt(data.umidita));
-    this.dehumidifierService
-      .getCharacteristic(Characteristic.RelativeHumidityDehumidifierThreshold)
-      .updateValue(parseInt(data.soglia_attiva_umi));
-    this.dehumidifierService
-      .getCharacteristic(Characteristic.CurrentHumidifierDehumidifierState)
-      .updateValue(
-        isOff
-          ? CurrentHumidifierDehumidifierState.INACTIVE
-          : isWorking
-          ? CurrentHumidifierDehumidifierState.DEHUMIDIFYING
-          : CurrentHumidifierDehumidifierState.IDLE
+      console.log(
+        `Dehumidifier status is ${isOff ? 'OFF' : 'ON'}, ${
+          isAuto ? 'auto mode' : 'manual mode'
+        }, Humidity level ${parseInt(data.umidita)}%, threshold ${
+          data.soglia_attiva_umi
+        }%\nGeneral status is ${data.status === '1' ? 'ON' : 'OFF'}`
       );
-    this.dehumidifierService
-      .getCharacteristic(Characteristic.TargetHumidifierDehumidifierState)
-      .updateValue(TargetHumidifierDehumidifierState.DEHUMIDIFIER);
-    this.dehumidifierService
-      .getCharacteristic(Characteristic.Active)
-      .updateValue(isWorking ? Active.ACTIVE : Active.INACTIVE);
 
-    dehumidifierStatus.set({ dehumidifier_name: data.descrizione }, isWorking ? 0 : 1);
-    dehumidifierHumidity.set({ dehumidifier_name: data.descrizione }, parseInt(data.umidita));
+      this.dehumidifierService
+        .getCharacteristic(Characteristic.CurrentRelativeHumidity)
+        .updateValue(parseInt(data.umidita));
+      this.dehumidifierService
+        .getCharacteristic(Characteristic.RelativeHumidityHumidifierThreshold)
+        .updateValue(parseInt(data.umidita));
+      this.dehumidifierService
+        .getCharacteristic(Characteristic.RelativeHumidityDehumidifierThreshold)
+        .updateValue(parseInt(data.soglia_attiva_umi));
+      this.dehumidifierService
+        .getCharacteristic(Characteristic.CurrentHumidifierDehumidifierState)
+        .updateValue(
+          isOff
+            ? CurrentHumidifierDehumidifierState.INACTIVE
+            : isWorking
+            ? CurrentHumidifierDehumidifierState.DEHUMIDIFYING
+            : CurrentHumidifierDehumidifierState.IDLE
+        );
+      this.dehumidifierService
+        .getCharacteristic(Characteristic.TargetHumidifierDehumidifierState)
+        .updateValue(TargetHumidifierDehumidifierState.DEHUMIDIFIER);
+      this.dehumidifierService
+        .getCharacteristic(Characteristic.Active)
+        .updateValue(isWorking ? Active.ACTIVE : Active.INACTIVE);
+
+      dehumidifierStatus.set({ dehumidifier_name: data.descrizione }, isWorking ? 0 : 1);
+      dehumidifierHumidity.set({ dehumidifier_name: data.descrizione }, parseInt(data.umidita));
+    }
   }
 }
