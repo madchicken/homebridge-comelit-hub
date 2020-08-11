@@ -70,20 +70,13 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
   >();
 
   readonly log: Logger;
-
-  private readonly api: API;
-
-  private client: ComelitClient;
-
-  private readonly config: HubConfig;
-
-  private keepAliveTimer: Timeout;
-
-  private server: http.Server;
-
-  private mappedNames: { [key: string]: boolean };
-
   public readonly accessories: PlatformAccessory[] = [];
+  private readonly api: API;
+  private client: ComelitClient;
+  private readonly config: HubConfig;
+  private keepAliveTimer: Timeout;
+  private server: http.Server;
+  private mappedNames: { [key: string]: boolean };
 
   constructor(log: Logger, config: HubConfig, api: API) {
     if (config && config.sentry_dsn) {
@@ -105,29 +98,27 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
   }
 
   async discoverDevices() {
-    if (this.hasValidConfig()) {
-      this.mappedNames = {};
-      await this.login();
-      this.log.info('Building accessories list...');
-      const homeIndex = await this.client.fetchHomeIndex();
-      if (this.config.hide_lights !== true) {
-        this.mapLights(homeIndex);
-      }
-      if (this.config.hide_thermostats !== true) {
-        this.mapThermostats(homeIndex);
-      }
-      if (this.config.hide_blinds !== true) {
-        this.mapBlinds(homeIndex);
-      }
-      if (this.config.hide_outlets !== true) {
-        this.mapOutlets(homeIndex);
-      }
-      if (this.config.hide_power_suppliers !== true) {
-        this.mapSuppliers(homeIndex);
-      }
-      this.log.info(`Found ${this.mappedAccessories.size} accessories`);
-      this.log.info('Subscribed to root object');
+    this.mappedNames = {};
+    await this.login();
+    this.log.info('Building accessories list...');
+    const homeIndex = await this.client.fetchHomeIndex();
+    if (this.config.hide_lights !== true) {
+      this.mapLights(homeIndex);
     }
+    if (this.config.hide_thermostats !== true) {
+      this.mapThermostats(homeIndex);
+    }
+    if (this.config.hide_blinds !== true) {
+      this.mapBlinds(homeIndex);
+    }
+    if (this.config.hide_outlets !== true) {
+      this.mapOutlets(homeIndex);
+    }
+    if (this.config.hide_power_suppliers !== true) {
+      this.mapSuppliers(homeIndex);
+    }
+    this.log.info(`Found ${this.mappedAccessories.size} accessories`);
+    this.log.info('Subscribed to root object');
   }
 
   configureAccessory(accessory: PlatformAccessory): void {
@@ -135,10 +126,6 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
 
     // add the restored accessory to the accessories cache so we can track if it has already been registered
     this.accessories.push(accessory);
-  }
-
-  private hasValidConfig() {
-    return this.config && this.config.broker_url && this.config.username && this.config.password;
   }
 
   getDeviceName(deviceData: DeviceData): string {
@@ -152,6 +139,30 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
       this.mappedNames[key] = true;
     }
     return key;
+  }
+
+  updateAccessory(id: string, data: DeviceData) {
+    const comelitAccessory = this.mappedAccessories.get(id);
+    if (comelitAccessory) {
+      comelitAccessory.update(data);
+      if (data.sub_type === OBJECT_SUBTYPE.CLIMA_THERMOSTAT_DEHUMIDIFIER) {
+        this.mappedAccessories.get(`${id}#D`).update(data);
+      }
+    }
+  }
+
+  keepAlive() {
+    this.keepAliveTimer = setTimeout(async () => {
+      try {
+        await this.client.ping();
+        uptime.set(1);
+        this.keepAlive();
+      } catch (e) {
+        this.log.error(e);
+        Sentry.captureException(e);
+        await this.loginWithRetry();
+      }
+    }, this.config.keep_alive || ComelitPlatform.KEEP_ALIVE_TIMEOUT);
   }
 
   private mapSuppliers(homeIndex: HomeIndex) {
@@ -251,30 +262,6 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
       this.api.registerPlatformAccessories('homebridge-comelit-platform', 'Comelit', [accessory]);
     }
     return accessory;
-  }
-
-  updateAccessory(id: string, data: DeviceData) {
-    const comelitAccessory = this.mappedAccessories.get(id);
-    if (comelitAccessory) {
-      comelitAccessory.update(data);
-      if (data.sub_type === OBJECT_SUBTYPE.CLIMA_THERMOSTAT_DEHUMIDIFIER) {
-        this.mappedAccessories.get(`${id}#D`).update(data);
-      }
-    }
-  }
-
-  keepAlive() {
-    this.keepAliveTimer = setTimeout(async () => {
-      try {
-        await this.client.ping();
-        uptime.set(1);
-        this.keepAlive();
-      } catch (e) {
-        this.log.error(e);
-        Sentry.captureException(e);
-        await this.loginWithRetry();
-      }
-    }, this.config.keep_alive || ComelitPlatform.KEEP_ALIVE_TIMEOUT);
   }
 
   private async loginWithRetry() {
