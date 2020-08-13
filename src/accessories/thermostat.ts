@@ -66,6 +66,7 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
       services.push(this.dehumidifierService);
     }
 
+    this.update(this.device);
     return services;
   }
 
@@ -74,7 +75,6 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
     const service =
       this.accessory.getService(this.platform.Service.Thermostat) ||
       this.accessory.addService(this.platform.Service.Thermostat);
-    this.update(this.device);
 
     service
       .getCharacteristic(Characteristic.TargetTemperature)
@@ -143,7 +143,6 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
     service.addOptionalCharacteristic(Characteristic.RelativeHumidityDehumidifierThreshold);
     service.addOptionalCharacteristic(Characteristic.RelativeHumidityHumidifierThreshold);
     service.addOptionalCharacteristic(Characteristic.Active);
-    this.update(this.device);
 
     service
       .getCharacteristic(Characteristic.RelativeHumidityDehumidifierThreshold)
