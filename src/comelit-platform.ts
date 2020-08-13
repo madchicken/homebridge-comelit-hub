@@ -9,7 +9,7 @@ import {
   PlatformConfig,
   Service,
 } from 'homebridge';
-import { ComelitClient, DeviceData, HomeIndex, OBJECT_SUBTYPE, ROOT_ID } from 'comelit-client';
+import { ComelitClient, DeviceData, HomeIndex, ROOT_ID } from 'comelit-client';
 import express, { Express } from 'express';
 import client, { register } from 'prom-client';
 import * as http from 'http';
@@ -19,7 +19,6 @@ import { Thermostat } from './accessories/thermostat';
 import { Blind } from './accessories/blind';
 import { Outlet } from './accessories/outlet';
 import { PowerSupplier } from './accessories/power-supplier';
-import { Dehumidifier } from './accessories/dehumidifier';
 import Timeout = NodeJS.Timeout;
 
 const Sentry = require('@sentry/node');
@@ -40,7 +39,6 @@ export interface HubConfig extends PlatformConfig {
   hide_lights?: boolean;
   hide_blinds?: boolean;
   hide_thermostats?: boolean;
-  hide_dehumidifiers?: boolean;
   hide_power_suppliers?: boolean;
   hide_outlets?: boolean;
 }
@@ -211,19 +209,9 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
       const deviceData = homeIndex.thermostatsIndex.get(id);
       if (deviceData) {
         this.log.debug(`Thermostat ID: ${id}, ${deviceData.descrizione}`);
-        if (deviceData.sub_type === OBJECT_SUBTYPE.CLIMA_THERMOSTAT_DEHUMIDIFIER) {
-          if (this.config.hide_dehumidifiers !== true) {
-            const thermoAccessory = this.createHapAccessory(
-              deviceData,
-              Categories.AIR_DEHUMIDIFIER
-            );
-            this.mappedAccessories.set(id, new Dehumidifier(this, thermoAccessory, this.client));
-          }
-        } else {
-          if (this.config.hide_thermostats !== true) {
-            const accessory = this.createHapAccessory(deviceData, Categories.THERMOSTAT);
-            this.mappedAccessories.set(id, new Thermostat(this, accessory, this.client));
-          }
+        if (this.config.hide_thermostats !== true) {
+          const accessory = this.createHapAccessory(deviceData, Categories.THERMOSTAT);
+          this.mappedAccessories.set(id, new Thermostat(this, accessory, this.client));
         }
       }
     });

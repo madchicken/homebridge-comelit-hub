@@ -83,11 +83,6 @@
         "type": "boolean",
         "default": false
       },
-      "hide_dehumidifiers": {
-        "title": "Avoid mapping dehumidifiers",
-        "type": "boolean",
-        "default": false
-      },
       "hide_power_suppliers": {
         "title": "Avoid mapping different power supplier devices (controllo carichi)",
         "type": "boolean",
