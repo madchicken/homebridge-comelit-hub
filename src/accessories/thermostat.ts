@@ -161,6 +161,9 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
 
     service
       .getCharacteristic(Characteristic.TargetHumidifierDehumidifierState)
+      .setProps({
+        validValues: [2],
+      })
       .on(CharacteristicEventTypes.SET, async (state: number, callback: VoidCallback) => {
         try {
           this.log.info(
