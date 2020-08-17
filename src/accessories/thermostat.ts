@@ -318,24 +318,30 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
           isAuto ? 'auto mode' : 'manual mode'
         }, Humidity level ${parseInt(data.umidita)}%, threshold ${
           data.soglia_attiva_umi
-        }%\nGeneral status is ${data.status === '1' ? 'ON' : 'OFF'}`
+        }%\nGeneral status is ${data.status === STATUS_ON ? 'ON' : 'OFF'}`
       );
 
-      this.dehumidifierService
-        .getCharacteristic(Characteristic.CurrentRelativeHumidity)
-        .updateValue(parseInt(data.umidita));
-      this.dehumidifierService
-        .getCharacteristic(Characteristic.RelativeHumidityHumidifierThreshold)
-        .updateValue(parseInt(data.soglia_attiva_umi));
-      this.dehumidifierService
-        .getCharacteristic(Characteristic.RelativeHumidityDehumidifierThreshold)
-        .updateValue(parseInt(data.soglia_attiva_umi));
-      this.dehumidifierService
-        .getCharacteristic(Characteristic.CurrentHumidifierDehumidifierState)
-        .updateValue(currentDehumidifierState);
-      this.dehumidifierService
-        .getCharacteristic(Characteristic.TargetHumidifierDehumidifierState)
-        .updateValue(targetState);
+      this.dehumidifierService.updateCharacteristic(
+        Characteristic.CurrentRelativeHumidity,
+        parseInt(data.umidita)
+      );
+      this.dehumidifierService.updateCharacteristic(
+        Characteristic.RelativeHumidityHumidifierThreshold,
+        parseInt(data.soglia_attiva_umi)
+      );
+      this.dehumidifierService.updateCharacteristic(
+        Characteristic.RelativeHumidityDehumidifierThreshold,
+        parseInt(data.soglia_attiva_umi)
+      );
+      this.dehumidifierService.updateCharacteristic(
+        Characteristic.CurrentHumidifierDehumidifierState,
+        currentDehumidifierState
+      );
+      this.dehumidifierService.updateCharacteristic(
+        Characteristic.TargetHumidifierDehumidifierState,
+        targetState
+      );
+      this.dehumidifierService.updateCharacteristic(Characteristic.Active, isOn);
 
       dehumidifierStatus.set({ dehumidifier_name: data.descrizione }, isWorking ? 0 : 1);
       dehumidifierHumidity.set({ dehumidifier_name: data.descrizione }, parseInt(data.umidita));
