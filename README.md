@@ -40,13 +40,13 @@ Add the following section to the platform array in the Homebridge config.json fi
   "platform": "Comelit",
   "name": "Comelit",
   "username": "YOUR_USERNAME",
-  "password": "YOUR_PASSWORD",
-  "broker_url": "mqtt://192.168.1.2"
+  "password": "YOUR_PASSWORD"
 }
 ```
 
-By default username and password are both set to `admin`.
-`broker_url` is the `mqtt://` + the IP/name of your HUB in the local network.
+By default, username and password are both set to `admin`.
+You can also provide the `broker_url` as config parameter, that is the HUB IP address on your network,
+or leave it empty and let the plugin auto discover the HUB for you.
 
 ## Find the broker URL
 
@@ -62,8 +62,7 @@ You should get an output like this:
     Found hardware IcoM MAC XXXXXXXXXXXX, app Mngr version 3.0.1, system id ViP_, IcoM -  at IP [X.X.X.X]
     Found hardware D407 MAC XXXXXXXXXXXX, app HSrv version 1.2.0, system id ViP_, Home server - Comelit Hub 1 at IP [X.X.X.X]
 
-Hit CTRL+C to interrupt the scan command.
-The IP you are looking for is the `Home server` one.
+The IP you are looking for is the `app HSrv` one.
 
 ## VEDO alarm support
 
@@ -73,6 +72,7 @@ VEDO alarm supported has been moved to a separate plugin: https://github.com/mad
 
 The plugin offers some extra configuration flag. Here is the list
 
+- broker_url: string - IP of your HUB (optional)
 - sentry_dsn: string - DSN for Sentry monitoring (see https://sentry.com)
 - blind_closing_time: number - number of seconds your blinds take to go from fully open to fully closed (default 35)
 - keep_alive?: number - number of seconds for the MQTT keep alive message
@@ -106,6 +106,23 @@ To enable metrics, specify `export_prometheus_metrics: true` in the platform con
 }
 ```
 
+## Compiling from source
+
+This plugin uses `yarn`, so you need to install it before starting (see https://yarnpkg.com for instructions).
+Once you have it, just run
+
+```
+yarn && yarn build
+```
+
+inside the project folder.
+
+## Contribute
+
+Any help on this project is really welcome, so if you have some programming skill, and you want to improve
+the current implementation, fork the repo and open your PR!
+If otherwise, you simply enjoyed using this plugin, and you want to contribute in some way, you can always donate something!
+
 ## Version History
 
 1.0.0 - Initial version
@@ -116,6 +133,7 @@ To enable metrics, specify `export_prometheus_metrics: true` in the platform con
 1.1.0 - VEDO alarm support and various fixes
 1.2.0 - Switch to use external comelit-client dependency
 2.0.0 - Major update to support Homebridge 1.1.0
+2.3.0 - Auto discover HUB
 
 ## Screenshots
 
