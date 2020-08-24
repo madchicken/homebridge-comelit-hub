@@ -67,7 +67,6 @@ export class Lightbulb extends ComelitAccessory<LightDeviceData> {
         const status = yes ? ObjectStatus.ON : ObjectStatus.OFF;
         try {
           this.client.toggleDeviceStatus(this.device.id, status).then(() => {
-            this.device.status = `${status}`;
             callback();
           });
         } catch (e) {
