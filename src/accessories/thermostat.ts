@@ -152,7 +152,6 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
             `Modifying target humidity threshold of ${this.accessory.displayName}-dehumidifier to ${humidity}%`
           );
           await this.client.setHumidity(this.device.id, humidity);
-          this.device.soglia_attiva_umi = `${humidity}`;
           callback();
         } catch (e) {
           callback(e);
@@ -219,7 +218,6 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
     const normalizedTemp = temperature * 10;
     if (currentTemperature !== temperature) {
       await this.client.setTemperature(this.device.id, normalizedTemp);
-      this.device.temperatura = `${normalizedTemp}`;
     }
   }
 
