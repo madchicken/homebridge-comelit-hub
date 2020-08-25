@@ -8,7 +8,6 @@ import {
   CharacteristicGetCallback,
 } from 'homebridge';
 import { ComelitPlatform } from '../comelit-platform';
-import { callbackify } from 'util';
 
 const lightStatus = new client.Gauge({
   name: 'comelit_light_status',

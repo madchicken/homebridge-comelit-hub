@@ -249,7 +249,7 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
       : TargetHeatingCoolingState.COOL;
 
     let targetState: TargetHeatingCoolingState;
-    if (isOff || !isWorking) {
+    if (isOff) {
       targetState = TargetHeatingCoolingState.OFF;
     } else if (isAuto) {
       targetState = TargetHeatingCoolingState.AUTO;

@@ -142,7 +142,7 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
   updateAccessory(id: string, data: DeviceData) {
     const comelitAccessory = this.mappedAccessories.get(id);
     if (comelitAccessory) {
-      comelitAccessory.update(data);
+      comelitAccessory.updateDevice(data);
     }
   }
 
