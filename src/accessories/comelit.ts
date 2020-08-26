@@ -58,7 +58,7 @@ export abstract class ComelitAccessory<T extends DeviceData> {
   protected abstract update(data: T): void;
 
   updateDevice(data: T) {
-    this.device = data;
+    this.device = { ...this.device, ...data };
     this.update(data);
   }
 }

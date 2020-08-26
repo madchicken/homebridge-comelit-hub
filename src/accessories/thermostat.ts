@@ -78,6 +78,9 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
 
     service
       .getCharacteristic(Characteristic.TargetTemperature)
+      .setProps({
+        minStep: 0.1,
+      })
       .on(CharacteristicEventTypes.SET, async (temperature: number, callback: VoidCallback) => {
         try {
           await this.setTargetTemperature(temperature);
@@ -268,7 +271,9 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
         isOff ? 'OFF' : 'ON'
       }, ${isAuto ? 'auto mode' : 'manual mode'}, ${
         data.est_inv === ThermoSeason.WINTER ? 'winter' : 'summer'
-      }, Temperature ${temperature}°, threshold ${targetTemperature}°`
+      }, Temperature ${temperature}°, threshold ${targetTemperature}° (currently ${
+        isWorking ? 'active' : 'not active'
+      }`
     );
 
     this.thermostatService.updateCharacteristic(
