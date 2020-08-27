@@ -4,6 +4,7 @@ import {
   ClimaOnOff,
   ComelitClient,
   OBJECT_SUBTYPE,
+  STATUS_OFF,
   STATUS_ON,
   ThermoSeason,
   ThermostatDeviceData,
@@ -285,7 +286,7 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
     const isWinter = data.est_inv === ThermoSeason.WINTER;
     const isAuto = auto_man === ClimaMode.OFF_AUTO || auto_man === ClimaMode.AUTO;
     const isOn = auto_man === ClimaMode.AUTO || auto_man === ClimaMode.MANUAL;
-    const isWorking = isOn && data.status === STATUS_ON;
+    const isWorking = isOn && data.status !== STATUS_OFF;
 
     const currentCoolingState = isOff
       ? TargetHeatingCoolingState.OFF
@@ -348,7 +349,7 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
       const isOff = auto_man === ClimaMode.OFF_AUTO || auto_man === ClimaMode.OFF_MANUAL;
       const isOn = auto_man === ClimaMode.AUTO || auto_man === ClimaMode.MANUAL;
       const isAuto = auto_man === ClimaMode.OFF_AUTO || auto_man === ClimaMode.AUTO;
-      const isWorking = isOn && data.status === STATUS_ON;
+      const isWorking = isOn && data.status !== STATUS_OFF;
       const currentDehumidifierState = isOff
         ? CurrentHumidifierDehumidifierState.INACTIVE
         : isWorking
