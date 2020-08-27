@@ -69,6 +69,7 @@ export class Lightbulb extends ComelitAccessory<LightDeviceData> {
             callback();
           });
         } catch (e) {
+          this.log.error(e.message);
           callback(e);
         }
       })

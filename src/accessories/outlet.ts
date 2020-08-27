@@ -56,6 +56,7 @@ export class Outlet extends ComelitAccessory<OutletDeviceData> {
           await this.client.toggleDeviceStatus(this.device.id, status);
           callback();
         } catch (e) {
+          this.log.error(e.message);
           callback(e);
         }
       })

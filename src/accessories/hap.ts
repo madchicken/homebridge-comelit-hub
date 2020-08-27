@@ -1,3 +1,6 @@
+import { CharacteristicSetCallback } from 'hap-nodejs';
+import { Logger } from 'homebridge';
+
 export enum Active {
   INACTIVE = 0,
   ACTIVE = 1,

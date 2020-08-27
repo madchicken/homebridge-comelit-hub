@@ -86,6 +86,7 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
           await this.setTargetTemperature(temperature);
           callback();
         } catch (e) {
+          this.log.error(e.message);
           callback(e);
         }
       });
@@ -128,6 +129,7 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
           }
           callback();
         } catch (e) {
+          this.log.error(e.message);
           callback(e);
         }
       });
@@ -157,6 +159,7 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
           await this.client.setHumidity(this.device.id, humidity);
           callback();
         } catch (e) {
+          this.log.error(e.message);
           callback(e);
         }
       });
@@ -182,6 +185,7 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
           }
           callback();
         } catch (e) {
+          this.log.error(e.message);
           callback(e);
         }
       });
@@ -205,6 +209,7 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
             }
             callback();
           } catch (e) {
+            this.log.error(e.message);
             callback(e);
           }
         }
