@@ -5,7 +5,6 @@ import {
   ComelitClient,
   OBJECT_SUBTYPE,
   STATUS_OFF,
-  STATUS_ON,
   ThermoSeason,
   ThermostatDeviceData,
 } from 'comelit-client';
@@ -364,7 +363,7 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
           isAuto ? 'auto mode' : 'manual mode'
         }, Humidity level ${parseInt(data.umidita)}%, threshold ${
           data.soglia_attiva_umi
-        }%\nGeneral status is ${data.status === STATUS_ON ? 'ON' : 'OFF'}`
+        }%\nGeneral status is ${data.status !== STATUS_OFF ? 'ON' : 'OFF'}`
       );
 
       this.dehumidifierService.updateCharacteristic(
