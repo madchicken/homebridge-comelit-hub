@@ -249,7 +249,7 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
       .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
         const auto_man = this.device.auto_man_umi;
         const isOn = auto_man === ClimaMode.AUTO || auto_man === ClimaMode.MANUAL;
-        const isWorking = isOn && this.device.status === STATUS_ON;
+        const isWorking = isOn && this.device.status !== STATUS_OFF;
         callback(null, isWorking);
       });
 
