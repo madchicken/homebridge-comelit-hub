@@ -134,6 +134,7 @@ If otherwise, you simply enjoyed using this plugin, and you want to contribute i
 1.2.0 - Switch to use external comelit-client dependency
 2.0.0 - Major update to support Homebridge 1.1.0
 2.3.0 - Auto discover HUB
+2.3.1 - Fix major bug in HUB communication protocol
 
 ## Screenshots
 

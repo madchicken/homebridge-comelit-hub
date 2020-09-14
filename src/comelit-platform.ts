@@ -21,8 +21,6 @@ import { Outlet } from './accessories/outlet';
 import { PowerSupplier } from './accessories/power-supplier';
 import Timeout = NodeJS.Timeout;
 
-const Sentry = require('@sentry/node');
-
 export interface HubConfig extends PlatformConfig {
   username: string;
   password: string;
@@ -32,7 +30,6 @@ export interface HubConfig extends PlatformConfig {
   client_id?: string;
   export_prometheus_metrics?: boolean;
   exporter_http_port?: number;
-  sentry_dsn?: string;
   blind_closing_time?: number;
   keep_alive?: number;
   avoid_duplicates?: boolean;
@@ -69,7 +66,7 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
 
   readonly log: Logger;
   public readonly accessories: PlatformAccessory[] = [];
-  private readonly api: API;
+  readonly homebridge: API;
   private client: ComelitClient;
   private readonly config: HubConfig;
   private keepAliveTimer: Timeout;
@@ -77,22 +74,17 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
   private mappedNames: { [key: string]: boolean };
 
   constructor(log: Logger, config: HubConfig, api: API) {
-    if (config && config.sentry_dsn) {
-      Sentry.init({ dsn: config.sentry_dsn });
-    } else if (config) {
-      Sentry.captureException = () => null;
-    }
     this.log = log;
     this.log.info('Initializing platform: ', config);
     this.config = config;
     // Save the API object as plugin needs to register new accessory via this object
-    this.api = api;
+    this.homebridge = api;
     this.log.info(`homebridge API version: ${api.version}`);
-    this.Service = this.api.hap.Service;
-    this.Characteristic = this.api.hap.Characteristic;
-    this.PlatformAccessory = this.api.platformAccessory;
-    this.api.on(APIEvent.DID_FINISH_LAUNCHING, () => this.discoverDevices());
-    this.api.on(APIEvent.SHUTDOWN, () => this.shutdown());
+    this.Service = this.homebridge.hap.Service;
+    this.Characteristic = this.homebridge.hap.Characteristic;
+    this.PlatformAccessory = this.homebridge.platformAccessory;
+    this.homebridge.on(APIEvent.DID_FINISH_LAUNCHING, () => this.discoverDevices());
+    this.homebridge.on(APIEvent.SHUTDOWN, () => this.shutdown());
   }
 
   async discoverDevices() {
@@ -158,7 +150,6 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
         this.keepAlive();
       } catch (e) {
         this.log.error(e);
-        Sentry.captureException(e);
         await this.loginWithRetry();
       }
     }, this.config.keep_alive || ComelitPlatform.KEEP_ALIVE_TIMEOUT);
@@ -236,7 +227,7 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
   }
 
   private createHapAccessory(deviceData: DeviceData, category: Categories, id?: string) {
-    const uuid = this.api.hap.uuid.generate(id || deviceData.id);
+    const uuid = this.homebridge.hap.uuid.generate(id || deviceData.id);
     const existingAccessory = this.accessories.find(accessory => accessory.UUID === uuid);
     const accessory =
       existingAccessory ||
@@ -246,7 +237,9 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
       this.log.debug(`Reuse accessory from cache with uuid ${uuid} of type ${category}`);
     } else {
       this.log.debug(`Registering new accessory with uuid ${uuid} of type ${category}`);
-      this.api.registerPlatformAccessories('homebridge-comelit-platform', 'Comelit', [accessory]);
+      this.homebridge.registerPlatformAccessories('homebridge-comelit-platform', 'Comelit', [
+        accessory,
+      ]);
     }
     return accessory;
   }
@@ -277,7 +270,6 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
       }
     } catch (e) {
       this.log.error('Error initializing MQTT client', e);
-      Sentry.captureException(e);
       return false;
     }
 
@@ -288,7 +280,6 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
       return true;
     } catch (e) {
       this.log.error('Error logging in', e);
-      Sentry.captureException(e);
       return false;
     }
   }
