@@ -1,20 +1,13 @@
 import { ComelitClient, DeviceData } from 'comelit-client';
-import {
-  AccessoryPlugin,
-  Controller,
-  Logger,
-  PlatformAccessory,
-  PlatformAccessoryEvent,
-  Service,
-} from 'homebridge';
+import { Controller, Logger, PlatformAccessory, PlatformAccessoryEvent, Service } from 'homebridge';
 import { ComelitPlatform } from '../comelit-platform';
 
 export abstract class ComelitAccessory<T extends DeviceData> {
   readonly platform: ComelitPlatform;
   readonly accessory: PlatformAccessory;
   readonly log: Logger;
-  readonly device: T;
   readonly client: ComelitClient;
+  protected device: Readonly<T>;
 
   services: Service[];
   reachable: boolean;
@@ -62,5 +55,10 @@ export abstract class ComelitAccessory<T extends DeviceData> {
 
   protected abstract initServices(): Service[];
 
-  public abstract update(data: T): void;
+  protected abstract update(data: T): void;
+
+  updateDevice(data: T) {
+    this.device = { ...this.device, ...data };
+    this.update(data);
+  }
 }

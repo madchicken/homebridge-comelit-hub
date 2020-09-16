@@ -1,8 +1,13 @@
 import { ComelitAccessory } from './comelit';
-import { ComelitClient, OutletDeviceData } from 'comelit-client';
+import { ComelitClient, ObjectStatus, OutletDeviceData } from 'comelit-client';
 import client from 'prom-client';
 import { ComelitPlatform } from '../comelit-platform';
-import { PlatformAccessory, CharacteristicEventTypes, Service } from 'homebridge';
+import {
+  PlatformAccessory,
+  CharacteristicEventTypes,
+  Service,
+  CharacteristicGetCallback,
+} from 'homebridge';
 
 const singleConsumption = new client.Gauge({
   name: 'comelit_plug_consumption',
@@ -49,11 +54,14 @@ export class Outlet extends ComelitAccessory<OutletDeviceData> {
         const status = yes ? Outlet.ON : Outlet.OFF;
         try {
           await this.client.toggleDeviceStatus(this.device.id, status);
-          this.device.status = `${status}`;
           callback();
         } catch (e) {
+          this.log.error(e.message);
           callback(e);
         }
+      })
+      .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
+        callback(null, this.device.status === `${ObjectStatus.ON}`);
       });
     return [accessoryInformation, this.outletService];
   }

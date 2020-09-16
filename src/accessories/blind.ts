@@ -68,6 +68,7 @@ export class Blind extends ComelitAccessory<BlindDeviceData> {
           }
           callback();
         } catch (e) {
+          this.log.error(e.message);
           callback(e);
         }
       });

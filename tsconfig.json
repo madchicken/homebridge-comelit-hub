@@ -16,7 +16,8 @@
     "esModuleInterop": true,
     // Allow fancy language features.
     "downlevelIteration": true,
-    "outDir": "dist"
+    "outDir": "dist",
+    "inlineSourceMap": true
   },
   "lib": ["esnext"],
   "include": ["src"]

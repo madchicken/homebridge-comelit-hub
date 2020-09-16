@@ -1,7 +1,12 @@
 import { ComelitAccessory } from './comelit';
 import { ComelitClient, LightDeviceData, ObjectStatus } from 'comelit-client';
 import client from 'prom-client';
-import { PlatformAccessory, CharacteristicEventTypes, Service } from 'homebridge';
+import {
+  PlatformAccessory,
+  CharacteristicEventTypes,
+  Service,
+  CharacteristicGetCallback,
+} from 'homebridge';
 import { ComelitPlatform } from '../comelit-platform';
 
 const lightStatus = new client.Gauge({
@@ -57,15 +62,19 @@ export class Lightbulb extends ComelitAccessory<LightDeviceData> {
 
     this.lightbulbService
       .getCharacteristic(Characteristic.On)
-      .on(CharacteristicEventTypes.SET, async (yes: boolean, callback: Function) => {
+      .on(CharacteristicEventTypes.SET, (yes: boolean, callback: Function) => {
         const status = yes ? ObjectStatus.ON : ObjectStatus.OFF;
         try {
-          await this.client.toggleDeviceStatus(this.device.id, status);
-          this.device.status = `${status}`;
-          callback();
+          this.client.toggleDeviceStatus(this.device.id, status).then(() => {
+            callback();
+          });
         } catch (e) {
+          this.log.error(e.message);
           callback(e);
         }
+      })
+      .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
+        callback(null, this.device.status === `${ObjectStatus.ON}`);
       });
 
     return [accessoryInformation, this.lightbulbService];
