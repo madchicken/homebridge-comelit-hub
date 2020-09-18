@@ -1,4 +1,5 @@
 [![npm version](https://badge.fury.io/js/homebridge-comelit-platform.svg)](https://badge.fury.io/js/homebridge-comelit-platform)
+[![verified-by-homebridge](https://badgen.net/badge/homebridge/verified/purple)](https://github.com/homebridge/homebridge/wiki/Verified-Plugins)
 
 ![Homebridge](https://github.com/madchicken/homebridge-comelit-hub/raw/master/images/homebridge.png)
 
