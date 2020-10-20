@@ -47,7 +47,8 @@ const dehumidifierHumidity = new client.Gauge({
 });
 
 export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
-  protected thermostatService: Service;
+  private thermostatService: Service;
+  private temperatureService: Service;
 
   constructor(platform: ComelitPlatform, accessory: PlatformAccessory, client: ComelitClient) {
     super(platform, accessory, client);
@@ -60,7 +61,8 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
   protected initServices(): Service[] {
     const accessoryInformation = this.initAccessoryInformation();
     this.thermostatService = this.initThermostatService();
-    const services = [accessoryInformation, this.thermostatService];
+    this.temperatureService = this.initTemperatureService();
+    const services = [accessoryInformation, this.thermostatService, this.temperatureService];
 
     if (this.isDehumidifier) {
       this.dehumidifierService = this.initDehumidifierService();
@@ -71,7 +73,7 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
     return services;
   }
 
-  protected initThermostatService(): Service {
+  private initThermostatService(): Service {
     const Characteristic = this.platform.Characteristic;
     const service =
       this.accessory.getService(this.platform.Service.Thermostat) ||
@@ -153,6 +155,20 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
         callback(null, currentCoolingState);
       });
 
+    return service;
+  }
+
+  private initTemperatureService(): Service {
+    const Characteristic = this.platform.Characteristic;
+    const service =
+      this.accessory.getService(this.platform.Service.TemperatureSensor) ||
+      this.accessory.addService(this.platform.Service.TemperatureSensor);
+
+    service
+      .getCharacteristic(Characteristic.CurrentTemperature)
+      .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
+        callback(null, parseInt(this.device.temperatura) / 10);
+      });
     return service;
   }
 
@@ -307,6 +323,7 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
     }
 
     const temperature = data.temperatura ? parseFloat(data.temperatura) / 10 : 0;
+    this.temperatureService.updateCharacteristic(Characteristic.CurrentTemperature, temperature);
     const targetTemperature = data.soglia_attiva ? parseFloat(data.soglia_attiva) / 10 : 0;
     this.log.info(
       `${data.objectId} - ${this.accessory.displayName}:\nThermostat status ${
