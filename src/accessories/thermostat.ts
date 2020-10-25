@@ -66,7 +66,8 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
 
     if (this.isDehumidifier) {
       this.dehumidifierService = this.initDehumidifierService();
-      services.push(this.dehumidifierService);
+      this.humidityService = this.initHumidityService();
+      services.push(this.dehumidifierService, this.humidityService);
     }
 
     this.update(this.device);
@@ -172,7 +173,8 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
     return service;
   }
 
-  protected dehumidifierService: Service;
+  private dehumidifierService: Service;
+  private humidityService: Service;
 
   private initDehumidifierService(): Service {
     const Characteristic = this.platform.Characteristic;
@@ -268,6 +270,20 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
         callback(null, isWorking);
       });
 
+    return service;
+  }
+
+  private initHumidityService(): Service {
+    const Characteristic = this.platform.Characteristic;
+    const service =
+      this.accessory.getService(this.platform.Service.HumiditySensor) ||
+      this.accessory.addService(this.platform.Service.HumiditySensor);
+
+    service
+      .getCharacteristic(Characteristic.CurrentRelativeHumidity)
+      .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
+        callback(null, parseInt(this.device.umidita));
+      });
     return service;
   }
 
@@ -383,6 +399,10 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
         }%\nGeneral status is ${data.status !== STATUS_OFF ? 'ON' : 'OFF'}`
       );
 
+      this.humidityService.updateCharacteristic(
+        Characteristic.CurrentRelativeHumidity,
+        parseInt(data.umidita)
+      );
       this.dehumidifierService.updateCharacteristic(
         Characteristic.CurrentRelativeHumidity,
         parseInt(data.umidita)
