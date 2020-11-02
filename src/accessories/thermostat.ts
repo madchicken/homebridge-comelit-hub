@@ -47,7 +47,8 @@ const dehumidifierHumidity = new client.Gauge({
 });
 
 export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
-  protected thermostatService: Service;
+  private thermostatService: Service;
+  private temperatureService: Service;
 
   constructor(platform: ComelitPlatform, accessory: PlatformAccessory, client: ComelitClient) {
     super(platform, accessory, client);
@@ -60,18 +61,20 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
   protected initServices(): Service[] {
     const accessoryInformation = this.initAccessoryInformation();
     this.thermostatService = this.initThermostatService();
-    const services = [accessoryInformation, this.thermostatService];
+    this.temperatureService = this.initTemperatureService();
+    const services = [accessoryInformation, this.thermostatService, this.temperatureService];
 
     if (this.isDehumidifier) {
       this.dehumidifierService = this.initDehumidifierService();
-      services.push(this.dehumidifierService);
+      this.humidityService = this.initHumidityService();
+      services.push(this.dehumidifierService, this.humidityService);
     }
 
     this.update(this.device);
     return services;
   }
 
-  protected initThermostatService(): Service {
+  private initThermostatService(): Service {
     const Characteristic = this.platform.Characteristic;
     const service =
       this.accessory.getService(this.platform.Service.Thermostat) ||
@@ -156,7 +159,22 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
     return service;
   }
 
-  protected dehumidifierService: Service;
+  private initTemperatureService(): Service {
+    const Characteristic = this.platform.Characteristic;
+    const service =
+      this.accessory.getService(this.platform.Service.TemperatureSensor) ||
+      this.accessory.addService(this.platform.Service.TemperatureSensor);
+
+    service
+      .getCharacteristic(Characteristic.CurrentTemperature)
+      .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
+        callback(null, parseInt(this.device.temperatura) / 10);
+      });
+    return service;
+  }
+
+  private dehumidifierService: Service;
+  private humidityService: Service;
 
   private initDehumidifierService(): Service {
     const Characteristic = this.platform.Characteristic;
@@ -255,6 +273,20 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
     return service;
   }
 
+  private initHumidityService(): Service {
+    const Characteristic = this.platform.Characteristic;
+    const service =
+      this.accessory.getService(this.platform.Service.HumiditySensor) ||
+      this.accessory.addService(this.platform.Service.HumiditySensor);
+
+    service
+      .getCharacteristic(Characteristic.CurrentRelativeHumidity)
+      .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
+        callback(null, parseInt(this.device.umidita));
+      });
+    return service;
+  }
+
   private async setTargetTemperature(temperature: number) {
     const Characteristic = this.platform.Characteristic;
     const currentTemperature = this.thermostatService.getCharacteristic(
@@ -307,6 +339,7 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
     }
 
     const temperature = data.temperatura ? parseFloat(data.temperatura) / 10 : 0;
+    this.temperatureService.updateCharacteristic(Characteristic.CurrentTemperature, temperature);
     const targetTemperature = data.soglia_attiva ? parseFloat(data.soglia_attiva) / 10 : 0;
     this.log.info(
       `${data.objectId} - ${this.accessory.displayName}:\nThermostat status ${
@@ -366,6 +399,10 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
         }%\nGeneral status is ${data.status !== STATUS_OFF ? 'ON' : 'OFF'}`
       );
 
+      this.humidityService.updateCharacteristic(
+        Characteristic.CurrentRelativeHumidity,
+        parseInt(data.umidita)
+      );
       this.dehumidifierService.updateCharacteristic(
         Characteristic.CurrentRelativeHumidity,
         parseInt(data.umidita)
