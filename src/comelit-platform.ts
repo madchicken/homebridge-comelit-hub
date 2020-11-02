@@ -111,7 +111,7 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
     this.log.info('Subscribed to root object');
     if (homeIndex.unknownIndex.size) {
       homeIndex.unknownIndex.forEach((value, key) =>
-        this.log.warn(`Unknow device found ${key}: ${value}`)
+        this.log.warn(`Unknown device found ${key}:`, value)
       );
     }
   }
