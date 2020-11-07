@@ -20,6 +20,7 @@ import { Blind } from './accessories/blind';
 import { Outlet } from './accessories/outlet';
 import { PowerSupplier } from './accessories/power-supplier';
 import Timeout = NodeJS.Timeout;
+import { Other } from './accessories/other';
 
 export interface HubConfig extends PlatformConfig {
   username: string;
@@ -38,6 +39,7 @@ export interface HubConfig extends PlatformConfig {
   hide_thermostats?: boolean;
   hide_power_suppliers?: boolean;
   hide_outlets?: boolean;
+  hide_others?: boolean;
 }
 
 const uptime = new client.Gauge({
@@ -106,6 +108,9 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
     }
     if (this.config.hide_power_suppliers !== true) {
       this.mapSuppliers(homeIndex);
+    }
+    if (this.config.hide_others !== true) {
+      this.mapOthers(homeIndex);
     }
     this.log.info(`Found ${this.mappedAccessories.size} accessories`);
     this.log.info('Subscribed to root object');
@@ -227,6 +232,20 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
         this.log.debug(`Light ID: ${id}, ${deviceData.descrizione}`);
         const accessory = this.createHapAccessory(deviceData, Categories.LIGHTBULB);
         this.mappedAccessories.set(id, new Lightbulb(this, accessory, this.client));
+      }
+    });
+  }
+
+  private mapOthers(homeIndex: HomeIndex) {
+    const othersIds = [...homeIndex.othersIndex.keys()];
+    this.log.info(`Found ${othersIds.length} lights`);
+
+    othersIds.forEach(id => {
+      const deviceData = homeIndex.othersIndex.get(id);
+      if (deviceData) {
+        this.log.debug(`Other ID: ${id}, ${deviceData.descrizione}`);
+        const accessory = this.createHapAccessory(deviceData, Categories.SWITCH);
+        this.mappedAccessories.set(id, new Other(this, accessory, this.client));
       }
     });
   }
