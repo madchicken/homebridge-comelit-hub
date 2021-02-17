@@ -63,7 +63,7 @@ export class Blind extends ComelitAccessory<BlindDeviceData> {
             await this.client.toggleDeviceStatus(this.device.id, status);
             this.lastCommandTime = new Date().getTime();
             this.timeout = setTimeout(async () => {
-              this.resetTimeout();
+              return this.resetTimeout();
             }, (this.closingTime * Math.abs(delta)) / 100);
           }
           callback();

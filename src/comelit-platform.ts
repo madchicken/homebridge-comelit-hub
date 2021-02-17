@@ -250,6 +250,20 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
     });
   }
 
+  private mapIrrigation(homeIndex: HomeIndex) {
+    const lightIds = [...homeIndex.lightsIndex.keys()];
+    this.log.info(`Found ${lightIds.length} lights`);
+
+    lightIds.forEach(id => {
+      const deviceData = homeIndex.lightsIndex.get(id);
+      if (deviceData) {
+        this.log.debug(`Light ID: ${id}, ${deviceData.descrizione}`);
+        const accessory = this.createHapAccessory(deviceData, Categories.LIGHTBULB);
+        this.mappedAccessories.set(id, new Lightbulb(this, accessory, this.client));
+      }
+    });
+  }
+
   private createHapAccessory(deviceData: DeviceData, category: Categories, id?: string) {
     const uuid = this.homebridge.hap.uuid.generate(id || deviceData.id);
     const existingAccessory = this.accessories.find(accessory => accessory.UUID === uuid);
