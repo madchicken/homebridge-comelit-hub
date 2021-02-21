@@ -21,6 +21,7 @@ import { Outlet } from './accessories/outlet';
 import { PowerSupplier } from './accessories/power-supplier';
 import Timeout = NodeJS.Timeout;
 import { Other } from './accessories/other';
+import { Irrigation } from './accessories/irrigation';
 
 export interface HubConfig extends PlatformConfig {
   username: string;
@@ -40,6 +41,7 @@ export interface HubConfig extends PlatformConfig {
   hide_power_suppliers?: boolean;
   hide_outlets?: boolean;
   hide_others?: boolean;
+  hide_irrigation?: boolean;
 }
 
 const uptime = new client.Gauge({
@@ -111,6 +113,9 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
     }
     if (this.config.hide_others !== true) {
       this.mapOthers(homeIndex);
+    }
+    if (this.config.hide_irrigation !== true) {
+      this.mapIrrigation(homeIndex);
     }
     this.log.info(`Found ${this.mappedAccessories.size} accessories`);
     this.log.info('Subscribed to root object');
@@ -251,15 +256,15 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
   }
 
   private mapIrrigation(homeIndex: HomeIndex) {
-    const lightIds = [...homeIndex.lightsIndex.keys()];
-    this.log.info(`Found ${lightIds.length} lights`);
+    const irrigationIds = [...homeIndex.irrigationIndex.keys()];
+    this.log.info(`Found ${irrigationIds.length} irrigation`);
 
-    lightIds.forEach(id => {
-      const deviceData = homeIndex.lightsIndex.get(id);
+    irrigationIds.forEach(id => {
+      const deviceData = homeIndex.irrigationIndex.get(id);
       if (deviceData) {
-        this.log.debug(`Light ID: ${id}, ${deviceData.descrizione}`);
-        const accessory = this.createHapAccessory(deviceData, Categories.LIGHTBULB);
-        this.mappedAccessories.set(id, new Lightbulb(this, accessory, this.client));
+        this.log.debug(`Irrigation ID: ${id}, ${deviceData.descrizione}`);
+        const accessory = this.createHapAccessory(deviceData, Categories.SPRINKLER);
+        this.mappedAccessories.set(id, new Irrigation(this, accessory, this.client));
       }
     });
   }

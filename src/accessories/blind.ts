@@ -1,7 +1,7 @@
 import { ComelitAccessory } from './comelit';
-import { BlindDeviceData, ComelitClient, ObjectStatus } from 'comelit-client';
+import { BlindDeviceData, ComelitClient, OBJECT_SUBTYPE, ObjectStatus } from 'comelit-client';
 import { ComelitPlatform } from '../comelit-platform';
-import { PlatformAccessory, Callback, CharacteristicEventTypes, Service } from 'homebridge';
+import { Callback, CharacteristicEventTypes, PlatformAccessory, Service } from 'homebridge';
 import { PositionState } from './hap';
 import Timeout = NodeJS.Timeout;
 
@@ -44,38 +44,59 @@ export class Blind extends ComelitAccessory<BlindDeviceData> {
     this.coveringService
       .getCharacteristic(Characteristic.TargetPosition)
       .on(CharacteristicEventTypes.SET, async (position: number, callback: Callback) => {
-        try {
-          if (this.timeout) {
-            await this.resetTimeout();
-            callback();
-            return;
-          }
-
-          const currentPosition = this.coveringService.getCharacteristic(
-            Characteristic.CurrentPosition
-          ).value as number;
-          const status = position < currentPosition ? ObjectStatus.OFF : ObjectStatus.ON;
-          const delta = currentPosition - position;
-          this.log.info(
-            `Setting position to ${position}%. Current position is ${currentPosition}. Delta is ${delta}`
-          );
-          if (delta !== 0) {
-            await this.client.toggleDeviceStatus(this.device.id, status);
-            this.lastCommandTime = new Date().getTime();
-            this.timeout = setTimeout(async () => {
-              return this.resetTimeout();
-            }, (this.closingTime * Math.abs(delta)) / 100);
-          }
-          callback();
-        } catch (e) {
-          this.log.error(e.message);
-          callback(e);
+        if (this.device.sub_type === OBJECT_SUBTYPE.ENHANCED_ELECTRIC_BLIND) {
+          await this.enhancedBlindSet(position, callback);
+        } else {
+          await this.standardBlindSet(position, callback);
         }
       });
 
     return [accessoryInformation, this.coveringService];
   }
 
+  private async enhancedBlindSet(position: number, callback: Callback) {
+    const Characteristic = this.platform.Characteristic;
+    try {
+      const currentPosition = this.coveringService.getCharacteristic(Characteristic.CurrentPosition)
+        .value as number;
+      this.log.info(`Setting position to ${position}%. Current position is ${currentPosition}`);
+      await this.client.setBlindPosition(this.device.id, Math.round(position * 2.55));
+      callback();
+    } catch (e) {
+      this.log.error(e.message);
+      callback(e);
+    }
+  }
+
+  private async standardBlindSet(position: number, callback: Callback) {
+    const Characteristic = this.platform.Characteristic;
+    try {
+      if (this.timeout) {
+        await this.resetTimeout();
+        callback();
+        return;
+      }
+
+      const currentPosition = this.coveringService.getCharacteristic(Characteristic.CurrentPosition)
+        .value as number;
+      const status = position < currentPosition ? ObjectStatus.OFF : ObjectStatus.ON;
+      const delta = currentPosition - position;
+      this.log.info(
+        `Setting position to ${position}%. Current position is ${currentPosition}. Delta is ${delta}`
+      );
+      if (delta !== 0) {
+        await this.client.toggleDeviceStatus(this.device.id, status);
+        this.lastCommandTime = new Date().getTime();
+        this.timeout = setTimeout(async () => {
+          return this.resetTimeout();
+        }, (this.closingTime * Math.abs(delta)) / 100);
+      }
+      callback();
+    } catch (e) {
+      this.log.error(e.message);
+      callback(e);
+    }
+  }
   private async resetTimeout() {
     // A timeout was set, this means that we are already opening or closing the blind
     // Stop the blind and calculate a rough position

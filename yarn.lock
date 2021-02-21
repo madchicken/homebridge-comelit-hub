@@ -810,10 +810,10 @@ aws4@^1.8.0:
   resolved "https://registry.yarnpkg.com/aws4/-/aws4-1.10.1.tgz#e1e82e4f3e999e2cfd61b161280d16a111f86428"
   integrity sha512-zg7Hz2k5lI8kb7U32998pRRFin7zJlkfezGJjUc2heaD4Pw2wObakCDVzkKztTm/Ln7eiVvYsjqak0Ed4LkMDA==
 
-axios@0.21.0:
-  version "0.21.0"
-  resolved "https://registry.yarnpkg.com/axios/-/axios-0.21.0.tgz#26df088803a2350dff2c27f96fef99fe49442aca"
-  integrity sha512-fmkJBknJKoZwem3/IKSSLpkdNXZeBu5Q7GA/aRsr2btgrptmSCxi2oFjZHqGdK9DoTil9PIHlPIZw2EcRJXRvw==
+axios@0.21.1:
+  version "0.21.1"
+  resolved "https://registry.yarnpkg.com/axios/-/axios-0.21.1.tgz#22563481962f4d6bde9a76d516ef0e5d3c09b2b8"
+  integrity sha512-dKQiRHxGD9PPRIUNIWvZhPTPpl1rf/OxTYKsqKUDjBwYylTvV7SjSHJb9ratfyzM6wCdLCOYLzs73qpg5c4iGA==
   dependencies:
     follow-redirects "^1.10.0"
 
@@ -1158,13 +1158,14 @@ combined-stream@^1.0.6, combined-stream@~1.0.6:
   dependencies:
     delayed-stream "~1.0.0"
 
-comelit-client@2.2.3:
-  version "2.2.3"
-  resolved "https://registry.yarnpkg.com/comelit-client/-/comelit-client-2.2.3.tgz#1b4ff43fe69b88234ef2489aac57a1c832688151"
-  integrity sha512-pgced7asb/g5tRcFp9w7FcYtxn2Xv2RrKhY8etzYsjYtkl0rfOPTXTmK9FO0Nufqht23A9gO3XYwZgs0kG8bsw==
+comelit-client@2.3.1:
+  version "2.3.1"
+  resolved "https://registry.yarnpkg.com/comelit-client/-/comelit-client-2.3.1.tgz#2ba8d879d8cc7e8a1778a5e4fedf8e40dcf4aa44"
+  integrity sha512-RfdvRXoiaIZDIxVVDiVzeFU/LodE8/LDWy4V1QMxIdFhUlncCsehwmMmtA86nTOd00CXTrjT9+Yw6GeaxCK20Q==
   dependencies:
     async-mqtt "2.6.1"
-    axios "0.21.0"
+    atob "^2.1.2"
+    axios "0.21.1"
     chalk "3.0.0"
     lodash "4.17.20"
     mqtt "4.2.1"

@@ -97,6 +97,11 @@
         "title": "Avoid mapping uncategorized devices",
         "type": "boolean",
         "default": false
+      },
+      "hide_irrigation": {
+        "title": "Avoid mapping irrigation systems",
+        "type": "boolean",
+        "default": false
       }
     }
   },
@@ -124,7 +129,8 @@
         "hide_dehumidifiers",
         "hide_power_suppliers",
         "hide_outlets",
-        "hide_others"
+        "hide_others",
+        "hide_irrigation"
       ]
     }
   ]
