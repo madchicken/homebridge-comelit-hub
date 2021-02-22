@@ -14,6 +14,7 @@ let CurrentPowerConsumption;
 export class PowerSupplier extends ComelitAccessory<SupplierDeviceData> {
   private outletService: Service;
   private fakegatoService: any;
+  private powerMeterService: Service;
 
   constructor(platform: ComelitPlatform, accessory: PlatformAccessory, client: ComelitClient) {
     super(platform, accessory, client);
@@ -42,10 +43,19 @@ export class PowerSupplier extends ComelitAccessory<SupplierDeviceData> {
       }
     );
 
-    this.outletService.addCharacteristic(CurrentPowerConsumption);
+    this.powerMeterService = new this.platform.homebridge.hap.Service(
+      'Power meter service',
+      '00000001-0000-1777-8000-775D67EC4377'
+    );
+    this.powerMeterService.addCharacteristic(CurrentPowerConsumption);
 
     this.fakegatoService = this.platform.powerLoggingService;
-    return [this.initAccessoryInformation(), this.outletService];
+    return [
+      this.initAccessoryInformation(),
+      this.outletService,
+      this.fakegatoService,
+      this.powerMeterService,
+    ];
   }
 
   update(data: SupplierDeviceData): void {
