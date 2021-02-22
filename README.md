@@ -24,12 +24,12 @@ Currently supported devices:
 - Controlled plugs
 - Vedo Alarm
 - Dehumidifiers
+- Irrigation
 
 Missing devices:
 
 - RGB lights
 - Dimmerable lights
-- Irrigation
 
 ## Configuration
 
@@ -84,6 +84,8 @@ The plugin offers some extra configuration flag. Here is the list
 - hide_dehumidifiers: boolean - true to hide dehumidifiers to HomeKit
 - hide_power_suppliers: boolean - true to hide power suppliers (aka "Controllo Carichi") to HomeKit
 - hide_outlets: boolean - true to hide outlets to HomeKit
+- hide_others: boolean - true to hide so called "other devices" to HomeKit
+- hide_irrigation: boolean - true to hide sprinklers to HomeKit
 
 **Note**: When hiding thermostats you will automatically exclude dehumidifiers
 
@@ -136,6 +138,7 @@ If otherwise, you simply enjoyed using this plugin, and you want to contribute i
 2.0.0 - Major update to support Homebridge 1.1.0
 2.3.0 - Auto discover HUB
 2.3.1 - Fix major bug in HUB communication protocol
+2.6.0 - Add Irrigation system and handle new blinds with built in percentage
 
 ## Screenshots
 
