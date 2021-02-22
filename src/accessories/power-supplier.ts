@@ -31,9 +31,10 @@ export class PowerSupplier extends ComelitAccessory<SupplierDeviceData> {
   update(data: SupplierDeviceData): void {
     const instantPower = parseFloat(data.instant_power);
     this.log.info(`Reporting instant consumption of ${instantPower}Wh`);
+    consumption.set(instantPower);
+
     this.outletService
       .getCharacteristic(this.platform.homebridge.hap.Characteristic.OutletInUse)
-      .setValue(instantPower > 0);
-    consumption.set(instantPower);
+      .updateValue(instantPower > 0);
   }
 }
