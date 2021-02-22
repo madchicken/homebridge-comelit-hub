@@ -67,7 +67,6 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
   public readonly Service: typeof Service;
   public readonly Characteristic: typeof Characteristic;
   public readonly PlatformAccessory: typeof PlatformAccessory;
-  public fakeGatoHistoryService: any;
 
   public mappedAccessories: Map<string, ComelitAccessory<DeviceData>> = new Map<
     string,
@@ -82,6 +81,7 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
   private keepAliveTimer: Timeout;
   private server: http.Server;
   private mappedNames: { [key: string]: boolean };
+  public powerLoggingService: any;
 
   constructor(log: Logger, config: HubConfig, api: API) {
     this.log = log;
@@ -130,7 +130,8 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
         this.log.warn(`Unknown device found ${key}:`, value)
       );
     }
-    this.fakeGatoHistoryService = fakegato(this.homebridge);
+    const FakeGatoHistoryService = fakegato(this.homebridge);
+    this.powerLoggingService = new FakeGatoHistoryService('energy', this, { storage: 'fs' });
   }
 
   configureAccessory(accessory: PlatformAccessory): void {

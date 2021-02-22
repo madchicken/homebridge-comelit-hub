@@ -44,9 +44,7 @@ export class PowerSupplier extends ComelitAccessory<SupplierDeviceData> {
 
     this.outletService.addCharacteristic(CurrentPowerConsumption);
 
-    this.fakegatoService = new this.platform.fakeGatoHistoryService('energy', this.accessory, {
-      log: this.log,
-    });
+    this.fakegatoService = this.platform.powerLoggingService;
     return [this.initAccessoryInformation(), this.outletService];
   }
 
@@ -56,7 +54,7 @@ export class PowerSupplier extends ComelitAccessory<SupplierDeviceData> {
     consumption.set(instantPower);
 
     this.fakegatoService.addEntry({
-      time: Math.round(new Date().valueOf() / 1000),
+      time: Date.now() / 1000,
       power: instantPower,
     });
 
