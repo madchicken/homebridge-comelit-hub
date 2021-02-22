@@ -13,7 +13,7 @@ let CurrentPowerConsumption;
 
 export class PowerSupplier extends ComelitAccessory<SupplierDeviceData> {
   private outletService: Service;
-  private fakegatoService: nay;
+  private fakegatoService: any;
 
   constructor(platform: ComelitPlatform, accessory: PlatformAccessory, client: ComelitClient) {
     super(platform, accessory, client);
