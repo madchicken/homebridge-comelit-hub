@@ -61,6 +61,13 @@ expr.get('/metrics', async (req, res) => {
   }
 });
 
+interface FakeGato {
+  [k: string]: any;
+}
+interface FakeGatoCtor {
+  new (type: string, plugin: DynamicPlatformPlugin, config: any): FakeGato;
+}
+
 export class ComelitPlatform implements DynamicPlatformPlugin {
   static KEEP_ALIVE_TIMEOUT = 120000;
 
@@ -82,6 +89,7 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
   private server: http.Server;
   private mappedNames: { [key: string]: boolean };
   public powerLoggingService: any;
+  private readonly FakeGatoHistoryService: FakeGatoCtor;
 
   constructor(log: Logger, config: HubConfig, api: API) {
     this.log = log;
@@ -93,6 +101,8 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
     this.Service = this.homebridge.hap.Service;
     this.Characteristic = this.homebridge.hap.Characteristic;
     this.PlatformAccessory = this.homebridge.platformAccessory;
+    this.FakeGatoHistoryService = fakegato(this.homebridge);
+    this.powerLoggingService = new this.FakeGatoHistoryService('energy', this, { storage: 'fs' });
     this.homebridge.on(APIEvent.DID_FINISH_LAUNCHING, () => this.discoverDevices());
     this.homebridge.on(APIEvent.SHUTDOWN, () => this.shutdown());
   }
@@ -130,8 +140,6 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
         this.log.warn(`Unknown device found ${key}:`, value)
       );
     }
-    const FakeGatoHistoryService = fakegato(this.homebridge);
-    this.powerLoggingService = new FakeGatoHistoryService('energy', this, { storage: 'fs' });
   }
 
   configureAccessory(accessory: PlatformAccessory): void {
