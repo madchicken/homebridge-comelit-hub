@@ -52,8 +52,12 @@ const uptime = new client.Gauge({
 const DEFAULT_HTTP_PORT = 3002;
 const expr: Express = express();
 expr.get('/metrics', (req, res) => {
-  res.set('Content-Type', register.contentType);
-  res.end(register.metrics());
+  try {
+    res.set('Content-Type', register.contentType);
+    res.end(register.metrics());
+  } catch (e) {
+    res.status(500).end(e.message);
+  }
 });
 
 export class ComelitPlatform implements DynamicPlatformPlugin {
