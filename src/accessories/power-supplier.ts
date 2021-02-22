@@ -10,20 +10,30 @@ const consumption = new client.Gauge({
 });
 
 export class PowerSupplier extends ComelitAccessory<SupplierDeviceData> {
+  private outletService: Service;
+
   constructor(platform: ComelitPlatform, accessory: PlatformAccessory, client: ComelitClient) {
     super(platform, accessory, client);
   }
 
   protected initServices(): Service[] {
-    const powerManagementService =
-      this.accessory.getService(this.platform.Service.PowerManagement) ||
-      this.accessory.addService(this.platform.Service.PowerManagement);
+    this.outletService =
+      this.accessory.getService(this.platform.Service.Outlet) ||
+      this.accessory.addService(this.platform.Service.Outlet);
 
-    return [this.initAccessoryInformation(), powerManagementService];
+    this.outletService
+      .getCharacteristic(this.platform.homebridge.hap.Characteristic.On)
+      .setValue(true);
+
+    return [this.initAccessoryInformation(), this.outletService];
   }
 
   update(data: SupplierDeviceData): void {
-    this.log.info(`Reporting instant consumption of ${data.instant_power}Wh`);
-    consumption.set(parseFloat(data.instant_power));
+    const instantPower = parseFloat(data.instant_power);
+    this.log.info(`Reporting instant consumption of ${instantPower}Wh`);
+    this.outletService
+      .getCharacteristic(this.platform.homebridge.hap.Characteristic.OutletInUse)
+      .setValue(instantPower > 0);
+    consumption.set(instantPower);
   }
 }
