@@ -1,5 +1,5 @@
 import { ComelitAccessory } from './comelit';
-import { ComelitClient, ObjectStatus } from 'comelit-client';
+import { ComelitClient, IrrigationDeviceData, ObjectStatus } from 'comelit-client';
 import client from 'prom-client';
 import { ComelitPlatform } from '../comelit-platform';
 import {
@@ -8,7 +8,6 @@ import {
   PlatformAccessory,
   Service,
 } from 'homebridge';
-import { IrrigationDeviceData } from '../../../comelit-client/src';
 
 const irrigationActivations = new client.Counter({
   name: 'comelit_irrigation',
