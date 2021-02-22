@@ -2,15 +2,18 @@ import { ComelitAccessory } from './comelit';
 import { ComelitClient, SupplierDeviceData } from 'comelit-client';
 import client from 'prom-client';
 import { ComelitPlatform } from '../comelit-platform';
-import { PlatformAccessory, Service } from 'homebridge';
+import { Formats, Perms, PlatformAccessory, Service, Units } from 'homebridge';
 
 const consumption = new client.Gauge({
   name: 'comelit_total_consumption',
   help: 'Consumption in Wh',
 });
 
+let CurrentPowerConsumption;
+
 export class PowerSupplier extends ComelitAccessory<SupplierDeviceData> {
   private outletService: Service;
+  private fakegatoService: nay;
 
   constructor(platform: ComelitPlatform, accessory: PlatformAccessory, client: ComelitClient) {
     super(platform, accessory, client);
@@ -25,6 +28,25 @@ export class PowerSupplier extends ComelitAccessory<SupplierDeviceData> {
       .getCharacteristic(this.platform.homebridge.hap.Characteristic.On)
       .setValue(true);
 
+    const Characteristic = this.platform.homebridge.hap.Characteristic;
+    CurrentPowerConsumption = new Characteristic(
+      'Current power consumption',
+      'E863F10D-079E-48FF-8F27-9C2605A29F52',
+      {
+        format: Formats.UINT16,
+        unit: 'watts' as Units, // ??
+        maxValue: 100000,
+        minValue: 0,
+        minStep: 1,
+        perms: [Perms.PAIRED_READ, Perms.NOTIFY],
+      }
+    );
+
+    this.outletService.addCharacteristic(CurrentPowerConsumption);
+
+    this.fakegatoService = new this.platform.fakeGatoHistoryService('energy', this.accessory, {
+      log: this.log,
+    });
     return [this.initAccessoryInformation(), this.outletService];
   }
 
@@ -32,6 +54,11 @@ export class PowerSupplier extends ComelitAccessory<SupplierDeviceData> {
     const instantPower = parseFloat(data.instant_power);
     this.log.info(`Reporting instant consumption of ${instantPower}Wh`);
     consumption.set(instantPower);
+
+    this.fakegatoService.addEntry({
+      time: Math.round(new Date().valueOf() / 1000),
+      power: instantPower,
+    });
 
     this.outletService
       .getCharacteristic(this.platform.homebridge.hap.Characteristic.OutletInUse)

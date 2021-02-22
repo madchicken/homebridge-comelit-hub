@@ -22,6 +22,7 @@ import { PowerSupplier } from './accessories/power-supplier';
 import Timeout = NodeJS.Timeout;
 import { Other } from './accessories/other';
 import { Irrigation } from './accessories/irrigation';
+import fakegato from 'fakegato-history';
 
 export interface HubConfig extends PlatformConfig {
   username: string;
@@ -66,6 +67,7 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
   public readonly Service: typeof Service;
   public readonly Characteristic: typeof Characteristic;
   public readonly PlatformAccessory: typeof PlatformAccessory;
+  public fakeGatoHistoryService: any;
 
   public mappedAccessories: Map<string, ComelitAccessory<DeviceData>> = new Map<
     string,
@@ -128,6 +130,7 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
         this.log.warn(`Unknown device found ${key}:`, value)
       );
     }
+    this.fakeGatoHistoryService = fakegato(this.homebridge);
   }
 
   configureAccessory(accessory: PlatformAccessory): void {
