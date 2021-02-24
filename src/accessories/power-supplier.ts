@@ -43,16 +43,24 @@ export class PowerSupplier extends ComelitAccessory<SupplierDeviceData> {
       }
     );
 
+    this.powerMeterService = new this.platform.homebridge.hap.Service(
+      'Power meter service',
+      '00000001-0000-1777-8000-775D67EC4377'
+    );
+    this.powerMeterService.addCharacteristic(CurrentPowerConsumption);
+
     this.historyService = new this.platform.FakeGatoHistoryService('energy', this.accessory, {
       storage: 'fs',
     });
-    return [this.initAccessoryInformation(), this.outletService, this.historyService];
+    return [this.initAccessoryInformation(), this.powerMeterService, this.historyService];
   }
 
   update(data: SupplierDeviceData): void {
     const instantPower = parseFloat(data.instant_power);
     this.log.info(`Reporting instant consumption of ${instantPower}Wh`);
     consumption.set(instantPower);
+
+    this.powerMeterService.updateCharacteristic(CurrentPowerConsumption, instantPower);
 
     this.historyService.addEntry({
       time: Date.now() / 1000,
