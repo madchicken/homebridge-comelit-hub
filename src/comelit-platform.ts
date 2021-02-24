@@ -16,15 +16,14 @@ import * as http from 'http';
 import { ComelitAccessory } from './accessories/comelit';
 import { Lightbulb } from './accessories/lightbulb';
 import { Thermostat } from './accessories/thermostat';
-import { Blind } from './accessories/blind';
 import { Outlet } from './accessories/outlet';
 import { PowerSupplier } from './accessories/power-supplier';
 import { Other } from './accessories/other';
 import { Irrigation } from './accessories/irrigation';
 import fakegato from 'fakegato-history';
-import Timeout = NodeJS.Timeout;
 import { EnhancedBlind } from './accessories/enhanced-blind';
 import { StandardBlind } from './accessories/standard-blind';
+import Timeout = NodeJS.Timeout;
 
 export interface HubConfig extends PlatformConfig {
   username: string;
@@ -67,7 +66,7 @@ interface FakeGato {
   [k: string]: any;
 }
 interface FakeGatoCtor {
-  new (type: string, plugin: DynamicPlatformPlugin, config: any): FakeGato;
+  new (type: string, plugin: PlatformAccessory, config: any): FakeGato;
 }
 
 export class ComelitPlatform implements DynamicPlatformPlugin {
@@ -90,8 +89,7 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
   private keepAliveTimer: Timeout;
   private server: http.Server;
   private mappedNames: { [key: string]: boolean };
-  public powerLoggingService: any;
-  private readonly FakeGatoHistoryService: FakeGatoCtor;
+  public readonly FakeGatoHistoryService: FakeGatoCtor;
 
   constructor(log: Logger, config: HubConfig, api: API) {
     this.log = log;
@@ -104,7 +102,6 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
     this.Characteristic = this.homebridge.hap.Characteristic;
     this.PlatformAccessory = this.homebridge.platformAccessory;
     this.FakeGatoHistoryService = fakegato(this.homebridge);
-    this.powerLoggingService = new this.FakeGatoHistoryService('energy', this, { storage: 'fs' });
     this.homebridge.on(APIEvent.DID_FINISH_LAUNCHING, () => this.discoverDevices());
     this.homebridge.on(APIEvent.SHUTDOWN, () => this.shutdown());
   }
