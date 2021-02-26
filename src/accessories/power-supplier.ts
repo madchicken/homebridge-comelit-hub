@@ -21,8 +21,8 @@ export class PowerSupplier extends ComelitAccessory<SupplierDeviceData> {
 
   protected initServices(): Service[] {
     this.outletService =
-      this.accessory.getService(this.platform.Service.Outlet) ||
-      this.accessory.addService(this.platform.Service.Outlet);
+      this.accessory.getService(HAP.Service.Outlet) ||
+      this.accessory.addService(HAP.Service.Outlet);
 
     this.outletService.getCharacteristic(HAP.Characteristic.On).setValue(true);
 
@@ -31,6 +31,9 @@ export class PowerSupplier extends ComelitAccessory<SupplierDeviceData> {
     this.historyService = new HAP.FakeGatoHistoryService('energy', this.accessory, {
       storage: 'fs',
     });
+    this.powerMeterService =
+      this.accessory.getService(HAP.PowerMeterService) ||
+      this.accessory.addService(HAP.PowerMeterService);
     return [this.initAccessoryInformation(), this.powerMeterService, this.historyService];
   }
 
