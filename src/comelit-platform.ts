@@ -20,7 +20,6 @@ import { Outlet } from './accessories/outlet';
 import { PowerSupplier } from './accessories/power-supplier';
 import { Other } from './accessories/other';
 import { Irrigation } from './accessories/irrigation';
-import fakegato from 'fakegato-history';
 import { EnhancedBlind } from './accessories/enhanced-blind';
 import { StandardBlind } from './accessories/standard-blind';
 import Timeout = NodeJS.Timeout;
@@ -62,13 +61,6 @@ expr.get('/metrics', async (req, res) => {
   }
 });
 
-interface FakeGato {
-  [k: string]: any;
-}
-interface FakeGatoCtor {
-  new (type: string, plugin: PlatformAccessory, config: any): FakeGato;
-}
-
 export class ComelitPlatform implements DynamicPlatformPlugin {
   static KEEP_ALIVE_TIMEOUT = 120000;
 
@@ -89,7 +81,6 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
   private keepAliveTimer: Timeout;
   private server: http.Server;
   private mappedNames: { [key: string]: boolean };
-  public readonly FakeGatoHistoryService: FakeGatoCtor;
 
   constructor(log: Logger, config: HubConfig, api: API) {
     this.log = log;
@@ -101,7 +92,6 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
     this.Service = this.homebridge.hap.Service;
     this.Characteristic = this.homebridge.hap.Characteristic;
     this.PlatformAccessory = this.homebridge.platformAccessory;
-    this.FakeGatoHistoryService = fakegato(this.homebridge);
     this.homebridge.on(APIEvent.DID_FINISH_LAUNCHING, () => this.discoverDevices());
     this.homebridge.on(APIEvent.SHUTDOWN, () => this.shutdown());
   }
