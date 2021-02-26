@@ -11,7 +11,6 @@ const consumption = new client.Gauge({
 });
 
 export class PowerSupplier extends ComelitAccessory<SupplierDeviceData> {
-  private outletService: Service;
   private historyService: any;
   private powerMeterService: Service;
 
@@ -20,20 +19,14 @@ export class PowerSupplier extends ComelitAccessory<SupplierDeviceData> {
   }
 
   protected initServices(): Service[] {
-    this.outletService =
-      this.accessory.getService(HAP.Service.Outlet) ||
-      this.accessory.addService(HAP.Service.Outlet);
-
-    this.outletService.getCharacteristic(HAP.Characteristic.On).setValue(true);
-
-    this.outletService.addCharacteristic(new HAP.CurrentPowerConsumption());
-
     this.historyService = new HAP.FakeGatoHistoryService('energy', this.accessory, {
       storage: 'fs',
     });
     this.powerMeterService =
       this.accessory.getService(HAP.PowerMeterService) ||
       this.accessory.addService(HAP.PowerMeterService);
+
+    this.powerMeterService.addCharacteristic(HAP.CurrentPowerConsumption);
     return [this.initAccessoryInformation(), this.powerMeterService, this.historyService];
   }
 
@@ -48,9 +41,5 @@ export class PowerSupplier extends ComelitAccessory<SupplierDeviceData> {
       time: Date.now() / 1000,
       power: instantPower,
     });
-
-    this.outletService
-      .getCharacteristic(HAP.Characteristic.OutletInUse)
-      .updateValue(instantPower > 0);
   }
 }
