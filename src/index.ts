@@ -32,8 +32,8 @@ export default function(homebridge: API) {
   };
 
   HAP.PowerMeterService = class PowerMeterService extends HAP.Service {
-    constructor() {
-      super('Power meter service', '00000001-0000-1777-8000-775D67EC4377');
+    constructor(displayName: string, UUID: string, subtype?: string | undefined) {
+      super('Power meter service', '00000001-0000-1777-8000-775D67EC4377', subtype);
     }
   };
 
