@@ -8,6 +8,7 @@ export const HAP = {
   Characteristic: null,
   PlatformAccessory: null,
   CurrentPowerConsumption: null,
+  TotalConsumption: null,
   PowerMeterService: null,
   FakeGatoHistoryService: null,
 };
@@ -19,8 +20,9 @@ export default function(homebridge: API) {
   HAP.PlatformAccessory = homebridge.platformAccessory;
 
   HAP.CurrentPowerConsumption = class CurrentPowerConsumption extends HAP.Characteristic {
+    public static readonly UUID: String = 'E863F10D-079E-48FF-8F27-9C2605A29F52';
     constructor() {
-      super('Current power consumption', 'E863F10D-079E-48FF-8F27-9C2605A29F52', {
+      super('Current power consumption', HAP.CurrentPowerConsumption.UUID, {
         format: Formats.UINT16,
         unit: 'watts' as Units, // ??
         maxValue: 100000,
@@ -31,9 +33,26 @@ export default function(homebridge: API) {
     }
   };
 
+  HAP.TotalConsumption = class TotalConsumption extends HAP.Characteristic {
+    public static readonly UUID: String = 'E863F10C-079E-48FF-8F27-9C2605A29F52';
+    constructor() {
+      super('Current power consumption', HAP.CurrentPowerConsumption.UUID, {
+        format: Formats.FLOAT,
+        unit: 'kWh' as Units, // ??
+        minValue: 0,
+        minStep: 0.001,
+        perms: [Perms.PAIRED_READ, Perms.NOTIFY],
+      });
+    }
+  };
+
   HAP.PowerMeterService = class PowerMeterService extends HAP.Service {
-    constructor(displayName: string, UUID: string, subtype?: string | undefined) {
-      super('Power meter service', '00000001-0000-1777-8000-775D67EC4377', subtype);
+    public static readonly UUID: String = '00000001-0000-1777-8000-775D67EC4377';
+
+    constructor(displayName?: string) {
+      super(displayName, HAP.PowerMeterService.UUID);
+      this.addCharacteristic(HAP.CurrentPowerConsumption);
+      this.addCharacteristic(HAP.TotalConsumption);
     }
   };
 

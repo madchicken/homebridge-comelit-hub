@@ -26,7 +26,6 @@ export class PowerSupplier extends ComelitAccessory<SupplierDeviceData> {
       this.accessory.getService(HAP.PowerMeterService) ||
       this.accessory.addService(HAP.PowerMeterService);
 
-    this.powerMeterService.addCharacteristic(HAP.CurrentPowerConsumption);
     return [this.initAccessoryInformation(), this.powerMeterService, this.historyService];
   }
 
@@ -36,6 +35,11 @@ export class PowerSupplier extends ComelitAccessory<SupplierDeviceData> {
     consumption.set(instantPower);
 
     this.powerMeterService.updateCharacteristic(HAP.CurrentPowerConsumption, instantPower);
+    this.powerMeterService.updateCharacteristic(
+      HAP.TotalConsumption,
+      <number>this.powerMeterService.getCharacteristic(HAP.TotalConsumption).value +
+        instantPower / 1000 // total is in kWh
+    );
 
     this.historyService.addEntry({
       time: Date.now() / 1000,
