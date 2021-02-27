@@ -20,11 +20,19 @@ export class PowerSupplier extends ComelitAccessory<SupplierDeviceData> {
 
   protected initServices(): Service[] {
     this.historyService = new HAP.FakeGatoHistoryService('energy', this.accessory, {
+      disableTimer: true,
       storage: 'fs',
+      path: `${this.platform.homebridge.user.storagePath()}/accessories`,
+      filename: `history_${this.accessory.displayName}.json`,
     });
+    const hap = this.platform.homebridge.hap;
     this.powerMeterService =
-      this.accessory.getService(HAP.PowerMeterService) ||
-      this.accessory.addService(HAP.PowerMeterService);
+      this.accessory.getService(hap.Service.PowerManagement) ||
+      this.accessory.addService(hap.Service.PowerManagement);
+
+    this.powerMeterService.getCharacteristic(hap.Characteristic.WakeConfiguration).setValue(0);
+    this.powerMeterService.addOptionalCharacteristic(HAP.CurrentPowerConsumption);
+    this.powerMeterService.addOptionalCharacteristic(HAP.TotalConsumption);
 
     return [this.initAccessoryInformation(), this.powerMeterService, this.historyService];
   }

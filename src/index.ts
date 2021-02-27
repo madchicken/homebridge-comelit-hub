@@ -21,6 +21,7 @@ export default function(homebridge: API) {
 
   HAP.CurrentPowerConsumption = class CurrentPowerConsumption extends HAP.Characteristic {
     public static readonly UUID: String = 'E863F10D-079E-48FF-8F27-9C2605A29F52';
+
     constructor() {
       super('Current power consumption', HAP.CurrentPowerConsumption.UUID, {
         format: Formats.UINT16,
@@ -35,6 +36,7 @@ export default function(homebridge: API) {
 
   HAP.TotalConsumption = class TotalConsumption extends HAP.Characteristic {
     public static readonly UUID: String = 'E863F10C-079E-48FF-8F27-9C2605A29F52';
+
     constructor() {
       super('Current power consumption', HAP.CurrentPowerConsumption.UUID, {
         format: Formats.FLOAT,
