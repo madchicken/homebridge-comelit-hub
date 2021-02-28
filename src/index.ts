@@ -1,5 +1,5 @@
 import { ComelitPlatform } from './comelit-platform';
-import { API, Formats, Perms, Units, Service, Characteristic, PlatformAccessory } from 'homebridge';
+import { API, Service, Characteristic, PlatformAccessory } from 'homebridge';
 import fakegato from 'fakegato-history';
 import { Fakegato } from './types';
 
