@@ -41,7 +41,12 @@ export class PowerSupplier extends ComelitAccessory<SupplierDeviceData> {
       this.accessory.getService(HAP.PowerMeterService) ||
       this.accessory.addService(HAP.PowerMeterService);
 
-    return [this.initAccessoryInformation(), this.outletService, this.historyService];
+    return [
+      this.initAccessoryInformation(),
+      this.outletService,
+      this.historyService,
+      this.powerMeterService,
+    ];
   }
 
   update(data: SupplierDeviceData): void {
