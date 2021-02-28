@@ -12,29 +12,29 @@ const consumption = new client.Gauge({
 
 export class PowerSupplier extends ComelitAccessory<SupplierDeviceData> {
   private historyService: any;
-  private powerMeterService: Service;
+  private outletService: Service;
 
   constructor(platform: ComelitPlatform, accessory: PlatformAccessory, client: ComelitClient) {
     super(platform, accessory, client);
   }
 
   protected initServices(): Service[] {
+    this.outletService =
+      this.accessory.getService(this.platform.Service.Outlet) ||
+      this.accessory.addService(this.platform.Service.Outlet);
+
+    this.outletService
+      .getCharacteristic(this.platform.homebridge.hap.Characteristic.On)
+      .setValue(true);
+
     this.historyService = new HAP.FakeGatoHistoryService('energy', this.accessory, {
       disableTimer: true,
       storage: 'fs',
       path: `${this.platform.homebridge.user.storagePath()}/accessories`,
       filename: `history_${this.accessory.displayName}.json`,
     });
-    const hap = this.platform.homebridge.hap;
-    this.powerMeterService =
-      this.accessory.getService(hap.Service.PowerManagement) ||
-      this.accessory.addService(hap.Service.PowerManagement);
 
-    this.powerMeterService.getCharacteristic(hap.Characteristic.WakeConfiguration).setValue(0);
-    this.powerMeterService.addOptionalCharacteristic(HAP.CurrentPowerConsumption);
-    this.powerMeterService.addOptionalCharacteristic(HAP.TotalConsumption);
-
-    return [this.initAccessoryInformation(), this.powerMeterService, this.historyService];
+    return [this.initAccessoryInformation(), this.outletService, this.historyService];
   }
 
   update(data: SupplierDeviceData): void {
@@ -42,12 +42,10 @@ export class PowerSupplier extends ComelitAccessory<SupplierDeviceData> {
     this.log.info(`Reporting instant consumption of ${instantPower}Wh`);
     consumption.set(instantPower);
 
-    /* this.powerMeterService.getCharacteristic(HAP.CurrentPowerConsumption).setValue(instantPower);
-    this.powerMeterService.getCharacteristic(HAP.TotalConsumption).setValue(
-      <number>this.powerMeterService.getCharacteristic(HAP.TotalConsumption).value +
-        instantPower / 1000 // total is in kWh
-    );
-*/
+    this.outletService
+      .getCharacteristic(this.platform.homebridge.hap.Characteristic.OutletInUse)
+      .updateValue(instantPower > 0);
+
     this.historyService.addEntry({
       time: Date.now() / 1000,
       power: instantPower,
