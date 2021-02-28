@@ -1,8 +1,14 @@
 import { PlatformAccessory } from 'homebridge';
 
-export interface FakeGato {
-  [k: string]: any;
+export interface FakegatoEntry {
+  time: number;
+  power: number;
 }
-export interface FakeGatoCtor {
-  new (type: string, plugin: PlatformAccessory, config: any): FakeGato;
+
+export interface FakegatoHistory {
+  addEntry(config: FakegatoEntry);
+}
+
+export interface Fakegato {
+  new (type: string, plugin: PlatformAccessory, config: any): FakegatoHistory;
 }

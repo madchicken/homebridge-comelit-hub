@@ -28,6 +28,7 @@ export class PowerSupplier extends ComelitAccessory<SupplierDeviceData> {
       .setValue(true);
 
     this.historyService = new HAP.FakeGatoHistoryService('energy', this.accessory, {
+      log: this.log,
       disableTimer: true,
       storage: 'fs',
       path: `${this.platform.homebridge.user.storagePath()}/accessories`,
