@@ -4,6 +4,7 @@ import client from 'prom-client';
 import { ComelitPlatform } from '../comelit-platform';
 import { PlatformAccessory, Service } from 'homebridge';
 import { HAP } from '../index';
+import { FakegatoHistoryService } from '../types';
 
 const consumption = new client.Gauge({
   name: 'comelit_total_consumption',
@@ -11,8 +12,9 @@ const consumption = new client.Gauge({
 });
 
 export class PowerSupplier extends ComelitAccessory<SupplierDeviceData> {
-  private historyService: any;
+  private historyService: FakegatoHistoryService;
   private outletService: Service;
+  private powerMeterService: Service;
 
   constructor(platform: ComelitPlatform, accessory: PlatformAccessory, client: ComelitClient) {
     super(platform, accessory, client);
@@ -35,6 +37,10 @@ export class PowerSupplier extends ComelitAccessory<SupplierDeviceData> {
       filename: `history_${this.accessory.displayName}.json`,
     });
 
+    this.powerMeterService =
+      this.accessory.getService(HAP.PowerMeterService) ||
+      this.accessory.addService(HAP.PowerMeterService);
+
     return [this.initAccessoryInformation(), this.outletService, this.historyService];
   }
 
@@ -46,6 +52,8 @@ export class PowerSupplier extends ComelitAccessory<SupplierDeviceData> {
     this.outletService
       .getCharacteristic(this.platform.homebridge.hap.Characteristic.OutletInUse)
       .updateValue(instantPower > 0);
+
+    this.powerMeterService.getCharacteristic(HAP.CurrentPowerConsumption).updateValue(instantPower);
 
     this.historyService.addEntry({
       time: Date.now() / 1000,

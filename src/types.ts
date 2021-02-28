@@ -1,14 +1,15 @@
 import { PlatformAccessory } from 'homebridge';
+import { Service } from 'hap-nodejs';
 
 export interface FakegatoEntry {
   time: number;
   power: number;
 }
 
-export interface FakegatoHistory {
+export interface FakegatoHistoryService extends Service {
   addEntry(config: FakegatoEntry);
 }
 
-export interface Fakegato {
-  new (type: string, plugin: PlatformAccessory, config: any): FakegatoHistory;
+export interface FakegatoService {
+  new (type: string, plugin: PlatformAccessory, config: any): FakegatoHistoryService;
 }
