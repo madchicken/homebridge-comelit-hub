@@ -26,7 +26,7 @@ export const HAP: ExtraHAPTypes = {
 };
 
 export class CurrentPowerConsumption extends Characteristic {
-  public static readonly UUID: string = 'E863F10D-079E-48FF-8F27-9C2605A29F52';
+  public static readonly UUID: string = 'C6A07A7E-ECD2-426B-89D7-E8664CF782C1';
 
   constructor() {
     super('Current power consumption', CurrentPowerConsumption.UUID, {
@@ -57,13 +57,13 @@ class TotalConsumption extends Characteristic {
 HAP.TotalConsumption = TotalConsumption;
 
 class PowerMeterService extends Service {
-  public static readonly UUID: string = '00000001-0000-1777-8000-775D67EC4377';
+  public static readonly UUID: string = 'D9C50529-BC9A-4324-8E79-E17C85FCAC62';
 
   public UUID: string;
   constructor(displayName?: string, subtype?: string) {
     super(displayName, PowerMeterService.UUID, subtype);
     this.addCharacteristic(HAP.CurrentPowerConsumption);
-    this.addCharacteristic(HAP.TotalConsumption);
+    // this.addCharacteristic(HAP.TotalConsumption);
   }
 }
 HAP.PowerMeterService = PowerMeterService;

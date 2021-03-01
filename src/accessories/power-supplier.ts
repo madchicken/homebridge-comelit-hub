@@ -55,8 +55,8 @@ export class PowerSupplier extends ComelitAccessory<SupplierDeviceData> {
     return [
       this.initAccessoryInformation(),
       this.outletService,
-      this.historyService,
       this.powerMeterService,
+      this.historyService,
     ];
   }
 
