@@ -2,7 +2,12 @@ import { ComelitAccessory } from './comelit';
 import { ComelitClient, SupplierDeviceData } from 'comelit-client';
 import client from 'prom-client';
 import { ComelitPlatform } from '../comelit-platform';
-import { PlatformAccessory, Service } from 'homebridge';
+import {
+  CharacteristicEventTypes,
+  CharacteristicGetCallback,
+  PlatformAccessory,
+  Service,
+} from 'homebridge';
 import { HAP } from '../index';
 import { FakegatoHistoryService } from '../types';
 
@@ -40,6 +45,12 @@ export class PowerSupplier extends ComelitAccessory<SupplierDeviceData> {
     this.powerMeterService =
       this.accessory.getService(HAP.PowerMeterService) ||
       this.accessory.addService(HAP.PowerMeterService);
+
+    this.powerMeterService
+      .getCharacteristic(HAP.CurrentPowerConsumption)
+      .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
+        callback(null, parseFloat(this.device.instant_power));
+      });
 
     return [
       this.initAccessoryInformation(),
