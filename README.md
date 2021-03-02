@@ -139,6 +139,8 @@ If otherwise, you simply enjoyed using this plugin, and you want to contribute i
 2.3.0 - Auto discover HUB
 2.3.1 - Fix major bug in HUB communication protocol
 2.6.0 - Add Irrigation system and handle new blinds with built in percentage
+2.6.1 - Fix warnings on Homebridge 1.3.0
+2.6.2 - Add Fakegato support
 
 ## Screenshots
 
