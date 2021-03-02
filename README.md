@@ -141,6 +141,7 @@ If otherwise, you simply enjoyed using this plugin, and you want to contribute i
 2.6.0 - Add Irrigation system and handle new blinds with built in percentage
 2.6.1 - Fix warnings on Homebridge 1.3.0
 2.6.2 - Add Fakegato support
+2.6.1 - Fix Fakegato new types
 
 ## Screenshots
 
