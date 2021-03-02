@@ -19,7 +19,6 @@ const consumption = new client.Gauge({
 export class PowerSupplier extends ComelitAccessory<SupplierDeviceData> {
   private historyService: FakegatoHistoryService;
   private outletService: Service;
-  private powerMeterService: Service;
 
   constructor(platform: ComelitPlatform, accessory: PlatformAccessory, client: ComelitClient) {
     super(platform, accessory, client);
@@ -30,9 +29,20 @@ export class PowerSupplier extends ComelitAccessory<SupplierDeviceData> {
       this.accessory.getService(this.platform.Service.Outlet) ||
       this.accessory.addService(this.platform.Service.Outlet);
 
+    if (!this.outletService.getCharacteristic(HAP.CurrentPowerConsumption)) {
+      this.outletService.addCharacteristic(HAP.CurrentPowerConsumption);
+    }
+
     this.outletService
-      .getCharacteristic(this.platform.homebridge.hap.Characteristic.On)
-      .setValue(true);
+      .getCharacteristic(this.platform.homebridge.hap.Characteristic.OutletInUse)
+      .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
+        callback(null, parseFloat(this.device.instant_power) > 0);
+      });
+    this.outletService
+      .getCharacteristic(HAP.CurrentPowerConsumption)
+      .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
+        callback(null, parseFloat(this.device.instant_power));
+      });
 
     this.historyService = new HAP.FakeGatoHistoryService('energy', this.accessory, {
       log: this.log,
@@ -42,22 +52,7 @@ export class PowerSupplier extends ComelitAccessory<SupplierDeviceData> {
       filename: `history_${this.accessory.displayName}.json`,
     });
 
-    this.powerMeterService =
-      this.accessory.getService(HAP.PowerMeterService) ||
-      this.accessory.addService(HAP.PowerMeterService);
-
-    this.powerMeterService
-      .getCharacteristic(HAP.CurrentPowerConsumption)
-      .on(CharacteristicEventTypes.GET, (callback: CharacteristicGetCallback) => {
-        callback(null, parseFloat(this.device.instant_power));
-      });
-
-    return [
-      this.initAccessoryInformation(),
-      this.outletService,
-      this.powerMeterService,
-      this.historyService,
-    ];
+    return [this.initAccessoryInformation(), this.outletService, this.historyService];
   }
 
   update(data: SupplierDeviceData): void {
@@ -65,11 +60,12 @@ export class PowerSupplier extends ComelitAccessory<SupplierDeviceData> {
     this.log.info(`Reporting instant consumption of ${instantPower}Wh`);
     consumption.set(instantPower);
 
-    this.outletService
-      .getCharacteristic(this.platform.homebridge.hap.Characteristic.OutletInUse)
-      .updateValue(instantPower > 0);
+    this.outletService.updateCharacteristic(
+      this.platform.homebridge.hap.Characteristic.OutletInUse,
+      instantPower > 0
+    );
 
-    this.powerMeterService.getCharacteristic(HAP.CurrentPowerConsumption).updateValue(instantPower);
+    this.outletService.updateCharacteristic(HAP.CurrentPowerConsumption, instantPower);
 
     this.historyService.addEntry({
       time: Date.now() / 1000,

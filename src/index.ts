@@ -26,10 +26,10 @@ export const HAP: ExtraHAPTypes = {
 };
 
 export class CurrentPowerConsumption extends Characteristic {
-  public static readonly UUID: string = 'C6A07A7E-ECD2-426B-89D7-E8664CF782C1';
+  public static readonly UUID: string = 'E863F10D-079E-48FF-8F27-9C2605A29F52';
 
   constructor() {
-    super('Current power consumption', CurrentPowerConsumption.UUID, {
+    super('CurrentConsumption', CurrentPowerConsumption.UUID, {
       format: Formats.UINT16,
       unit: 'watts' as Units, // ??
       maxValue: 100000,
@@ -45,7 +45,7 @@ class TotalConsumption extends Characteristic {
   public static readonly UUID: string = 'E863F10C-079E-48FF-8F27-9C2605A29F52';
 
   constructor() {
-    super('Total power consumption', TotalConsumption.UUID, {
+    super('TotalConsumption', TotalConsumption.UUID, {
       format: Formats.FLOAT,
       unit: 'kWh' as Units, // ??
       minValue: 0,
