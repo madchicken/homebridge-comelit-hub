@@ -9,19 +9,20 @@ import {
   PlatformConfig,
   Service,
 } from 'homebridge';
-import { ComelitClient, DeviceData, HomeIndex, ROOT_ID } from 'comelit-client';
+import { ComelitClient, DeviceData, HomeIndex, OBJECT_SUBTYPE, ROOT_ID } from 'comelit-client';
 import express, { Express } from 'express';
 import client, { register } from 'prom-client';
 import * as http from 'http';
 import { ComelitAccessory } from './accessories/comelit';
 import { Lightbulb } from './accessories/lightbulb';
 import { Thermostat } from './accessories/thermostat';
-import { Blind } from './accessories/blind';
 import { Outlet } from './accessories/outlet';
 import { PowerSupplier } from './accessories/power-supplier';
-import Timeout = NodeJS.Timeout;
 import { Other } from './accessories/other';
 import { Irrigation } from './accessories/irrigation';
+import { EnhancedBlind } from './accessories/enhanced-blind';
+import { StandardBlind } from './accessories/standard-blind';
+import Timeout = NodeJS.Timeout;
 
 export interface HubConfig extends PlatformConfig {
   username: string;
@@ -208,9 +209,13 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
       if (deviceData) {
         this.log.debug(`Blind ID: ${id}, ${deviceData.descrizione}`);
         const accessory = this.createHapAccessory(deviceData, Categories.WINDOW_COVERING);
+        // Enhanced blinds are able to set the position while standard ones are not (and we simulate it)
+        const isEnhanced = deviceData.sub_type === OBJECT_SUBTYPE.ENHANCED_ELECTRIC_BLIND;
         this.mappedAccessories.set(
           id,
-          new Blind(this, accessory, this.client, this.config.blind_closing_time)
+          isEnhanced
+            ? new EnhancedBlind(this, accessory, this.client)
+            : new StandardBlind(this, accessory, this.client, this.config.blind_closing_time)
         );
       }
     });
