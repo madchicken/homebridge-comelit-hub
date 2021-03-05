@@ -370,7 +370,7 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
 
     this.thermostatService.updateCharacteristic(Characteristic.Active, isOn);
 
-    thermostatStatus.set({ thermostat_name: data.descrizione }, isWorking ? 0 : 1);
+    thermostatStatus.set({ thermostat_name: data.descrizione }, isWorking ? 1 : 0);
     thermostatTemperature.set({ thermostat_name: data.descrizione }, temperature);
   }
 
@@ -425,7 +425,7 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
       );
       this.dehumidifierService.updateCharacteristic(Characteristic.Active, isOn);
 
-      dehumidifierStatus.set({ dehumidifier_name: data.descrizione }, isWorking ? 0 : 1);
+      dehumidifierStatus.set({ dehumidifier_name: data.descrizione }, isWorking ? 1 : 0);
       dehumidifierHumidity.set({ dehumidifier_name: data.descrizione }, parseInt(data.umidita));
     }
   }
