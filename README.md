@@ -142,6 +142,8 @@ If otherwise, you simply enjoyed using this plugin, and you want to contribute i
 2.6.1 - Fix warnings on Homebridge 1.3.0
 2.6.2 - Add Fakegato support
 2.6.1 - Fix Fakegato new types
+2.6.2 - Fixes
+2.6.3 - Fix new blind percentage (was inverted)
 
 ## Screenshots
 
