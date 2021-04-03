@@ -143,7 +143,8 @@ If otherwise, you simply enjoyed using this plugin, and you want to contribute i
 2.6.2 - Add Fakegato support
 2.6.1 - Fix Fakegato new types
 2.6.2 - Fixes
-2.6.3 - Fix new blind percentage (was inverted)
+2.6.3 - Fixes
+2.6.4 - Fix new blind percentage (was inverted)
 
 ## Screenshots
 
