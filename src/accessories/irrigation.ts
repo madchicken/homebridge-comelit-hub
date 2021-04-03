@@ -28,6 +28,7 @@ export class Irrigation extends ComelitAccessory<IrrigationDeviceData> {
   public update(data: IrrigationDeviceData) {
     const Characteristic = this.platform.Characteristic;
     const status = parseInt(data.status);
+    this.service.updateCharacteristic(Characteristic.On, status);
     this.service.updateCharacteristic(Characteristic.Active, status);
     this.service.updateCharacteristic(Characteristic.InUse, status);
     irrigationActivations.inc({ name: data.descrizione });
@@ -42,7 +43,7 @@ export class Irrigation extends ComelitAccessory<IrrigationDeviceData> {
       this.accessory.addService(this.platform.Service.IrrigationSystem);
     this.update(this.device);
     this.service
-      .getCharacteristic(Characteristic.Active)
+      .getCharacteristic(Characteristic.On)
       .on(CharacteristicEventTypes.SET, async (yes: boolean, callback: Function) => {
         const status = yes ? Irrigation.ON : Irrigation.OFF;
         try {

@@ -5,19 +5,23 @@ import { PositionState } from './hap';
 import { Blind } from './blind';
 
 /**
- * Returns the position as a value between 0 and 255
+ * Returns the position as a value between 0 and 255.
+ * Since Comelit system uses 0 for opened and 100 for closed, this function inverts the percentage to accommodate
+ * the value for Homekit, that uses 0 for closed nad 100 for fully opened.
  * @param position number 0-100
  */
 function getPositionAsByte(position: number) {
-  return Math.round(position * 2.55);
+  return Math.round((100 - position) * 2.55);
 }
 
 /**
  * Returns the position as a value between 0 and 100
+ * Since Comelit system uses 0 for opened and 100 for closed, this function inverts the percentage to accommodate
+ * the value for Homekit, that uses 0 for closed nad 100 for fully opened.
  * @param position number 0-255
  */
 function getPositionAsPerc(position: string) {
-  return Math.round(parseInt(position) / 2.55);
+  return Math.round((100 - parseInt(position)) / 2.55);
 }
 
 export class EnhancedBlind extends Blind {
