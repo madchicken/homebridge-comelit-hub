@@ -126,7 +126,6 @@
         "hide_lights",
         "hide_blinds",
         "hide_thermostats",
-        "hide_dehumidifiers",
         "hide_power_suppliers",
         "hide_outlets",
         "hide_others",
