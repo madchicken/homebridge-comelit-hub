@@ -51,7 +51,7 @@ export class EnhancedBlind extends Blind {
     const Characteristic = this.platform.Characteristic;
     const position = getPositionAsPerc(data.position);
     const status = parseInt(data.status); // can be 1 (increasing), 2 (decreasing) or 0 (stopped)
-    this.positionState = this.getPositionStateFromState(data);
+    this.positionState = this.getPositionStateFromDeviceData(data);
     if (status === ObjectStatus.OFF) {
       this.log.info(
         `Blind is now at position ${position} (it was ${
@@ -69,11 +69,11 @@ export class EnhancedBlind extends Blind {
     this.coveringService.getCharacteristic(Characteristic.CurrentPosition).updateValue(position);
   }
 
-  protected getPositionFromState(data: BlindDeviceData): number {
+  protected getPositionFromDeviceData(data: BlindDeviceData): number {
     return getPositionAsPerc(data.position);
   }
 
-  protected getPositionStateFromState(data: BlindDeviceData): number {
+  protected getPositionStateFromDeviceData(data: BlindDeviceData): number {
     const status = parseInt(data.status); // can be 1 (increasing), 2 (decreasing) or 0 (stopped)
     switch (status) {
       case ObjectStatus.ON:

@@ -69,13 +69,13 @@ export class StandardBlind extends Blind {
     const Characteristic = this.platform.Characteristic;
     const status = parseInt(data.status);
     const now = new Date().getTime();
-    this.positionState = this.getPositionStateFromState(data);
+    this.positionState = this.getPositionStateFromDeviceData(data);
     switch (status) {
       case ObjectStatus.ON:
         this.lastCommandTime = now;
         break;
       case ObjectStatus.OFF: {
-        const position = this.getPositionFromState(data);
+        const position = this.getPositionFromDeviceData(data);
         this.lastCommandTime = 0;
         this.log.info(
           `Blind is now at position ${position} (it was ${
@@ -100,14 +100,14 @@ export class StandardBlind extends Blind {
     );
   }
 
-  protected getPositionFromState(_data: BlindDeviceData): number {
+  protected getPositionFromDeviceData(_data: BlindDeviceData): number {
+    const Characteristic = this.platform.Characteristic;
+    const currentPosition = this.coveringService.getCharacteristic(Characteristic.CurrentPosition)
+      .value as number;
     if (this.lastCommandTime) {
-      const Characteristic = this.platform.Characteristic;
       const now = new Date().getTime();
       // Calculate the number of milliseconds the blind moved
       const delta = now - this.lastCommandTime;
-      const currentPosition = this.coveringService.getCharacteristic(Characteristic.CurrentPosition)
-        .value as number;
       // Calculate the percentage of movement
       const deltaPercentage = Math.round(delta / (this.closingTime / 100));
       this.log.info(
@@ -123,10 +123,10 @@ export class StandardBlind extends Blind {
     // by default we set initial state to open (100).
     // This means that when restarting homebridge you should have your blinds all opened, since we can't determine the
     // initial state
-    return StandardBlind.OPEN;
+    return currentPosition;
   }
 
-  protected getPositionStateFromState(data: BlindDeviceData): number {
+  protected getPositionStateFromDeviceData(data: BlindDeviceData): number {
     const status = parseInt(data.status); // can be 1 (increasing), 2 (decreasing) or 0 (stopped)
     switch (status) {
       case ObjectStatus.ON:

@@ -28,9 +28,9 @@ export abstract class Blind extends ComelitAccessory<BlindDeviceData> {
     const data = this.accessory.context as BlindDeviceData;
     this.coveringService.setCharacteristic(
       Characteristic.PositionState,
-      this.getPositionStateFromState(data)
+      this.getPositionStateFromDeviceData(data)
     );
-    const position = this.getPositionFromState(data);
+    const position = this.getPositionFromDeviceData(data);
     this.coveringService.setCharacteristic(
       Characteristic.TargetPosition,
       position > 0 ? Blind.OPEN : Blind.CLOSED
@@ -39,7 +39,7 @@ export abstract class Blind extends ComelitAccessory<BlindDeviceData> {
       Characteristic.CurrentPosition,
       position > 0 ? Blind.OPEN : Blind.CLOSED
     );
-    this.positionState = this.getPositionStateFromState(data);
+    this.positionState = this.getPositionStateFromDeviceData(data);
 
     this.coveringService
       .getCharacteristic(Characteristic.TargetPosition)
@@ -57,7 +57,7 @@ export abstract class Blind extends ComelitAccessory<BlindDeviceData> {
 
   public abstract update(data: BlindDeviceData);
 
-  protected abstract getPositionFromState(data: BlindDeviceData): number;
+  protected abstract getPositionFromDeviceData(data: BlindDeviceData): number;
 
-  protected abstract getPositionStateFromState(data: BlindDeviceData): number;
+  protected abstract getPositionStateFromDeviceData(data: BlindDeviceData): number;
 }

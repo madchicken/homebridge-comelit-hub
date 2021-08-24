@@ -38,7 +38,7 @@
   },
   "dependencies": {
     "async-mqtt": "2.6.1",
-    "comelit-client": "2.3.3",
+    "comelit-client": "2.3.4",
     "express": "^4.17.1",
     "fakegato-history": "^0.6.1",
     "lodash": "4.17.21",
