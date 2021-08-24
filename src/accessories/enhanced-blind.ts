@@ -21,7 +21,7 @@ function getPositionAsByte(position: number) {
  * @param position number 0-255
  */
 function getPositionAsPerc(position: string) {
-  return Math.round((100 - parseInt(position)) / 2.55);
+  return Math.round(100 - parseInt(position) / 2.55);
 }
 
 export class EnhancedBlind extends Blind {
@@ -51,26 +51,15 @@ export class EnhancedBlind extends Blind {
     const Characteristic = this.platform.Characteristic;
     const position = getPositionAsPerc(data.position);
     const status = parseInt(data.status); // can be 1 (increasing), 2 (decreasing) or 0 (stopped)
-    switch (status) {
-      case ObjectStatus.ON:
-        this.positionState = PositionState.INCREASING;
-        break;
-      case ObjectStatus.OFF: {
-        this.log.info(
-          `Blind is now at position ${position} (it was ${
-            this.positionState === PositionState.DECREASING ? 'closing' : 'opening'
-          })`
-        );
-        this.positionState = PositionState.STOPPED;
-        this.coveringService.getCharacteristic(Characteristic.TargetPosition).updateValue(position);
-        this.coveringService
-          .getCharacteristic(Characteristic.CurrentPosition)
-          .updateValue(position);
-        break;
-      }
-      case ObjectStatus.IDLE:
-        this.positionState = PositionState.DECREASING;
-        break;
+    this.positionState = this.getPositionStateFromState(data);
+    if (status === ObjectStatus.OFF) {
+      this.log.info(
+        `Blind is now at position ${position} (it was ${
+          this.positionState === PositionState.DECREASING ? 'closing' : 'opening'
+        })`
+      );
+      this.coveringService.getCharacteristic(Characteristic.TargetPosition).updateValue(position);
+      this.coveringService.getCharacteristic(Characteristic.CurrentPosition).updateValue(position);
     }
 
     this.coveringService
@@ -78,5 +67,21 @@ export class EnhancedBlind extends Blind {
       .updateValue(this.positionState);
     this.coveringService.getCharacteristic(Characteristic.TargetPosition).updateValue(position);
     this.coveringService.getCharacteristic(Characteristic.CurrentPosition).updateValue(position);
+  }
+
+  protected getPositionFromState(data: BlindDeviceData): number {
+    return getPositionAsPerc(data.position);
+  }
+
+  protected getPositionStateFromState(data: BlindDeviceData): number {
+    const status = parseInt(data.status); // can be 1 (increasing), 2 (decreasing) or 0 (stopped)
+    switch (status) {
+      case ObjectStatus.ON:
+        return PositionState.INCREASING;
+      case ObjectStatus.OFF:
+        return PositionState.STOPPED;
+      case ObjectStatus.IDLE:
+        return PositionState.DECREASING;
+    }
   }
 }

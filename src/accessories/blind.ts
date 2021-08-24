@@ -1,8 +1,7 @@
 import { ComelitAccessory } from './comelit';
-import { BlindDeviceData, ComelitClient, OBJECT_SUBTYPE } from 'comelit-client';
+import { BlindDeviceData, ComelitClient } from 'comelit-client';
 import { ComelitPlatform } from '../comelit-platform';
 import { CharacteristicEventTypes, PlatformAccessory, Service } from 'homebridge';
-import { PositionState } from './hap';
 import { CharacteristicSetCallback } from 'hap-nodejs';
 
 export abstract class Blind extends ComelitAccessory<BlindDeviceData> {
@@ -26,10 +25,21 @@ export abstract class Blind extends ComelitAccessory<BlindDeviceData> {
       this.accessory.getService(this.platform.Service.WindowCovering) ||
       this.accessory.addService(this.platform.Service.WindowCovering);
 
-    this.coveringService.setCharacteristic(Characteristic.PositionState, PositionState.STOPPED);
-    this.coveringService.setCharacteristic(Characteristic.TargetPosition, Blind.OPEN);
-    this.coveringService.setCharacteristic(Characteristic.CurrentPosition, Blind.OPEN);
-    this.positionState = PositionState.STOPPED;
+    const data = this.accessory.context as BlindDeviceData;
+    this.coveringService.setCharacteristic(
+      Characteristic.PositionState,
+      this.getPositionStateFromState(data)
+    );
+    const position = this.getPositionFromState(data);
+    this.coveringService.setCharacteristic(
+      Characteristic.TargetPosition,
+      position > 0 ? Blind.OPEN : Blind.CLOSED
+    );
+    this.coveringService.setCharacteristic(
+      Characteristic.CurrentPosition,
+      position > 0 ? Blind.OPEN : Blind.CLOSED
+    );
+    this.positionState = this.getPositionStateFromState(data);
 
     this.coveringService
       .getCharacteristic(Characteristic.TargetPosition)
@@ -46,4 +56,8 @@ export abstract class Blind extends ComelitAccessory<BlindDeviceData> {
   public abstract setPosition(position: number, callback: CharacteristicSetCallback): Promise<void>;
 
   public abstract update(data: BlindDeviceData);
+
+  protected abstract getPositionFromState(data: BlindDeviceData): number;
+
+  protected abstract getPositionStateFromState(data: BlindDeviceData): number;
 }

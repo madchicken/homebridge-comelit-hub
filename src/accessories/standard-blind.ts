@@ -69,20 +69,19 @@ export class StandardBlind extends Blind {
     const Characteristic = this.platform.Characteristic;
     const status = parseInt(data.status);
     const now = new Date().getTime();
+    this.positionState = this.getPositionStateFromState(data);
     switch (status) {
       case ObjectStatus.ON:
         this.lastCommandTime = now;
-        this.positionState = PositionState.INCREASING;
         break;
       case ObjectStatus.OFF: {
-        const position = this.positionFromTime();
+        const position = this.getPositionFromState(data);
         this.lastCommandTime = 0;
         this.log.info(
           `Blind is now at position ${position} (it was ${
             this.positionState === PositionState.DECREASING ? 'going down' : 'going up'
           })`
         );
-        this.positionState = PositionState.STOPPED;
         this.coveringService.getCharacteristic(Characteristic.TargetPosition).updateValue(position);
         this.coveringService
           .getCharacteristic(Characteristic.CurrentPosition)
@@ -94,7 +93,6 @@ export class StandardBlind extends Blind {
       }
       case ObjectStatus.IDLE:
         this.lastCommandTime = now;
-        this.positionState = PositionState.DECREASING;
         break;
     }
     this.log.info(
@@ -102,23 +100,41 @@ export class StandardBlind extends Blind {
     );
   }
 
-  private positionFromTime() {
-    const Characteristic = this.platform.Characteristic;
-    const now = new Date().getTime();
-    // Calculate the number of milliseconds the blind moved
-    const delta = now - this.lastCommandTime;
-    const currentPosition = this.coveringService.getCharacteristic(Characteristic.CurrentPosition)
-      .value as number;
-    // Calculate the percentage of movement
-    const deltaPercentage = Math.round(delta / (this.closingTime / 100));
-    this.log.info(
-      `Current position ${currentPosition}, delta is ${delta} (${deltaPercentage}%). State ${this.positionState}`
-    );
-    if (this.positionState === PositionState.DECREASING) {
-      // Blind is decreasing, subtract the delta
-      return currentPosition - deltaPercentage;
+  protected getPositionFromState(_data: BlindDeviceData): number {
+    if (this.lastCommandTime) {
+      const Characteristic = this.platform.Characteristic;
+      const now = new Date().getTime();
+      // Calculate the number of milliseconds the blind moved
+      const delta = now - this.lastCommandTime;
+      const currentPosition = this.coveringService.getCharacteristic(Characteristic.CurrentPosition)
+        .value as number;
+      // Calculate the percentage of movement
+      const deltaPercentage = Math.round(delta / (this.closingTime / 100));
+      this.log.info(
+        `Current position ${currentPosition}, delta is ${delta} (${deltaPercentage}%). State ${this.positionState}`
+      );
+      if (this.positionState === PositionState.DECREASING) {
+        // Blind is decreasing, subtract the delta
+        return currentPosition - deltaPercentage;
+      }
+      // Blind is increasing, add the delta
+      return currentPosition + deltaPercentage;
     }
-    // Blind is increasing, add the delta
-    return currentPosition + deltaPercentage;
+    // by default we set initial state to open (100).
+    // This means that when restarting homebridge you should have your blinds all opened, since we can't determine the
+    // initial state
+    return StandardBlind.OPEN;
+  }
+
+  protected getPositionStateFromState(data: BlindDeviceData): number {
+    const status = parseInt(data.status); // can be 1 (increasing), 2 (decreasing) or 0 (stopped)
+    switch (status) {
+      case ObjectStatus.ON:
+        return PositionState.INCREASING;
+      case ObjectStatus.OFF:
+        return PositionState.STOPPED;
+      case ObjectStatus.IDLE:
+        return PositionState.DECREASING;
+    }
   }
 }
