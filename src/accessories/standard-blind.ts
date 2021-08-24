@@ -100,7 +100,7 @@ export class StandardBlind extends Blind {
     );
   }
 
-  protected getPositionFromDeviceData(_data: BlindDeviceData): number {
+  protected getPositionFromDeviceData(data: BlindDeviceData): number {
     const Characteristic = this.platform.Characteristic;
     const currentPosition = this.coveringService.getCharacteristic(Characteristic.CurrentPosition)
       .value as number;
@@ -111,9 +111,9 @@ export class StandardBlind extends Blind {
       // Calculate the percentage of movement
       const deltaPercentage = Math.round(delta / (this.closingTime / 100));
       this.log.info(
-        `Current position ${currentPosition}, delta is ${delta} (${deltaPercentage}%). State ${this.positionState}`
+        `Current position ${currentPosition}, delta is ${deltaPercentage}% (${deltaPercentage}%). State ${this.positionState}`
       );
-      if (this.positionState === PositionState.DECREASING) {
+      if (this.getPositionStateFromDeviceData(data) === PositionState.DECREASING) {
         // Blind is decreasing, subtract the delta
         return currentPosition - deltaPercentage;
       }
