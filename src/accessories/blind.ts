@@ -12,8 +12,13 @@ export abstract class Blind extends ComelitAccessory<BlindDeviceData> {
 
   protected coveringService: Service;
   protected positionState: number;
+  protected position: number = -1;
 
-  constructor(platform: ComelitPlatform, accessory: PlatformAccessory, client: ComelitClient) {
+  protected constructor(
+    platform: ComelitPlatform,
+    accessory: PlatformAccessory,
+    client: ComelitClient
+  ) {
     super(platform, accessory, client);
   }
 
@@ -25,21 +30,13 @@ export abstract class Blind extends ComelitAccessory<BlindDeviceData> {
       this.accessory.getService(this.platform.Service.WindowCovering) ||
       this.accessory.addService(this.platform.Service.WindowCovering);
 
-    const data = this.accessory.context as BlindDeviceData;
-    this.coveringService.setCharacteristic(
-      Characteristic.PositionState,
-      this.getPositionStateFromDeviceData(data)
-    );
-    const position = this.getPositionFromDeviceData(data);
-    this.coveringService.setCharacteristic(
-      Characteristic.TargetPosition,
-      position > 0 ? Blind.OPEN : Blind.CLOSED
-    );
-    this.coveringService.setCharacteristic(
-      Characteristic.CurrentPosition,
-      position > 0 ? Blind.OPEN : Blind.CLOSED
-    );
-    this.positionState = this.getPositionStateFromDeviceData(data);
+    this.positionState = this.getPositionStateFromDeviceData();
+    this.position = this.getPositionFromDeviceData();
+
+    this.coveringService.setCharacteristic(Characteristic.PositionState, this.positionState);
+    const targetPosition = this.position > 0 ? Blind.OPEN : Blind.CLOSED;
+    this.coveringService.setCharacteristic(Characteristic.TargetPosition, targetPosition);
+    this.coveringService.setCharacteristic(Characteristic.CurrentPosition, targetPosition);
 
     this.coveringService
       .getCharacteristic(Characteristic.TargetPosition)
@@ -57,7 +54,7 @@ export abstract class Blind extends ComelitAccessory<BlindDeviceData> {
 
   public abstract update(data: BlindDeviceData);
 
-  protected abstract getPositionFromDeviceData(data: BlindDeviceData): number;
+  protected abstract getPositionFromDeviceData(): number;
 
-  protected abstract getPositionStateFromDeviceData(data: BlindDeviceData): number;
+  protected abstract getPositionStateFromDeviceData(): number;
 }

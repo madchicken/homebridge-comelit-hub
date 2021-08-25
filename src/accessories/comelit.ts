@@ -7,7 +7,6 @@ export abstract class ComelitAccessory<T extends DeviceData> {
   readonly accessory: PlatformAccessory;
   readonly log: Logger;
   readonly client: ComelitClient;
-  protected device: Readonly<T>;
 
   services: Service[];
   reachable: boolean;
@@ -19,7 +18,6 @@ export abstract class ComelitAccessory<T extends DeviceData> {
   ) {
     this.platform = platform;
     this.accessory = accessory;
-    this.device = this.accessory.context as T;
     this.log = platform.log;
     this.client = client;
     this.services = this.initServices();
@@ -33,6 +31,10 @@ export abstract class ComelitAccessory<T extends DeviceData> {
 
   getControllers(): Controller[] {
     return [];
+  }
+
+  get device(): Readonly<T> {
+    return this.accessory.context as T;
   }
 
   identify(): void {}
@@ -58,7 +60,7 @@ export abstract class ComelitAccessory<T extends DeviceData> {
   protected abstract update(data: T): void;
 
   updateDevice(data: T) {
-    this.device = { ...this.device, ...data };
+    this.accessory.context = { ...this.accessory.context, ...data };
     this.update(data);
   }
 }
