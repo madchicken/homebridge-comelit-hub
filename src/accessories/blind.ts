@@ -12,7 +12,6 @@ export abstract class Blind extends ComelitAccessory<BlindDeviceData> {
 
   protected coveringService: Service;
   protected positionState: number;
-  protected position: number = -1;
 
   protected constructor(
     platform: ComelitPlatform,
@@ -31,10 +30,10 @@ export abstract class Blind extends ComelitAccessory<BlindDeviceData> {
       this.accessory.addService(this.platform.Service.WindowCovering);
 
     this.positionState = this.getPositionStateFromDeviceData();
-    this.position = this.getPositionFromDeviceData();
+    const position = this.getPositionFromDeviceData();
 
     this.coveringService.setCharacteristic(Characteristic.PositionState, this.positionState);
-    const targetPosition = this.position > 0 ? Blind.OPEN : Blind.CLOSED;
+    const targetPosition = position > 0 ? Blind.OPEN : Blind.CLOSED;
     this.coveringService.setCharacteristic(Characteristic.TargetPosition, targetPosition);
     this.coveringService.setCharacteristic(Characteristic.CurrentPosition, targetPosition);
 

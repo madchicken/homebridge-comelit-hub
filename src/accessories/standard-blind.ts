@@ -48,9 +48,9 @@ export class StandardBlind extends Blind {
       if (delta !== 0) {
         this.positionState =
           position < currentPosition ? PositionState.DECREASING : PositionState.INCREASING;
-        this.position = position;
         await this.client.toggleDeviceStatus(this.device.id, status);
         this.lastCommandTime = new Date().getTime();
+        this.coveringService.getCharacteristic(Characteristic.TargetPosition).updateValue(position);
         this.timeout = setTimeout(async () => {
           return this.resetTimeout();
         }, (this.closingTime * Math.abs(delta)) / 100);
@@ -85,14 +85,11 @@ export class StandardBlind extends Blind {
           const position = this.positionFromTime();
           const positionAsByte = getPositionAsByte(position);
           this.log.debug(
-            `Saved position ${positionAsByte} (${getPositionAsPerc(`${positionAsByte}`)}%)`
+            `Saved position ${getPositionAsPerc(`${positionAsByte}`)}% (${positionAsByte})`
           );
           this.accessory.context = { ...this.device, position: positionAsByte };
           this.lastCommandTime = 0;
           this.log.info(`Blind is now at position ${position}`);
-          this.coveringService
-            .getCharacteristic(Characteristic.TargetPosition)
-            .updateValue(position);
           this.coveringService
             .getCharacteristic(Characteristic.CurrentPosition)
             .updateValue(position);
@@ -104,7 +101,9 @@ export class StandardBlind extends Blind {
         }
         break;
       case ObjectStatus.IDLE:
-        this.lastCommandTime = now;
+        if (!this.lastCommandTime) {
+          this.lastCommandTime = now;
+        }
         break;
     }
     this.log.info(
@@ -138,7 +137,7 @@ export class StandardBlind extends Blind {
     // Calculate the percentage of movement
     const deltaPercentage = Math.round(delta / (this.closingTime / 100));
     this.log.info(
-      `Current position ${currentPosition}, delta is ${delta} (${deltaPercentage}%). State ${this.positionState}`
+      `Current position ${currentPosition}, delta is ${delta}ms (${deltaPercentage}%). State ${this.positionState}`
     );
     if (this.positionState === PositionState.DECREASING) {
       // Blind is decreasing, subtract the delta
