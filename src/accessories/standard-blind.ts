@@ -46,6 +46,8 @@ export class StandardBlind extends Blind {
         `Setting position to ${position}%. Current position is ${currentPosition}. Delta is ${delta}`
       );
       if (delta !== 0) {
+        this.positionState =
+          position < currentPosition ? PositionState.DECREASING : PositionState.INCREASING;
         this.position = position;
         await this.client.toggleDeviceStatus(this.device.id, status);
         this.lastCommandTime = new Date().getTime();
@@ -76,33 +78,31 @@ export class StandardBlind extends Blind {
     const Characteristic = this.platform.Characteristic;
     const status = parseInt(data.status);
     const now = new Date().getTime();
-    this.positionState = this.getPositionStateFromDeviceData();
     switch (status) {
       case ObjectStatus.ON:
-        this.lastCommandTime = now;
+      case ObjectStatus.OFF:
+        if (this.lastCommandTime) {
+          const position = this.positionFromTime();
+          const positionAsByte = getPositionAsByte(position);
+          this.log.debug(
+            `Saved position ${positionAsByte} (${getPositionAsPerc(`${positionAsByte}`)}%)`
+          );
+          this.accessory.context = { ...this.device, position: positionAsByte };
+          this.lastCommandTime = 0;
+          this.log.info(`Blind is now at position ${position}`);
+          this.coveringService
+            .getCharacteristic(Characteristic.TargetPosition)
+            .updateValue(position);
+          this.coveringService
+            .getCharacteristic(Characteristic.CurrentPosition)
+            .updateValue(position);
+          this.coveringService
+            .getCharacteristic(Characteristic.PositionState)
+            .updateValue(PositionState.STOPPED);
+        } else {
+          this.lastCommandTime = now; // external command (physical button)
+        }
         break;
-      case ObjectStatus.OFF: {
-        const position = this.positionFromTime();
-        const positionAsByte = getPositionAsByte(position);
-        this.log.debug(
-          `Saved position ${positionAsByte} (${getPositionAsPerc(`${positionAsByte}`)}%)`
-        );
-        this.accessory.context = { ...this.device, position: positionAsByte };
-        this.lastCommandTime = 0;
-        this.log.info(
-          `Blind is now at position ${position} (it was ${
-            this.positionState === PositionState.DECREASING ? 'closing' : 'opening'
-          })`
-        );
-        this.coveringService.getCharacteristic(Characteristic.TargetPosition).updateValue(position);
-        this.coveringService
-          .getCharacteristic(Characteristic.CurrentPosition)
-          .updateValue(position);
-        this.coveringService
-          .getCharacteristic(Characteristic.PositionState)
-          .updateValue(PositionState.STOPPED);
-        break;
-      }
       case ObjectStatus.IDLE:
         this.lastCommandTime = now;
         break;
