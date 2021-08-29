@@ -141,9 +141,9 @@ export class StandardBlind extends Blind {
     );
     if (this.positionState === PositionState.DECREASING) {
       // Blind is decreasing, subtract the delta
-      return currentPosition - deltaPercentage;
+      return Math.max(Blind.CLOSED, currentPosition - deltaPercentage);
     }
     // Blind is increasing, add the delta
-    return currentPosition + deltaPercentage;
+    return Math.min(StandardBlind.OPEN, currentPosition + deltaPercentage);
   }
 }
