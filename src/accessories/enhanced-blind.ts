@@ -16,11 +16,7 @@ export class EnhancedBlind extends Blind {
       const currentPosition = this.coveringService.getCharacteristic(Characteristic.CurrentPosition)
         .value as number;
       this.log.info(`Setting position to ${position}%. Current position is ${currentPosition}`);
-      this.coveringService.setCharacteristic(
-        Characteristic.PositionState,
-        position < currentPosition ? PositionState.DECREASING : PositionState.INCREASING
-      );
-      this.coveringService.setCharacteristic(Characteristic.TargetPosition, position);
+      this.coveringService.getCharacteristic(Characteristic.TargetPosition).updateValue(position);
       await this.client.setBlindPosition(this.device.id, getPositionAsByte(position));
       callback();
     } catch (e) {

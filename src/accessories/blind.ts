@@ -36,6 +36,15 @@ export abstract class Blind extends ComelitAccessory<BlindDeviceData> {
     this.coveringService.setCharacteristic(Characteristic.TargetPosition, position);
     this.coveringService.setCharacteristic(Characteristic.CurrentPosition, position);
 
+    this.coveringService
+      .getCharacteristic(Characteristic.TargetPosition)
+      .on(
+        CharacteristicEventTypes.SET,
+        async (position: number, callback: CharacteristicSetCallback) => {
+          await this.setPosition(position, callback);
+        }
+      );
+
     return [accessoryInformation, this.coveringService];
   }
 
