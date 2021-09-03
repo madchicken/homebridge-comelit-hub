@@ -8,7 +8,8 @@ export abstract class Blind extends ComelitAccessory<BlindDeviceData> {
   static readonly OPEN = 100;
   static readonly CLOSED = 0;
 
-  static readonly OPENING_CLOSING_TIME = 35; // 35 seconds to open approx. We should have this in the config
+  static readonly CLOSING_TIME = 35; // 35 seconds to close approx.
+  static readonly OPENING_TIME = 37; // 37 seconds to open approx.
 
   protected coveringService: Service;
   protected positionState: number;

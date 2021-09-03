@@ -7,20 +7,21 @@ import { getPositionAsByte, getPositionAsPerc } from '../utils';
 import Timeout = NodeJS.Timeout;
 
 export class StandardBlind extends Blind {
-  static readonly OPENING_CLOSING_TIME = 35; // 35 seconds to open approx. We should have this in the config
-
   private timeout: Timeout;
   private lastCommandTime: number = null;
   private readonly closingTime: number;
+  private readonly openingTime: number;
 
   constructor(
     platform: ComelitPlatform,
     accessory: PlatformAccessory,
     client: ComelitClient,
+    openingTime?: number,
     closingTime?: number
   ) {
     super(platform, accessory, client);
-    this.closingTime = (closingTime || Blind.OPENING_CLOSING_TIME) * 1000;
+    this.closingTime = (closingTime || Blind.CLOSING_TIME) * 1000;
+    this.openingTime = (openingTime || Blind.OPENING_TIME) * 1000;
     this.log.info(`Blind ${this.device.id} has closing time of ${this.closingTime}`);
   }
 
@@ -51,9 +52,15 @@ export class StandardBlind extends Blind {
         await this.client.toggleDeviceStatus(this.device.id, status);
         this.lastCommandTime = new Date().getTime();
         this.coveringService.getCharacteristic(Characteristic.TargetPosition).updateValue(position);
+        const time = status === 1 ? this.closingTime : this.openingTime;
+        let ms = (time * Math.abs(delta)) / 100;
+        if (position == Blind.CLOSED || position == Blind.OPEN) {
+          // when totally opening or closing, give an extra 5 seconds to be sure we reach the final position
+          ms += 5000;
+        }
         this.timeout = setTimeout(async () => {
           return this.resetTimeout();
-        }, (this.closingTime * Math.abs(delta)) / 100);
+        }, ms);
       }
       callback();
     } catch (e) {

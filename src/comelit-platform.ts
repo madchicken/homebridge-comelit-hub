@@ -9,7 +9,14 @@ import {
   PlatformConfig,
   Service,
 } from 'homebridge';
-import { ComelitClient, DeviceData, HomeIndex, OBJECT_SUBTYPE, ROOT_ID } from 'comelit-client';
+import {
+  BlindDeviceData,
+  ComelitClient,
+  DeviceData,
+  HomeIndex,
+  OBJECT_SUBTYPE,
+  ROOT_ID,
+} from 'comelit-client';
 import express, { Express } from 'express';
 import client, { register } from 'prom-client';
 import * as http from 'http';
@@ -23,6 +30,7 @@ import { Irrigation } from './accessories/irrigation';
 import { EnhancedBlind } from './accessories/enhanced-blind';
 import { StandardBlind } from './accessories/standard-blind';
 import Timeout = NodeJS.Timeout;
+import { Blind } from './accessories/blind';
 
 export interface HubConfig extends PlatformConfig {
   username: string;
@@ -33,7 +41,9 @@ export interface HubConfig extends PlatformConfig {
   client_id?: string;
   export_prometheus_metrics?: boolean;
   exporter_http_port?: number;
+  blind_opening_time?: number;
   blind_closing_time?: number;
+  use_comelit_blind_timing?: boolean;
   keep_alive?: number;
   avoid_duplicates?: boolean;
   hide_lights?: boolean;
@@ -60,6 +70,9 @@ expr.get('/metrics', async (req, res) => {
     res.status(500).end(e.message);
   }
 });
+
+const MIN_OPEN_CLOSE_TIME = 20;
+const MAX_OPEN_CLOSE_TIME = 80;
 
 export class ComelitPlatform implements DynamicPlatformPlugin {
   static KEEP_ALIVE_TIMEOUT = 120000;
@@ -211,14 +224,42 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
         const accessory = this.createHapAccessory(deviceData, Categories.WINDOW_COVERING);
         // Enhanced blinds are able to set the position while standard ones are not (and we simulate it)
         const isEnhanced = deviceData.sub_type === OBJECT_SUBTYPE.ENHANCED_ELECTRIC_BLIND;
+        const openingTime = this.getOpeningTime(deviceData);
+        const closingTime = this.getClosingTime(deviceData);
         this.mappedAccessories.set(
           id,
           isEnhanced
             ? new EnhancedBlind(this, accessory, this.client)
-            : new StandardBlind(this, accessory, this.client, this.config.blind_closing_time)
+            : new StandardBlind(this, accessory, this.client, openingTime, closingTime)
         );
       }
     });
+  }
+
+  public getClosingTime(deviceData: BlindDeviceData) {
+    try {
+      return this.config.use_comelit_blind_timing
+        ? Math.max(
+            MAX_OPEN_CLOSE_TIME,
+            Math.min(MIN_OPEN_CLOSE_TIME, parseInt(deviceData.closeTime))
+          )
+        : this.config.blind_closing_time;
+    } catch (e) {
+      return Blind.CLOSING_TIME;
+    }
+  }
+
+  public getOpeningTime(deviceData: BlindDeviceData) {
+    try {
+      return this.config.use_comelit_blind_timing
+        ? Math.max(
+            MAX_OPEN_CLOSE_TIME,
+            Math.min(MIN_OPEN_CLOSE_TIME, parseInt(deviceData.openTime))
+          )
+        : this.config.blind_opening_time;
+    } catch (e) {
+      return Blind.OPENING_TIME;
+    }
   }
 
   private mapThermostats(homeIndex: HomeIndex) {

@@ -20,5 +20,6 @@
     "inlineSourceMap": true
   },
   "lib": ["esnext"],
+  "exclude": ["**/__tests__/*"],
   "include": ["src"]
 }
