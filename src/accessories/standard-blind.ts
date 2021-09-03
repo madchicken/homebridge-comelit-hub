@@ -53,11 +53,7 @@ export class StandardBlind extends Blind {
         this.lastCommandTime = new Date().getTime();
         this.coveringService.getCharacteristic(Characteristic.TargetPosition).updateValue(position);
         const time = status === 1 ? this.closingTime : this.openingTime;
-        let ms = (time * Math.abs(delta)) / 100;
-        if (position == Blind.CLOSED || position == Blind.OPEN) {
-          // when totally opening or closing, give an extra 5 seconds to be sure we reach the final position
-          ms += 5000;
-        }
+        const ms = (time * Math.abs(delta)) / 100;
         this.timeout = setTimeout(async () => {
           return this.resetTimeout();
         }, ms);
