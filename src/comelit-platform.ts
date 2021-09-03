@@ -151,7 +151,7 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
     return key;
   }
 
-  updateAccessory(id: string, data: DeviceData) {
+  updateAccessory<T extends DeviceData>(id: string, data: T) {
     try {
       const comelitAccessory = this.mappedAccessories.get(id);
       if (comelitAccessory) {
@@ -278,7 +278,7 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
     });
   }
 
-  private createHapAccessory(deviceData: DeviceData, category: Categories, id?: string) {
+  public createHapAccessory(deviceData: DeviceData, category: Categories, id?: string) {
     const uuid = this.homebridge.hap.uuid.generate(id || deviceData.id);
     const existingAccessory = this.accessories.find(accessory => accessory.UUID === uuid);
     const accessory =

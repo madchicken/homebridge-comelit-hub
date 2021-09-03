@@ -33,18 +33,8 @@ export abstract class Blind extends ComelitAccessory<BlindDeviceData> {
     const position = this.getPositionFromDeviceData();
 
     this.coveringService.setCharacteristic(Characteristic.PositionState, this.positionState);
-    const targetPosition = position > 0 ? Blind.OPEN : Blind.CLOSED;
-    this.coveringService.setCharacteristic(Characteristic.TargetPosition, targetPosition);
-    this.coveringService.setCharacteristic(Characteristic.CurrentPosition, targetPosition);
-
-    this.coveringService
-      .getCharacteristic(Characteristic.TargetPosition)
-      .on(
-        CharacteristicEventTypes.SET,
-        async (position: number, callback: CharacteristicSetCallback) => {
-          await this.setPosition(position, callback);
-        }
-      );
+    this.coveringService.setCharacteristic(Characteristic.TargetPosition, position);
+    this.coveringService.setCharacteristic(Characteristic.CurrentPosition, position);
 
     return [accessoryInformation, this.coveringService];
   }

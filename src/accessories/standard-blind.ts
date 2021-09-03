@@ -1,4 +1,4 @@
-import { BlindDeviceData, ComelitClient, ObjectStatus } from 'comelit-client';
+import { BlindDeviceData, ComelitClient } from 'comelit-client';
 import { ComelitPlatform } from '../comelit-platform';
 import { Callback, PlatformAccessory, Service } from 'homebridge';
 import { PositionState } from './hap';
@@ -40,7 +40,7 @@ export class StandardBlind extends Blind {
 
       const currentPosition = this.coveringService.getCharacteristic(Characteristic.CurrentPosition)
         .value as number;
-      const status = position < currentPosition ? ObjectStatus.OFF : ObjectStatus.ON;
+      const status = position < currentPosition ? 0 : 1;
       const delta = currentPosition - position;
       this.log.info(
         `Setting position to ${position}%. Current position is ${currentPosition}. Delta is ${delta}`
@@ -70,45 +70,73 @@ export class StandardBlind extends Blind {
     this.timeout = null;
     await this.client.toggleDeviceStatus(
       this.device.id,
-      this.positionState === PositionState.DECREASING ? ObjectStatus.ON : ObjectStatus.OFF
+      this.positionState === PositionState.DECREASING ? 1 : 0
     ); // stop the blind
   }
 
   public update(data: BlindDeviceData) {
-    const Characteristic = this.platform.Characteristic;
     const status = parseInt(data.status);
-    const now = new Date().getTime();
+    const statusDesc = status === 0 ? 'STOPPED' : status === 1 ? 'MOVING UP' : 'MOVING DOWN';
+    const position = this.positionFromTime();
+    const positionAsByte = getPositionAsByte(position);
+    this.log.debug(`Saved position ${getPositionAsPerc(`${positionAsByte}`)}% (${positionAsByte})`);
+    this.log.info(`Blind is now at position ${position} (status is ${statusDesc})`);
     switch (status) {
-      case ObjectStatus.ON:
-      case ObjectStatus.OFF:
-        if (this.lastCommandTime) {
-          const position = this.positionFromTime();
-          const positionAsByte = getPositionAsByte(position);
-          this.log.debug(
-            `Saved position ${getPositionAsPerc(`${positionAsByte}`)}% (${positionAsByte})`
-          );
-          this.accessory.context = { ...this.device, position: positionAsByte };
-          this.lastCommandTime = 0;
-          this.log.info(`Blind is now at position ${position}`);
-          this.coveringService
-            .getCharacteristic(Characteristic.CurrentPosition)
-            .updateValue(position);
-          this.coveringService
-            .getCharacteristic(Characteristic.PositionState)
-            .updateValue(PositionState.STOPPED);
-        } else {
-          this.lastCommandTime = now; // external command (physical button)
-        }
+      case 0: // stopped
+        this.blindStopped(positionAsByte, position);
         break;
-      case ObjectStatus.IDLE:
-        if (!this.lastCommandTime) {
-          this.lastCommandTime = now;
-        }
+      case 1: // going up
+        this.blindGoingUp(positionAsByte, position);
+        break;
+      case 2: // going down
+        this.blindGoingDown(positionAsByte, position);
         break;
     }
     this.log.info(
       `Blind update: status ${status}, state ${this.positionState}, ts ${this.lastCommandTime}`
     );
+  }
+
+  private blindGoingDown(positionAsByte: number, position: number) {
+    const now = new Date().getTime();
+    const Characteristic = this.platform.Characteristic;
+    this.coveringService
+      .getCharacteristic(Characteristic.PositionState)
+      .updateValue(PositionState.DECREASING);
+    if (this.lastCommandTime) {
+      this.accessory.context = { ...this.device, position: positionAsByte };
+      this.coveringService.getCharacteristic(Characteristic.CurrentPosition).updateValue(position);
+    } else {
+      this.lastCommandTime = now; // external command (physical button)
+    }
+  }
+
+  private blindGoingUp(positionAsByte: number, position: number) {
+    const now = new Date().getTime();
+    const Characteristic = this.platform.Characteristic;
+    this.coveringService
+      .getCharacteristic(Characteristic.PositionState)
+      .updateValue(PositionState.INCREASING);
+    if (this.lastCommandTime) {
+      this.accessory.context = { ...this.device, position: positionAsByte };
+      this.coveringService.getCharacteristic(Characteristic.CurrentPosition).updateValue(position);
+    } else {
+      this.lastCommandTime = now; // external command (physical button)
+    }
+  }
+
+  private blindStopped(positionAsByte: number, position: number) {
+    const Characteristic = this.platform.Characteristic;
+    this.coveringService
+      .getCharacteristic(Characteristic.PositionState)
+      .updateValue(PositionState.STOPPED);
+    if (this.lastCommandTime) {
+      this.accessory.context = { ...this.device, position: positionAsByte };
+      this.lastCommandTime = 0;
+      this.coveringService.getCharacteristic(Characteristic.CurrentPosition).updateValue(position);
+    } else {
+      this.lastCommandTime = 0;
+    }
   }
 
   protected getPositionFromDeviceData(): number {
@@ -118,11 +146,11 @@ export class StandardBlind extends Blind {
   protected getPositionStateFromDeviceData(): number {
     const status = parseInt(this.device.status); // can be 1 (increasing), 2 (decreasing) or 0 (stopped)
     switch (status) {
-      case ObjectStatus.ON:
+      case 1:
         return PositionState.INCREASING;
-      case ObjectStatus.OFF:
+      case 0:
         return PositionState.STOPPED;
-      case ObjectStatus.IDLE:
+      case 2:
         return PositionState.DECREASING;
     }
   }
