@@ -1,28 +1,9 @@
-import { BlindDeviceData, ComelitClient, ObjectStatus } from 'comelit-client';
+import { BlindDeviceData, ComelitClient } from 'comelit-client';
 import { ComelitPlatform } from '../comelit-platform';
 import { Callback, PlatformAccessory } from 'homebridge';
 import { PositionState } from './hap';
 import { Blind } from './blind';
-
-/**
- * Returns the position as a value between 0 and 255.
- * Since Comelit system uses 0 for opened and 100 for closed, this function inverts the percentage to accommodate
- * the value for Homekit, that uses 0 for closed nad 100 for fully opened.
- * @param position number 0-100
- */
-function getPositionAsByte(position: number) {
-  return Math.round((100 - position) * 2.55);
-}
-
-/**
- * Returns the position as a value between 0 and 100
- * Since Comelit system uses 0 for opened and 100 for closed, this function inverts the percentage to accommodate
- * the value for Homekit, that uses 0 for closed nad 100 for fully opened.
- * @param position number 0-255
- */
-function getPositionAsPerc(position: string) {
-  return Math.round((100 - parseInt(position)) / 2.55);
-}
+import { getPositionAsByte, getPositionAsPerc } from '../utils';
 
 export class EnhancedBlind extends Blind {
   constructor(platform: ComelitPlatform, accessory: PlatformAccessory, client: ComelitClient) {
@@ -35,10 +16,7 @@ export class EnhancedBlind extends Blind {
       const currentPosition = this.coveringService.getCharacteristic(Characteristic.CurrentPosition)
         .value as number;
       this.log.info(`Setting position to ${position}%. Current position is ${currentPosition}`);
-      this.coveringService.setCharacteristic(
-        Characteristic.PositionState,
-        position > currentPosition ? PositionState.INCREASING : PositionState.DECREASING
-      );
+      this.coveringService.getCharacteristic(Characteristic.TargetPosition).updateValue(position);
       await this.client.setBlindPosition(this.device.id, getPositionAsByte(position));
       callback();
     } catch (e) {
@@ -51,32 +29,41 @@ export class EnhancedBlind extends Blind {
     const Characteristic = this.platform.Characteristic;
     const position = getPositionAsPerc(data.position);
     const status = parseInt(data.status); // can be 1 (increasing), 2 (decreasing) or 0 (stopped)
-    switch (status) {
-      case ObjectStatus.ON:
-        this.positionState = PositionState.INCREASING;
-        break;
-      case ObjectStatus.OFF: {
-        this.log.info(
-          `Blind is now at position ${position} (it was ${
-            this.positionState === PositionState.DECREASING ? 'closing' : 'opening'
-          })`
-        );
-        this.positionState = PositionState.STOPPED;
-        this.coveringService.getCharacteristic(Characteristic.TargetPosition).updateValue(position);
-        this.coveringService
-          .getCharacteristic(Characteristic.CurrentPosition)
-          .updateValue(position);
-        break;
-      }
-      case ObjectStatus.IDLE:
-        this.positionState = PositionState.DECREASING;
-        break;
-    }
-
-    this.coveringService
-      .getCharacteristic(Characteristic.PositionState)
-      .updateValue(this.positionState);
+    this.positionState = this.getPositionStateFromDeviceData();
     this.coveringService.getCharacteristic(Characteristic.TargetPosition).updateValue(position);
     this.coveringService.getCharacteristic(Characteristic.CurrentPosition).updateValue(position);
+    switch (status) {
+      case 0:
+        this.coveringService
+          .getCharacteristic(Characteristic.PositionState)
+          .updateValue(PositionState.STOPPED);
+        break;
+      case 1:
+        this.coveringService
+          .getCharacteristic(Characteristic.PositionState)
+          .updateValue(PositionState.INCREASING);
+        break;
+      case 2:
+        this.coveringService
+          .getCharacteristic(Characteristic.PositionState)
+          .updateValue(PositionState.DECREASING);
+        break;
+    }
+  }
+
+  protected getPositionFromDeviceData(): number {
+    return getPositionAsPerc(this.device.position);
+  }
+
+  protected getPositionStateFromDeviceData(): number {
+    const status = parseInt(this.device.status); // can be 1 (increasing), 2 (decreasing) or 0 (stopped)
+    switch (status) {
+      case 0:
+        return PositionState.STOPPED;
+      case 1:
+        return PositionState.INCREASING;
+      case 2:
+        return PositionState.DECREASING;
+    }
   }
 }

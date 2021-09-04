@@ -51,8 +51,14 @@
           "placeholder": ""
         }
       },
+      "blind_opening_time": {
+        "title": "Time spent by the blind to get fully open from closed position (default 37 seconds)",
+        "type": "number",
+        "required": false,
+        "default": 37
+      },
       "blind_closing_time": {
-        "title": "Time spent by the blind to get fully closed from open position (default 35 seconds)",
+        "title": "Time spent by the blind to get fully closed from opened position (default 35 seconds)",
         "type": "number",
         "required": false,
         "default": 35
@@ -65,6 +71,12 @@
       },
       "avoid_duplicates": {
         "title": "Avoid mapping different devices with the same name",
+        "type": "boolean",
+        "default": false
+      },
+      "use_comelit_blind_timing": {
+        "title": "Use open/close time configured in Comelit HUB for all standard blinds",
+        "description": "If this is set to true, the opening and closing time for each blind are read from internal Comelit configuration (you can use official Comelit app to change them). This settings overrides global opening and closing time settings. Does not affect new blinds with position support",
         "type": "boolean",
         "default": false
       },
@@ -114,13 +126,18 @@
     },
     {
       "type": "fieldset",
+      "expandable": false,
+      "title": "Blinds settings",
+      "items": ["use_comelit_blind_timing", "blind_opening_time", "blind_closing_time"]
+    },
+    {
+      "type": "fieldset",
       "expandable": true,
       "expanded": false,
       "title": "Advanced settings",
       "items": [
         "hub_username",
         "hub_password",
-        "blind_closing_time",
         "keep_alive",
         "avoid_duplicates",
         "hide_lights",
