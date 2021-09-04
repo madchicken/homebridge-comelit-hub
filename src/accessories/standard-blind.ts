@@ -52,7 +52,7 @@ export class StandardBlind extends Blind {
         await this.client.toggleDeviceStatus(this.device.id, status);
         this.lastCommandTime = new Date().getTime();
         this.coveringService.getCharacteristic(Characteristic.TargetPosition).updateValue(position);
-        const time = status === 1 ? this.closingTime : this.openingTime;
+        const time = status === 1 ? this.openingTime : this.closingTime;
         const ms = (time * Math.abs(delta)) / 100;
         this.timeout = setTimeout(async () => {
           return this.resetTimeout();

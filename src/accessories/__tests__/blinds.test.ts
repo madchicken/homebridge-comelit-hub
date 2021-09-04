@@ -105,7 +105,10 @@ describe('Blinds', () => {
       powerst: '2',
       open_status: '1',
     });
-    expect(setTimeout).toHaveBeenLastCalledWith(expect.any(Function), 21000);
+    expect(setTimeout).toHaveBeenLastCalledWith(
+      expect.any(Function),
+      ((Blind.CLOSING_TIME * 1000) / 100) * 60
+    );
     expect(positionState.value).toBe(PositionState.DECREASING);
     // @ts-ignore
     client.toggleDeviceStatus.mockClear();
