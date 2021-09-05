@@ -136,6 +136,7 @@ export class StandardBlind extends Blind {
     if (this.lastCommandTime) {
       this.accessory.context = { ...this.device, position: positionAsByte };
       this.lastCommandTime = 0;
+      this.coveringService.getCharacteristic(Characteristic.TargetPosition).updateValue(position);
       this.coveringService.getCharacteristic(Characteristic.CurrentPosition).updateValue(position);
     } else {
       this.lastCommandTime = 0;

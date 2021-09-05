@@ -30,10 +30,10 @@ export class EnhancedBlind extends Blind {
     const position = getPositionAsPerc(data.position);
     const status = parseInt(data.status); // can be 1 (increasing), 2 (decreasing) or 0 (stopped)
     this.positionState = this.getPositionStateFromDeviceData();
-    this.coveringService.getCharacteristic(Characteristic.TargetPosition).updateValue(position);
     this.coveringService.getCharacteristic(Characteristic.CurrentPosition).updateValue(position);
     switch (status) {
       case 0:
+        this.coveringService.getCharacteristic(Characteristic.TargetPosition).updateValue(position);
         this.coveringService
           .getCharacteristic(Characteristic.PositionState)
           .updateValue(PositionState.STOPPED);
