@@ -124,9 +124,9 @@ All notable changes to this project will be documented in this file. This projec
 
 - Fix new blind percentage (was inverted)
 
-## 2.6.5
+## 2.6.6
 
-## [Version 2.6.4](https://github.com/madchicken/homebridge-comelit-hub/compare/v2.6.4...v2.6.5)
+## [Version 2.6.6](https://github.com/madchicken/homebridge-comelit-hub/compare/v2.6.4...v2.6.5)
 
 #### Changes
 
@@ -134,3 +134,11 @@ All notable changes to this project will be documented in this file. This projec
 - Refactored blind handling: better position handling for old blinds
 - Let users us internal opening/closing time read from Comelit configuration
 - Added opening time for old blinds
+
+## 2.6.7
+
+## [Version 2.6.7](https://github.com/madchicken/homebridge-comelit-hub/compare/v2.6.5...v2.6.7)
+
+#### Changes
+
+- Fix target position for new blinds
