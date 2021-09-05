@@ -126,26 +126,6 @@ Any help on this project is really welcome, so if you have some programming skil
 the current implementation, fork the repo and open your PR!
 If otherwise, you simply enjoyed using this plugin, and you want to contribute in some way, you can always donate something!
 
-## Version History
-
-1.0.0 - Initial version
-1.0.1 - Bug Fixes
-1.0.2 - Bug Fixes
-1.0.3 - Bug Fixes
-1.0.4 - Shutter timing fixes
-1.1.0 - VEDO alarm support and various fixes
-1.2.0 - Switch to use external comelit-client dependency
-2.0.0 - Major update to support Homebridge 1.1.0
-2.3.0 - Auto discover HUB
-2.3.1 - Fix major bug in HUB communication protocol
-2.6.0 - Add Irrigation system and handle new blinds with built in percentage
-2.6.1 - Fix warnings on Homebridge 1.3.0
-2.6.2 - Add Fakegato support
-2.6.1 - Fix Fakegato new types
-2.6.2 - Fixes
-2.6.3 - Fixes
-2.6.4 - Fix new blind percentage (was inverted)
-
 ## Screenshots
 
 ![Home application screenshot](https://github.com/madchicken/homebridge-comelit-hub/raw/master/images/home.png)
