@@ -23,6 +23,7 @@ export class StandardBlind extends Blind {
     this.closingTime = (closingTime || Blind.CLOSING_TIME) * 1000;
     this.openingTime = (openingTime || Blind.OPENING_TIME) * 1000;
     this.log.info(`Blind ${this.device.id} has closing time of ${this.closingTime}`);
+    this.log.info(`Blind ${this.device.id} has opening time of ${this.openingTime}`);
   }
 
   protected initServices(): Service[] {
@@ -44,7 +45,9 @@ export class StandardBlind extends Blind {
       const status = position < currentPosition ? 0 : 1;
       const delta = currentPosition - position;
       this.log.info(
-        `Setting position to ${position}%. Current position is ${currentPosition}. Delta is ${delta}`
+        `Setting position to ${position}%. Current position is ${currentPosition}. Delta is ${delta}. Blind is now ${
+          status === 1 ? 'opening' : 'closing'
+        }`
       );
       if (delta !== 0) {
         this.positionState =
@@ -148,7 +151,7 @@ export class StandardBlind extends Blind {
   }
 
   protected getPositionStateFromDeviceData(): number {
-    const status = parseInt(this.device.status); // can be 1 (increasing), 2 (decreasing) or 0 (stopped)
+    const status = parseInt(this.device.status || '0'); // can be 1 (increasing), 2 (decreasing) or 0 (stopped)
     switch (status) {
       case 1:
         return PositionState.INCREASING;
