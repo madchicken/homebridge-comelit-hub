@@ -147,7 +147,7 @@ export class StandardBlind extends Blind {
   }
 
   protected getPositionFromDeviceData(): number {
-    return getPositionAsPerc(this.device.position);
+    return this.positionFromTime();
   }
 
   protected getPositionStateFromDeviceData(): number {
@@ -163,22 +163,25 @@ export class StandardBlind extends Blind {
   }
 
   private positionFromTime() {
-    const Characteristic = this.platform.Characteristic;
-    const now = new Date().getTime();
-    // Calculate the number of milliseconds the blind moved
-    const delta = now - this.lastCommandTime;
-    const currentPosition = this.coveringService.getCharacteristic(Characteristic.CurrentPosition)
-      .value as number;
-    // Calculate the percentage of movement
-    const deltaPercentage = Math.round(delta / (this.closingTime / 100));
-    this.log.info(
-      `Current position ${currentPosition}, delta is ${delta}ms (${deltaPercentage}%). State ${this.positionState}`
-    );
-    if (this.positionState === PositionState.DECREASING) {
-      // Blind is decreasing, subtract the delta
-      return Math.max(Blind.CLOSED, currentPosition - deltaPercentage);
+    if (this.lastCommandTime) {
+      const Characteristic = this.platform.Characteristic;
+      const now = new Date().getTime();
+      // Calculate the number of milliseconds the blind moved
+      const delta = now - this.lastCommandTime;
+      const currentPosition = this.coveringService.getCharacteristic(Characteristic.CurrentPosition)
+        .value as number;
+      // Calculate the percentage of movement
+      const deltaPercentage = Math.round(delta / (this.closingTime / 100));
+      this.log.info(
+        `Current position ${currentPosition}, delta is ${delta}ms (${deltaPercentage}%). State ${this.positionState}`
+      );
+      if (this.positionState === PositionState.DECREASING) {
+        // Blind is decreasing, subtract the delta
+        return Math.max(Blind.CLOSED, currentPosition - deltaPercentage);
+      }
+      // Blind is increasing, add the delta
+      return Math.min(StandardBlind.OPEN, currentPosition + deltaPercentage);
     }
-    // Blind is increasing, add the delta
-    return Math.min(StandardBlind.OPEN, currentPosition + deltaPercentage);
+    return StandardBlind.OPEN;
   }
 }
