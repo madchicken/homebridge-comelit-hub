@@ -191,10 +191,10 @@ export class StandardBlind extends Blind {
       let realPosition = null;
       if (this.positionState === PositionState.DECREASING) {
         // Blind is decreasing, subtract the delta
-        realPosition = Math.min(Blind.CLOSED, currentPosition - deltaPercentage);
+        realPosition = Math.max(Blind.CLOSED, currentPosition - deltaPercentage);
       } else if (this.positionState === PositionState.INCREASING) {
         // Blind is increasing, add the delta
-        realPosition = Math.max(StandardBlind.OPEN, currentPosition + deltaPercentage);
+        realPosition = Math.min(StandardBlind.OPEN, currentPosition + deltaPercentage);
       } else {
         // Blind is stopped
         realPosition = currentPosition;
