@@ -188,16 +188,23 @@ export class StandardBlind extends Blind {
         .value as number;
       // Calculate the percentage of movement
       const deltaPercentage = Math.round(delta / (this.closingTime / 100));
-      this.log.info(
-        `[Position from time] Current position ${currentPosition}, delta is ${delta}ms (${deltaPercentage}%). State ${this.positionState}`
-      );
+      let realPosition = null;
       if (this.positionState === PositionState.DECREASING) {
         // Blind is decreasing, subtract the delta
-        return Math.min(Blind.CLOSED, currentPosition - deltaPercentage);
+        realPosition = Math.min(Blind.CLOSED, currentPosition - deltaPercentage);
+      } else if (this.positionState === PositionState.INCREASING) {
+        // Blind is increasing, add the delta
+        realPosition = Math.max(StandardBlind.OPEN, currentPosition + deltaPercentage);
+      } else {
+        // Blind is stopped
+        realPosition = currentPosition;
       }
-      // Blind is increasing, add the delta
-      return Math.max(StandardBlind.OPEN, currentPosition + deltaPercentage);
+      this.log.info(
+        `[Position from time] Current position ${currentPosition}, delta is ${delta}ms (${deltaPercentage}%). State ${this.positionState}: returning ${realPosition}`
+      );
+      return realPosition;
     }
+    // Default to open open position
     return StandardBlind.OPEN;
   }
 }
