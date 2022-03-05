@@ -293,7 +293,7 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
 
   private mapOthers(homeIndex: HomeIndex) {
     const othersIds = [...homeIndex.othersIndex.keys()];
-    this.log.info(`Found ${othersIds.length} lights`);
+    this.log.info(`Found ${othersIds.length} other accessories`);
 
     othersIds.forEach(id => {
       const deviceData = homeIndex.othersIndex.get(id);

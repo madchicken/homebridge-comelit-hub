@@ -23,6 +23,7 @@ export class StandardBlind extends Blind {
     this.closingTime = (closingTime || Blind.CLOSING_TIME) * 1000;
     this.openingTime = (openingTime || Blind.OPENING_TIME) * 1000;
     this.log.info(`Blind ${this.device.id} has closing time of ${this.closingTime}`);
+    this.log.info(`Blind ${this.device.id} has opening time of ${this.openingTime}`);
   }
 
   protected initServices(): Service[] {
@@ -44,7 +45,9 @@ export class StandardBlind extends Blind {
       const status = position < currentPosition ? 0 : 1;
       const delta = currentPosition - position;
       this.log.info(
-        `Setting position to ${position}%. Current position is ${currentPosition}. Delta is ${delta}`
+        `[Set Position] Setting position to ${position}%. Current position is ${currentPosition}. Delta is ${delta}. Blind is now ${
+          status === 1 ? 'opening' : 'closing'
+        }`
       );
       if (delta !== 0) {
         this.positionState =
@@ -68,7 +71,7 @@ export class StandardBlind extends Blind {
   private async resetTimeout() {
     // A timeout was set, this means that we are already opening or closing the blind
     // Stop the blind and calculate a rough position
-    this.log.info(`Stopping blind`);
+    this.log.info(`[Reset timeout] Stopping blind`);
     clearTimeout(this.timeout);
     this.timeout = null;
     await this.client.toggleDeviceStatus(
@@ -82,8 +85,10 @@ export class StandardBlind extends Blind {
     const statusDesc = status === 0 ? 'STOPPED' : status === 1 ? 'MOVING UP' : 'MOVING DOWN';
     const position = this.positionFromTime();
     const positionAsByte = getPositionAsByte(position);
-    this.log.debug(`Saved position ${getPositionAsPerc(`${positionAsByte}`)}% (${positionAsByte})`);
-    this.log.info(`Blind is now at position ${position} (status is ${statusDesc})`);
+    this.log.debug(
+      `[Blind update] Saved position ${getPositionAsPerc(`${positionAsByte}`)}% (${positionAsByte})`
+    );
+    this.log.info(`[Blind update] Blind is now at position ${position} (status is ${statusDesc})`);
     switch (status) {
       case 0: // stopped
         this.blindStopped(positionAsByte, position);
@@ -96,7 +101,7 @@ export class StandardBlind extends Blind {
         break;
     }
     this.log.info(
-      `Blind update: status ${status}, state ${this.positionState}, ts ${this.lastCommandTime}`
+      `[Blind update] Status ${status}, state ${this.positionState}, ts ${this.lastCommandTime}`
     );
   }
 
@@ -110,8 +115,15 @@ export class StandardBlind extends Blind {
       this.accessory.context = { ...this.device, position: positionAsByte };
       this.coveringService.getCharacteristic(Characteristic.CurrentPosition).updateValue(position);
     } else {
+      this.log.info(
+        `[Blind down] Blind was moved using physical button, lastCommandTime set to ${now}`
+      );
+      this.coveringService
+        .getCharacteristic(Characteristic.TargetPosition)
+        .updateValue(Blind.CLOSED);
       this.lastCommandTime = now; // external command (physical button)
     }
+    this.positionState = PositionState.DECREASING;
   }
 
   private blindGoingUp(positionAsByte: number, position: number) {
@@ -124,8 +136,13 @@ export class StandardBlind extends Blind {
       this.accessory.context = { ...this.device, position: positionAsByte };
       this.coveringService.getCharacteristic(Characteristic.CurrentPosition).updateValue(position);
     } else {
+      this.log.info(
+        `[Blind up] Blind was moved using physical button, lastCommandTime set to ${now}`
+      );
+      this.coveringService.getCharacteristic(Characteristic.TargetPosition).updateValue(Blind.OPEN);
       this.lastCommandTime = now; // external command (physical button)
     }
+    this.positionState = PositionState.INCREASING;
   }
 
   private blindStopped(positionAsByte: number, position: number) {
@@ -139,16 +156,20 @@ export class StandardBlind extends Blind {
       this.coveringService.getCharacteristic(Characteristic.TargetPosition).updateValue(position);
       this.coveringService.getCharacteristic(Characteristic.CurrentPosition).updateValue(position);
     } else {
+      this.log.info(`[Blind stop] Blind was moved using physical button, lastCommandTime set to 0`);
       this.lastCommandTime = 0;
+      clearTimeout(this.timeout); // clean the eventually present timeout (down using SIRI, manual stop)
+      this.timeout = null;
     }
+    this.positionState = PositionState.STOPPED;
   }
 
   protected getPositionFromDeviceData(): number {
-    return getPositionAsPerc(this.device.position);
+    return this.positionFromTime();
   }
 
   protected getPositionStateFromDeviceData(): number {
-    const status = parseInt(this.device.status); // can be 1 (increasing), 2 (decreasing) or 0 (stopped)
+    const status = parseInt(this.device.status || '0'); // can be 1 (increasing), 2 (decreasing) or 0 (stopped)
     switch (status) {
       case 1:
         return PositionState.INCREASING;
@@ -160,22 +181,32 @@ export class StandardBlind extends Blind {
   }
 
   private positionFromTime() {
-    const Characteristic = this.platform.Characteristic;
-    const now = new Date().getTime();
-    // Calculate the number of milliseconds the blind moved
-    const delta = now - this.lastCommandTime;
-    const currentPosition = this.coveringService.getCharacteristic(Characteristic.CurrentPosition)
-      .value as number;
-    // Calculate the percentage of movement
-    const deltaPercentage = Math.round(delta / (this.closingTime / 100));
-    this.log.info(
-      `Current position ${currentPosition}, delta is ${delta}ms (${deltaPercentage}%). State ${this.positionState}`
-    );
-    if (this.positionState === PositionState.DECREASING) {
-      // Blind is decreasing, subtract the delta
-      return Math.max(Blind.CLOSED, currentPosition - deltaPercentage);
+    if (this.lastCommandTime) {
+      const Characteristic = this.platform.Characteristic;
+      const now = new Date().getTime();
+      // Calculate the number of milliseconds the blind moved
+      const delta = now - this.lastCommandTime;
+      const currentPosition = this.coveringService.getCharacteristic(Characteristic.CurrentPosition)
+        .value as number;
+      // Calculate the percentage of movement
+      const deltaPercentage = Math.round(delta / (this.closingTime / 100));
+      let realPosition = null;
+      if (this.positionState === PositionState.DECREASING) {
+        // Blind is decreasing, subtract the delta
+        realPosition = Math.max(Blind.CLOSED, currentPosition - deltaPercentage);
+      } else if (this.positionState === PositionState.INCREASING) {
+        // Blind is increasing, add the delta
+        realPosition = Math.min(StandardBlind.OPEN, currentPosition + deltaPercentage);
+      } else {
+        // Blind is stopped
+        realPosition = currentPosition;
+      }
+      this.log.info(
+        `[Position from time] Current position ${currentPosition}, delta is ${delta}ms (${deltaPercentage}%). State ${this.positionState}: returning ${realPosition}`
+      );
+      return realPosition;
     }
-    // Blind is increasing, add the delta
-    return Math.min(StandardBlind.OPEN, currentPosition + deltaPercentage);
+    // Default to open open position
+    return StandardBlind.OPEN;
   }
 }
