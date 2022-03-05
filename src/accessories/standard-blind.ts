@@ -45,7 +45,7 @@ export class StandardBlind extends Blind {
       const status = position < currentPosition ? 0 : 1;
       const delta = currentPosition - position;
       this.log.info(
-        `Setting position to ${position}%. Current position is ${currentPosition}. Delta is ${delta}. Blind is now ${
+        `[Set Position] Setting position to ${position}%. Current position is ${currentPosition}. Delta is ${delta}. Blind is now ${
           status === 1 ? 'opening' : 'closing'
         }`
       );
@@ -71,7 +71,7 @@ export class StandardBlind extends Blind {
   private async resetTimeout() {
     // A timeout was set, this means that we are already opening or closing the blind
     // Stop the blind and calculate a rough position
-    this.log.info(`Stopping blind`);
+    this.log.info(`[Reset timeout] Stopping blind`);
     clearTimeout(this.timeout);
     this.timeout = null;
     await this.client.toggleDeviceStatus(
@@ -85,8 +85,10 @@ export class StandardBlind extends Blind {
     const statusDesc = status === 0 ? 'STOPPED' : status === 1 ? 'MOVING UP' : 'MOVING DOWN';
     const position = this.positionFromTime();
     const positionAsByte = getPositionAsByte(position);
-    this.log.debug(`Saved position ${getPositionAsPerc(`${positionAsByte}`)}% (${positionAsByte})`);
-    this.log.info(`Blind is now at position ${position} (status is ${statusDesc})`);
+    this.log.debug(
+      `[Blind update] Saved position ${getPositionAsPerc(`${positionAsByte}`)}% (${positionAsByte})`
+    );
+    this.log.info(`[Blind update] Blind is now at position ${position} (status is ${statusDesc})`);
     switch (status) {
       case 0: // stopped
         this.blindStopped(positionAsByte, position);
@@ -99,7 +101,7 @@ export class StandardBlind extends Blind {
         break;
     }
     this.log.info(
-      `Blind update: status ${status}, state ${this.positionState}, ts ${this.lastCommandTime}`
+      `[Blind update] Status ${status}, state ${this.positionState}, ts ${this.lastCommandTime}`
     );
   }
 
@@ -113,6 +115,9 @@ export class StandardBlind extends Blind {
       this.accessory.context = { ...this.device, position: positionAsByte };
       this.coveringService.getCharacteristic(Characteristic.CurrentPosition).updateValue(position);
     } else {
+      this.log.info(
+        `[Blind down] Blind was moved using physical button, lastCommandTime set to ${now}`
+      );
       this.lastCommandTime = now; // external command (physical button)
     }
   }
@@ -127,6 +132,9 @@ export class StandardBlind extends Blind {
       this.accessory.context = { ...this.device, position: positionAsByte };
       this.coveringService.getCharacteristic(Characteristic.CurrentPosition).updateValue(position);
     } else {
+      this.log.info(
+        `[Blind up] Blind was moved using physical button, lastCommandTime set to ${now}`
+      );
       this.lastCommandTime = now; // external command (physical button)
     }
   }
@@ -142,6 +150,7 @@ export class StandardBlind extends Blind {
       this.coveringService.getCharacteristic(Characteristic.TargetPosition).updateValue(position);
       this.coveringService.getCharacteristic(Characteristic.CurrentPosition).updateValue(position);
     } else {
+      this.log.info(`[Blind stop] Blind was moved using physical button, lastCommandTime set to 0`);
       this.lastCommandTime = 0;
     }
   }
@@ -173,7 +182,7 @@ export class StandardBlind extends Blind {
       // Calculate the percentage of movement
       const deltaPercentage = Math.round(delta / (this.closingTime / 100));
       this.log.info(
-        `Current position ${currentPosition}, delta is ${delta}ms (${deltaPercentage}%). State ${this.positionState}`
+        `[Position from time] Current position ${currentPosition}, delta is ${delta}ms (${deltaPercentage}%). State ${this.positionState}`
       );
       if (this.positionState === PositionState.DECREASING) {
         // Blind is decreasing, subtract the delta
