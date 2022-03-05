@@ -123,6 +123,7 @@ export class StandardBlind extends Blind {
         .updateValue(Blind.CLOSED);
       this.lastCommandTime = now; // external command (physical button)
     }
+    this.positionState = PositionState.DECREASING;
   }
 
   private blindGoingUp(positionAsByte: number, position: number) {
@@ -141,6 +142,7 @@ export class StandardBlind extends Blind {
       this.coveringService.getCharacteristic(Characteristic.TargetPosition).updateValue(Blind.OPEN);
       this.lastCommandTime = now; // external command (physical button)
     }
+    this.positionState = PositionState.INCREASING;
   }
 
   private blindStopped(positionAsByte: number, position: number) {
@@ -157,6 +159,7 @@ export class StandardBlind extends Blind {
       this.log.info(`[Blind stop] Blind was moved using physical button, lastCommandTime set to 0`);
       this.lastCommandTime = 0;
     }
+    this.positionState = PositionState.STOPPED;
   }
 
   protected getPositionFromDeviceData(): number {
