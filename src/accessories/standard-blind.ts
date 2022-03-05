@@ -118,6 +118,9 @@ export class StandardBlind extends Blind {
       this.log.info(
         `[Blind down] Blind was moved using physical button, lastCommandTime set to ${now}`
       );
+      this.coveringService
+        .getCharacteristic(Characteristic.TargetPosition)
+        .updateValue(Blind.CLOSED);
       this.lastCommandTime = now; // external command (physical button)
     }
   }
@@ -135,6 +138,7 @@ export class StandardBlind extends Blind {
       this.log.info(
         `[Blind up] Blind was moved using physical button, lastCommandTime set to ${now}`
       );
+      this.coveringService.getCharacteristic(Characteristic.TargetPosition).updateValue(Blind.OPEN);
       this.lastCommandTime = now; // external command (physical button)
     }
   }
@@ -186,10 +190,10 @@ export class StandardBlind extends Blind {
       );
       if (this.positionState === PositionState.DECREASING) {
         // Blind is decreasing, subtract the delta
-        return Math.max(Blind.CLOSED, currentPosition - deltaPercentage);
+        return Math.min(Blind.CLOSED, currentPosition - deltaPercentage);
       }
       // Blind is increasing, add the delta
-      return Math.min(StandardBlind.OPEN, currentPosition + deltaPercentage);
+      return Math.max(StandardBlind.OPEN, currentPosition + deltaPercentage);
     }
     return StandardBlind.OPEN;
   }
