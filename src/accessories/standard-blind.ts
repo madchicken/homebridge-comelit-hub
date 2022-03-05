@@ -158,6 +158,8 @@ export class StandardBlind extends Blind {
     } else {
       this.log.info(`[Blind stop] Blind was moved using physical button, lastCommandTime set to 0`);
       this.lastCommandTime = 0;
+      clearTimeout(this.timeout); // clean the eventually present timeout (down using SIRI, manual stop)
+      this.timeout = null;
     }
     this.positionState = PositionState.STOPPED;
   }
