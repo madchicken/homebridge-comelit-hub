@@ -15,6 +15,12 @@ const singleConsumption = new client.Gauge({
   labelNames: ['plug_name'],
 });
 
+const plugStatus = new client.Gauge({
+  name: 'comelit_plug_status',
+  help: 'Status of a single line (0 or 1)',
+  labelNames: ['plug_name'],
+});
+
 export class Outlet extends ComelitAccessory<OutletDeviceData> {
   static readonly ON = 1;
   static readonly OFF = 0;
@@ -29,6 +35,7 @@ export class Outlet extends ComelitAccessory<OutletDeviceData> {
     const Characteristic = this.platform.Characteristic;
     const status = parseInt(data.status);
     this.outletService.getCharacteristic(Characteristic.On).updateValue(status > 0);
+    plugStatus.set({ plug_name: data.descrizione }, status);
     const power = parseFloat(data.instant_power);
     this.outletService.getCharacteristic(Characteristic.InUse).updateValue(power > 0);
     singleConsumption.set({ plug_name: data.descrizione }, power);
