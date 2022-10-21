@@ -14,6 +14,7 @@ import { FakegatoHistoryService } from '../types';
 const consumption = new client.Gauge({
   name: 'comelit_total_consumption',
   help: 'Consumption in Wh',
+  labelNames: ['power_meter_name'],
 });
 
 export class PowerSupplier extends ComelitAccessory<SupplierDeviceData> {
@@ -58,7 +59,7 @@ export class PowerSupplier extends ComelitAccessory<SupplierDeviceData> {
   update(data: SupplierDeviceData): void {
     const instantPower = parseFloat(data.instant_power);
     this.log.info(`Reporting instant consumption of ${instantPower}Wh`);
-    consumption.set(instantPower);
+    consumption.set({ power_meter_name: data.descrizione }, instantPower);
 
     this.outletService.updateCharacteristic(
       this.platform.homebridge.hap.Characteristic.OutletInUse,
