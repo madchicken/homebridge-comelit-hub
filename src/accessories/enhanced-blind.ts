@@ -1,6 +1,6 @@
 import { BlindDeviceData, ComelitClient } from 'comelit-client';
 import { ComelitPlatform } from '../comelit-platform';
-import { Callback, PlatformAccessory } from 'homebridge';
+import { CharacteristicSetCallback, PlatformAccessory } from 'homebridge';
 import { PositionState } from './hap';
 import { Blind } from './blind';
 import { getPositionAsByte, getPositionAsPerc } from '../utils';
@@ -10,7 +10,7 @@ export class EnhancedBlind extends Blind {
     super(platform, accessory, client);
   }
 
-  public async setPosition(position: number, callback: Callback) {
+  public async setPosition(position: number, callback: CharacteristicSetCallback) {
     const Characteristic = this.platform.Characteristic;
     try {
       const currentPosition = this.coveringService.getCharacteristic(Characteristic.CurrentPosition)

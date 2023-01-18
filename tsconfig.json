@@ -17,7 +17,8 @@
     // Allow fancy language features.
     "downlevelIteration": true,
     "outDir": "dist",
-    "inlineSourceMap": true
+    "inlineSourceMap": true,
+    "skipLibCheck": true
   },
   "lib": ["esnext"],
   "exclude": ["**/__tests__/*"],
