@@ -74,7 +74,6 @@ VEDO alarm supported has been moved to a separate plugin: https://github.com/mad
 The plugin offers some extra configuration flag. Here is the list
 
 - broker_url: string - IP of your HUB (optional)
-- sentry_dsn: string - DSN for Sentry monitoring (see https://sentry.com)
 - blind_closing_time: number - number of seconds your blinds take to go from fully open to fully closed (default 35)
 - keep_alive?: number - number of seconds for the MQTT keep alive message
 - avoid_duplicates: boolean - set this to true to avoid mapping different devices with the same name (it will append a numeric postfix to the name)
