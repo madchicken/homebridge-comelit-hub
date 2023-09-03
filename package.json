@@ -1,6 +1,6 @@
 {
   "name": "homebridge-comelit-platform",
-  "version": "2.6.11",
+  "version": "2.6.12",
   "author": "Pierpaolo Follia",
   "repository": {
     "type": "git",
@@ -39,7 +39,7 @@
   },
   "dependencies": {
     "async-mqtt": "2.6.3",
-    "comelit-client": "2.4.2",
+    "comelit-client": "2.3.5",
     "express": "^4.18.2",
     "fakegato-history": "^0.6.3",
     "lodash": "4.17.21",
