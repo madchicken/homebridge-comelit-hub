@@ -114,6 +114,56 @@
         "title": "Avoid mapping irrigation systems",
         "type": "boolean",
         "default": false
+      },
+      "hide_doors": {
+        "title": "Avoid mapping doors",
+        "type": "boolean",
+        "default": false
+      },
+      "hide_vip": {
+        "title": "Avoid mapping VIP devices (like doorbells)",
+        "type": "boolean",
+        "default": false
+      },
+      "door_devices": {
+        "type": "array",
+        "required": false,
+        "items": [
+          {
+            "type": "object",
+            "properties": {
+              "name": {
+                "title": "Name of the gate/door",
+                "type": "string",
+                "key": "door_devices[].name"
+              },
+              "type": {
+                "type": "string",
+                "title": "Type of the gate",
+                "enum": ["lock", "door", "garage_door"],
+                "key": "door_devices[].type"
+              },
+              "opening_time": {
+                "title": "Time in sec spent by the gate/door to open",
+                "type": "number",
+                "default": 20,
+                "key": "door_devices[].opening_time"
+              },
+              "closing_time": {
+                "title": "Time in sec spent by the gate/door to close",
+                "type": "number",
+                "default": 20,
+                "key": "door_devices[].closing_time"
+              },
+              "opened_time": {
+                "title": "Time in sec the gate/door stays opened",
+                "type": "number",
+                "default": 60,
+                "key": "door_devices[].opened_time"
+              }
+            }
+          }
+        ]
       }
     }
   },
@@ -146,7 +196,10 @@
         "hide_power_suppliers",
         "hide_outlets",
         "hide_others",
-        "hide_irrigation"
+        "hide_irrigation",
+        "hide_doors",
+        "hide_vip",
+        "door_devices"
       ]
     }
   ]

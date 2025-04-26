@@ -31,6 +31,10 @@ import { EnhancedBlind } from './accessories/enhanced-blind';
 import { StandardBlind } from './accessories/standard-blind';
 import Timeout = NodeJS.Timeout;
 import { Blind } from './accessories/blind';
+import { DoorAccessory } from './accessories/door-accessory';
+import { DoorDeviceConfig } from './types';
+import { getDoorDeviceConfigOrDefault } from './utils';
+import { Doorbell } from './accessories/doorbell';
 
 export interface HubConfig extends PlatformConfig {
   username: string;
@@ -53,6 +57,9 @@ export interface HubConfig extends PlatformConfig {
   hide_outlets?: boolean;
   hide_others?: boolean;
   hide_irrigation?: boolean;
+  hide_doors?: boolean;
+  hide_vip?: boolean;
+  door_devices?: DoorDeviceConfig[];
 }
 
 const uptime = new client.Gauge({
@@ -134,6 +141,12 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
     }
     if (this.config.hide_irrigation !== true) {
       this.mapIrrigation(homeIndex);
+    }
+    if (this.config.hide_doors !== true) {
+      this.mapDoors(homeIndex);
+    }
+    if (this.config.hide_vip !== true) {
+      this.mapVip(homeIndex);
     }
     this.log.info(`Found ${this.mappedAccessories.size} accessories`);
     this.log.info('Subscribed to root object');
@@ -315,6 +328,42 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
         this.log.debug(`Irrigation ID: ${id}, ${deviceData.descrizione}`);
         const accessory = this.createHapAccessory(deviceData, Categories.SPRINKLER);
         this.mappedAccessories.set(id, new Irrigation(this, accessory, this.client));
+      }
+    });
+  }
+
+  private mapDoors(homeIndex: HomeIndex) {
+    const doorIds = [...homeIndex.doorIndex.keys()];
+    this.log.info(`Found ${doorIds.length} doors`);
+
+    doorIds.forEach(id => {
+      const deviceData = homeIndex.doorIndex.get(id);
+      if (deviceData) {
+        this.log.debug(`Door ID: ${id}, ${deviceData.descrizione}`);
+        const accessory = this.createHapAccessory(deviceData, Categories.DOOR_LOCK);
+        this.mappedAccessories.set(
+          id,
+          new DoorAccessory(
+            this,
+            accessory,
+            this.client,
+            getDoorDeviceConfigOrDefault(this.config, deviceData.id)
+          )
+        );
+      }
+    });
+  }
+
+  private mapVip(homeIndex: HomeIndex) {
+    const vipIds = [...homeIndex.vipIndex.keys()];
+    this.log.info(`Found ${vipIds.length} vip elements`);
+
+    vipIds.forEach(id => {
+      const deviceData = homeIndex.vipIndex.get(id);
+      if (deviceData) {
+        this.log.debug(`VIP ID: ${id}, ${deviceData.descrizione}`);
+        const accessory = this.createHapAccessory(deviceData, Categories.VIDEO_DOORBELL);
+        this.mappedAccessories.set(id, new Doorbell(this, accessory, this.client));
       }
     });
   }
