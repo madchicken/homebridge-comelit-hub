@@ -120,6 +120,7 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
     await this.login();
     this.log.info('Building accessories list...');
     const homeIndex = await this.client.fetchHomeIndex();
+    await this.client.subscribeObject(ROOT_ID);
     if (this.config.hide_lights !== true) {
       this.mapLights(homeIndex);
     }
@@ -142,10 +143,10 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
       this.mapIrrigation(homeIndex);
     }
     if (this.config.hide_doors !== true) {
-      this.mapDoors(homeIndex);
+      await this.mapDoors(homeIndex);
     }
     if (this.config.hide_vip !== true) {
-      this.mapVip(homeIndex);
+      await this.mapVip(homeIndex);
     }
     this.log.info(`Found ${this.mappedAccessories.size} accessories`);
     this.log.info('Subscribed to root object');
@@ -331,39 +332,34 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
     });
   }
 
-  private mapDoors(homeIndex: HomeIndex) {
+  private async mapDoors(homeIndex: HomeIndex) {
     const doorIds = [...homeIndex.doorIndex.keys()];
     this.log.info(`Found ${doorIds.length} doors`);
 
-    doorIds.forEach(id => {
+    for (const id of doorIds) {
       const deviceData: DeviceData<DoorDeviceData> = homeIndex.doorIndex.get(id);
       if (deviceData) {
         this.log.debug(`Door ID: ${id}, ${deviceData.descrizione}`);
         const accessory = this.createHapAccessory(deviceData, Categories.DOOR_LOCK);
-        this.mappedAccessories.set(
-          id,
-          new DoorAccessory(
-            this,
-            accessory,
-            this.client
-          )
-        );
+        this.mappedAccessories.set(id, new DoorAccessory(this, accessory, this.client));
+        await this.client.subscribeObject(id);
       }
-    });
+    }
   }
 
-  private mapVip(homeIndex: HomeIndex) {
+  private async mapVip(homeIndex: HomeIndex) {
     const vipIds = [...homeIndex.vipIndex.keys()];
     this.log.info(`Found ${vipIds.length} vip elements`);
 
-    vipIds.forEach(id => {
+    for (const id of vipIds) {
       const deviceData = homeIndex.vipIndex.get(id);
       if (deviceData) {
         this.log.info(`VIP ID: ${id}, ${deviceData.descrizione}`);
         const accessory = this.createHapAccessory(deviceData, Categories.VIDEO_DOORBELL);
         this.mappedAccessories.set(id, new Doorbell(this, accessory, this.client));
+        await this.client.subscribeObject(id);
       }
-    });
+    }
   }
 
   public createHapAccessory(deviceData: DeviceData, category: Categories, id?: string) {
@@ -415,7 +411,6 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
 
     try {
       await this.client.login();
-      await this.client.subscribeObject(ROOT_ID);
       this.keepAlive();
       return true;
     } catch (e) {
