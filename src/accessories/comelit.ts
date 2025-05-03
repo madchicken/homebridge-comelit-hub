@@ -39,6 +39,10 @@ export abstract class ComelitAccessory<T extends DeviceData> {
 
   identify(): void {}
 
+  get_model(): string {
+    return 'None';
+  }
+
   protected initAccessoryInformation(): Service {
     const accessoryInformation = this.accessory.getService(
       this.platform.Service.AccessoryInformation
@@ -46,7 +50,7 @@ export abstract class ComelitAccessory<T extends DeviceData> {
     accessoryInformation!
       .setCharacteristic(this.platform.Characteristic.Name, this.accessory.displayName)
       .setCharacteristic(this.platform.Characteristic.Manufacturer, 'Comelit')
-      .setCharacteristic(this.platform.Characteristic.Model, 'None')
+      .setCharacteristic(this.platform.Characteristic.Model, this.get_model())
       .setCharacteristic(this.platform.Characteristic.FirmwareRevision, 'None')
       .setCharacteristic(
         this.platform.Characteristic.SerialNumber,

@@ -10,8 +10,16 @@ export class Doorbell extends ComelitAccessory<DoorDeviceData> {
     super(platform, accessory, client);
   }
 
+  identify() {
+    const Characteristic = this.platform.Characteristic;
+    this.service.getCharacteristic(Characteristic.ProgrammableSwitchEvent).setValue(0);
+  }
+
+  get_model(): string {
+    return 'VIP Doorbell';
+  }
+
   protected initServices(): Service[] {
-    // const Characteristic = this.platform.Characteristic;
     const infoService =
       this.accessory.getService(this.platform.Service.AccessoryInformation) ||
       this.accessory.addService(this.platform.Service.AccessoryInformation);
@@ -23,31 +31,26 @@ export class Doorbell extends ComelitAccessory<DoorDeviceData> {
     this.service =
       this.accessory.getService(this.platform.Service.Doorbell) ||
       this.accessory.addService(this.platform.Service.Doorbell);
-    // this.service.getCharacteristic(Characteristic.ProgrammableSwitchEvent)
-    //   .onGet(this.handleProgrammableSwitchEventGet.bind(this));
     this.service.getCharacteristic(this.platform.Characteristic.ProgrammableSwitchEvent).setProps({
-      validValues: [this.platform.Characteristic.ProgrammableSwitchEvent.SINGLE_PRESS],
+      validValues: [0, 1],
     });
-    return [infoService, this.service];
-  }
 
-  // handleProgrammableSwitchEventGet() {
-  //   const Characteristic = this.platform.Characteristic;
-  //   this.log.debug('Triggered GET ProgrammableSwitchEvent');
-  //
-  //   // set this to a valid value for ProgrammableSwitchEvent
-  //   const currentValue = Characteristic.ProgrammableSwitchEvent.SINGLE_PRESS;
-  //
-  //   return currentValue;
-  // }
+    return [this.service, infoService];
+  }
 
   protected update(data: DoorDeviceData) {
     const Characteristic = this.platform.Characteristic;
     if (data.status == STATUS_ON) {
       this.service.updateCharacteristic(
         Characteristic.ProgrammableSwitchEvent,
-        Characteristic.ProgrammableSwitchEvent.SINGLE_PRESS
+        1
       );
+      setTimeout(() => {
+        this.service.updateCharacteristic(
+          Characteristic.ProgrammableSwitchEvent,
+          0
+        );
+      }, 1000);
     }
   }
 }
