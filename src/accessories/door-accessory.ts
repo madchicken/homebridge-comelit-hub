@@ -32,7 +32,7 @@ export class DoorAccessory extends ComelitAccessory<DoorDeviceData> {
     infoService.getCharacteristic(this.platform.Characteristic.Manufacturer).setValue('Comelit');
       infoService.getCharacteristic(this.platform.Characteristic.Model).setValue('ICONA');
 
-    let config = getDoorDeviceConfigOrDefault(this.platform.config, this.accessory.context.id)
+    let config = getDoorDeviceConfigOrDefault(this.platform.config, this.accessory.displayName)
     switch (config.type) {
       case SupportedTypes.door:
         this.service = this.mountAsDoor();
