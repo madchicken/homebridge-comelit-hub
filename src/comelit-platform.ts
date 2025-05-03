@@ -359,7 +359,7 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
     vipIds.forEach(id => {
       const deviceData = homeIndex.vipIndex.get(id);
       if (deviceData) {
-        this.log.debug(`VIP ID: ${id}, ${deviceData.descrizione}`);
+        this.log.info(`VIP ID: ${id}, ${deviceData.descrizione}`);
         const accessory = this.createHapAccessory(deviceData, Categories.VIDEO_DOORBELL);
         this.mappedAccessories.set(id, new Doorbell(this, accessory, this.client));
       }
