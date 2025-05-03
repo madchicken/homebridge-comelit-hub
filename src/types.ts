@@ -1,5 +1,4 @@
-import { PlatformAccessory } from 'homebridge';
-import { Service } from 'hap-nodejs';
+import { PlatformAccessory, Service } from 'homebridge';
 
 export interface FakegatoEntry {
   time: number;

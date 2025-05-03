@@ -50,7 +50,7 @@ export abstract class ComelitAccessory<T extends DeviceData> {
       .setCharacteristic(this.platform.Characteristic.FirmwareRevision, 'None')
       .setCharacteristic(
         this.platform.Characteristic.SerialNumber,
-        this.accessory.context.objectId
+        this.accessory.context.id
       );
     return accessoryInformation;
   }

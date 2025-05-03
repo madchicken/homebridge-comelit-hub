@@ -1,14 +1,13 @@
 import { PlatformAccessory, Service } from 'homebridge';
 import { ACTION_TYPE, ComelitClient, DoorDeviceData } from 'comelit-client';
 import { ComelitPlatform } from '../comelit-platform';
-import { DoorDeviceConfig, SupportedTypes } from '../types';
+import { SupportedTypes } from '../types';
 import { ComelitAccessory } from './comelit';
 import { CharacteristicValue } from 'hap-nodejs/dist/types';
 import Timeout = NodeJS.Timeout;
+import { getDoorDeviceConfigOrDefault } from '../utils';
 
 export class DoorAccessory extends ComelitAccessory<DoorDeviceData> {
-  private readonly config: DoorDeviceConfig;
-
   private closeTimeout: Timeout;
   private closingTimeout: Timeout;
   private lockState: number;
@@ -18,10 +17,8 @@ export class DoorAccessory extends ComelitAccessory<DoorDeviceData> {
     platform: ComelitPlatform,
     accessory: PlatformAccessory,
     client: ComelitClient,
-    config: DoorDeviceConfig
   ) {
     super(platform, accessory, client);
-    this.config = config;
   }
 
   protected initServices(): Service[] {
@@ -33,9 +30,10 @@ export class DoorAccessory extends ComelitAccessory<DoorDeviceData> {
       this.accessory.getService(this.platform.Service.AccessoryInformation) ||
       this.accessory.addService(this.platform.Service.AccessoryInformation);
     infoService.getCharacteristic(this.platform.Characteristic.Manufacturer).setValue('Comelit');
-    infoService.getCharacteristic(this.platform.Characteristic.Model).setValue('ICONA');
+      infoService.getCharacteristic(this.platform.Characteristic.Model).setValue('ICONA');
 
-    switch (this.config.type) {
+    let config = getDoorDeviceConfigOrDefault(this.platform.config, this.accessory.context.id)
+    switch (config.type) {
       case SupportedTypes.door:
         this.service = this.mountAsDoor();
         break;
@@ -88,10 +86,11 @@ export class DoorAccessory extends ComelitAccessory<DoorDeviceData> {
    */
   async handleTargetPositionSet(value: CharacteristicValue) {
     this.log.debug('Triggered SET TargetPosition:' + value);
-    await this.client.sendAction(this.config.name, ACTION_TYPE.SET, 1);
+    let config = getDoorDeviceConfigOrDefault(this.platform.config, this.accessory.context.id)
+    await this.client.sendAction(config.name, ACTION_TYPE.SET, 1);
     clearTimeout(this.closeTimeout);
     clearTimeout(this.closingTimeout);
-    switch (this.config.type) {
+    switch (config.type) {
       case SupportedTypes.door:
         this.handleAsDoor();
         break;
@@ -141,16 +140,18 @@ export class DoorAccessory extends ComelitAccessory<DoorDeviceData> {
 
   private handleAsLock() {
     const Characteristic = this.platform.Characteristic;
+    let config = getDoorDeviceConfigOrDefault(this.platform.config, this.accessory.context.id)
     this.lockState = Characteristic.LockCurrentState.UNSECURED;
     this.service.getCharacteristic(Characteristic.LockCurrentState).updateValue(this.lockState);
     this.closeTimeout = setTimeout(() => {
       this.lockState = Characteristic.LockCurrentState.SECURED;
       this.service.getCharacteristic(Characteristic.LockTargetState).updateValue(this.lockState);
       this.service.getCharacteristic(Characteristic.LockCurrentState).updateValue(this.lockState);
-    }, this.config.opened_time * 1000);
+    }, config.opened_time * 1000);
   }
 
   private handleAsDoor() {
+    let config = getDoorDeviceConfigOrDefault(this.platform.config, this.accessory.context.id)
     const Characteristic = this.platform.Characteristic;
     this.service.getCharacteristic(Characteristic.TargetPosition).updateValue(1);
     this.service.getCharacteristic(Characteristic.CurrentPosition).updateValue(1);
@@ -163,10 +164,11 @@ export class DoorAccessory extends ComelitAccessory<DoorDeviceData> {
         .updateValue(Characteristic.PositionState.STOPPED);
       this.service.getCharacteristic(Characteristic.TargetPosition).updateValue(0);
       this.service.getCharacteristic(Characteristic.CurrentPosition).updateValue(0);
-    }, this.config.opened_time * 1000);
+    }, config.opened_time * 1000);
   }
 
   private handleAsGarageDoor() {
+    let config = getDoorDeviceConfigOrDefault(this.platform.config, this.accessory.context.id)
     const Characteristic = this.platform.Characteristic;
     this.service
       .getCharacteristic(Characteristic.CurrentDoorState)
@@ -189,8 +191,8 @@ export class DoorAccessory extends ComelitAccessory<DoorDeviceData> {
           this.service
             .getCharacteristic(Characteristic.CurrentDoorState)
             .updateValue(Characteristic.CurrentDoorState.CLOSED);
-        }, this.config.opening_time * 1000);
-      }, this.config.opened_time * 1000);
-    }, this.config.closing_time * 1000);
+        }, config.opening_time * 1000);
+      }, config.opened_time * 1000);
+    }, config.closing_time * 1000);
   }
 }

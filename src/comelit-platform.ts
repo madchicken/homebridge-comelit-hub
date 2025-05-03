@@ -12,7 +12,7 @@ import {
 import {
   BlindDeviceData,
   ComelitClient,
-  DeviceData,
+  DeviceData, DoorDeviceData,
   HomeIndex,
   OBJECT_SUBTYPE,
   ROOT_ID,
@@ -33,7 +33,6 @@ import Timeout = NodeJS.Timeout;
 import { Blind } from './accessories/blind';
 import { DoorAccessory } from './accessories/door-accessory';
 import { DoorDeviceConfig } from './types';
-import { getDoorDeviceConfigOrDefault } from './utils';
 import { Doorbell } from './accessories/doorbell';
 
 export interface HubConfig extends PlatformConfig {
@@ -97,7 +96,7 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
   public readonly accessories: PlatformAccessory[] = [];
   readonly homebridge: API;
   private client: ComelitClient;
-  private readonly config: HubConfig;
+  readonly config: HubConfig;
   private keepAliveTimer: Timeout;
   private server: http.Server;
   private mappedNames: { [key: string]: boolean };
@@ -337,7 +336,7 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
     this.log.info(`Found ${doorIds.length} doors`);
 
     doorIds.forEach(id => {
-      const deviceData = homeIndex.doorIndex.get(id);
+      const deviceData: DeviceData<DoorDeviceData> = homeIndex.doorIndex.get(id);
       if (deviceData) {
         this.log.debug(`Door ID: ${id}, ${deviceData.descrizione}`);
         const accessory = this.createHapAccessory(deviceData, Categories.DOOR_LOCK);
@@ -346,8 +345,7 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
           new DoorAccessory(
             this,
             accessory,
-            this.client,
-            getDoorDeviceConfigOrDefault(this.config, deviceData.id)
+            this.client
           )
         );
       }
