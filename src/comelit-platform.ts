@@ -344,6 +344,7 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
         const accessory = this.createHapAccessory(deviceData, Categories.DOOR_LOCK);
         this.mappedAccessories.set(id, new DoorAccessory(this, accessory, this.client));
         await this.client.subscribeObject(id);
+        this.log.info(`Subscribed to events for door ID: ${id}, ${deviceData.descrizione}`);
       }
     }
   }
@@ -359,6 +360,7 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
         const accessory = this.createHapAccessory(deviceData, Categories.VIDEO_DOORBELL);
         this.mappedAccessories.set(id, new Doorbell(this, accessory, this.client));
         await this.client.subscribeObject(id);
+        this.log.info(`Subscribed to events for VIP ID: ${id}, ${deviceData.descrizione}`);
       }
     }
   }

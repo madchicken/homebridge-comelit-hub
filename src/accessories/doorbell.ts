@@ -1,10 +1,14 @@
 import { ComelitAccessory } from './comelit';
 import { ComelitClient, DoorDeviceData, STATUS_ON } from 'comelit-client';
-import { PlatformAccessory, Service } from 'homebridge';
+import { CharacteristicSetCallback, PlatformAccessory, Service } from 'homebridge';
 import { ComelitPlatform } from '../comelit-platform';
 
 export class Doorbell extends ComelitAccessory<DoorDeviceData> {
   private service: Service;
+  private switchService: Service;
+  private busy: boolean;
+  private state: number;
+  private timeout: any;
 
   constructor(platform: ComelitPlatform, accessory: PlatformAccessory, client: ComelitClient) {
     super(platform, accessory, client);
@@ -20,6 +24,8 @@ export class Doorbell extends ComelitAccessory<DoorDeviceData> {
   }
 
   protected initServices(): Service[] {
+    const Characteristic = this.platform.Characteristic;
+
     const infoService =
       this.accessory.getService(this.platform.Service.AccessoryInformation) ||
       this.accessory.addService(this.platform.Service.AccessoryInformation);
@@ -35,22 +41,53 @@ export class Doorbell extends ComelitAccessory<DoorDeviceData> {
       validValues: [0, 1],
     });
 
+    this.switchService = this.accessory.getService(this.platform.Service.Switch);
+    this.switchService
+      .getCharacteristic(Characteristic.On)
+      .on('set', this.setSwitchState.bind(this));
+    this.switchService.setCharacteristic(Characteristic.On, false);
     return [this.service, infoService];
   }
 
   protected update(data: DoorDeviceData) {
-    const Characteristic = this.platform.Characteristic;
     if (data.status == STATUS_ON) {
-      this.service.updateCharacteristic(
-        Characteristic.ProgrammableSwitchEvent,
-        1
-      );
-      setTimeout(() => {
-        this.service.updateCharacteristic(
-          Characteristic.ProgrammableSwitchEvent,
-          0
-        );
-      }, 1000);
+      this.ring();
     }
+  }
+
+  setSwitchState(newState: number, callback: CharacteristicSetCallback) {
+    if (newState != 1) {
+      this.ring();
+    }
+    callback();
+  }
+
+  stepState() {
+    if (this.state === 1) {
+      this.state = 2;
+    } else {
+      this.state = 1;
+    }
+  }
+
+  ring() {
+    const Characteristic = this.platform.Characteristic;
+
+    if (!this.busy) {
+      this.busy = true;
+      this.service
+        .getCharacteristic(Characteristic.ProgrammableSwitchEvent)
+        .updateValue(this.state);
+      this.stepState();
+    }
+    if (this.timeout) {
+      clearTimeout(this.timeout);
+    }
+    this.timeout = setTimeout(() => {
+      this.busy = false;
+      this.timeout = undefined;
+      this.switchService.setCharacteristic(Characteristic.On, false);
+    }, 2 * 1000);
+    return true;
   }
 }
