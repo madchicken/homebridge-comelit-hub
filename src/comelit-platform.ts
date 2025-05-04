@@ -12,7 +12,8 @@ import {
 import {
   BlindDeviceData,
   ComelitClient,
-  DeviceData, DoorDeviceData,
+  DeviceData,
+  DoorDeviceData,
   HomeIndex,
   OBJECT_SUBTYPE,
   ROOT_ID,
@@ -29,11 +30,11 @@ import { Other } from './accessories/other';
 import { Irrigation } from './accessories/irrigation';
 import { EnhancedBlind } from './accessories/enhanced-blind';
 import { StandardBlind } from './accessories/standard-blind';
-import Timeout = NodeJS.Timeout;
 import { Blind } from './accessories/blind';
 import { DoorAccessory } from './accessories/door-accessory';
 import { DoorDeviceConfig } from './types';
 import { Doorbell } from './accessories/doorbell';
+import Timeout = NodeJS.Timeout;
 
 export interface HubConfig extends PlatformConfig {
   username: string;
@@ -373,9 +374,15 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
       this.log.debug(`Reuse accessory from cache with uuid ${uuid} of type ${category}`);
     } else {
       this.log.debug(`Registering new accessory with uuid ${uuid} of type ${category}`);
-      this.homebridge.registerPlatformAccessories('homebridge-comelit-platform', 'Comelit', [
-        accessory,
-      ]);
+      if (category == Categories.VIDEO_DOORBELL) {
+        this.homebridge.publishExternalAccessories('homebridge-comelit-platform', [
+          accessory,
+        ]);
+      } else {
+        this.homebridge.registerPlatformAccessories('homebridge-comelit-platform', 'Comelit', [
+          accessory,
+        ]);
+      }
     }
     return accessory;
   }
