@@ -12,6 +12,7 @@ export class Doorbell extends ComelitAccessory<DoorDeviceData> {
 
   constructor(platform: ComelitPlatform, accessory: PlatformAccessory, client: ComelitClient) {
     super(platform, accessory, client);
+    this.state = 0;
   }
 
   identify() {
@@ -50,10 +51,8 @@ export class Doorbell extends ComelitAccessory<DoorDeviceData> {
     return [this.service, infoService];
   }
 
-  protected update(data: DoorDeviceData) {
-    if (data.status == STATUS_ON) {
-      this.ring();
-    }
+  protected update(_data: DoorDeviceData) {
+    this.ring();
   }
 
   setSwitchState(newState: number, callback: CharacteristicSetCallback) {
