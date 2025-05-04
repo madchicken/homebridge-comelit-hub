@@ -57,7 +57,7 @@ export class Doorbell extends ComelitAccessory<DoorDeviceData> {
   }
 
   setSwitchState(newState: number, callback: CharacteristicSetCallback) {
-    if (newState != 1) {
+    if (newState != 0) {
       this.ring();
     }
     callback();
