@@ -6,6 +6,9 @@ jobs:
     executor:
       name: node/default
     steps:
+      - add_ssh_keys:
+          fingerprints:
+            - SHA256:JO4sC/fu24gqXJvI2pGXY4VJ3m+vn9eGtmQGAgOxL2w
       - checkout
       - node/with-cache:
           steps:
