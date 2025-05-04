@@ -1,19 +1,21 @@
 version: 2.1
 orbs:
-  node: circleci/node@1.1.6
+  node: circleci/node@7.1.0
 jobs:
   build-and-test:
-    executor:
-      name: node/default
+    docker:
+      - image: cimg/base:stable
     steps:
-      - add_ssh_keys:
-          fingerprints:
-            - SHA256:JO4sC/fu24gqXJvI2pGXY4VJ3m+vn9eGtmQGAgOxL2w
       - checkout
+      - node/install:
+          install-yarn: true
+          node-version: '18.20.4'
       - node/with-cache:
           steps:
             - run: yarn install
             - run: yarn test
+    executor:
+      name: node/default
 workflows:
     build-and-test:
       jobs:
