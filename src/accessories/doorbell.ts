@@ -38,11 +38,9 @@ export class Doorbell extends ComelitAccessory<DoorDeviceData> {
     this.service =
       this.accessory.getService(this.platform.Service.Doorbell) ||
       this.accessory.addService(this.platform.Service.Doorbell);
-    this.service.getCharacteristic(this.platform.Characteristic.ProgrammableSwitchEvent).setProps({
-      validValues: [0, 1],
-    });
 
-    this.switchService = this.accessory.getService(this.platform.Service.Switch) ||
+    this.switchService =
+      this.accessory.getService(this.platform.Service.Switch) ||
       this.accessory.addService(this.platform.Service.Switch);
     this.switchService
       .getCharacteristic(Characteristic.On)
