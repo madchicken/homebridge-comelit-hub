@@ -1,8 +1,7 @@
 import { ComelitAccessory } from './comelit';
 import { BlindDeviceData, ComelitClient } from 'comelit-client';
 import { ComelitPlatform } from '../comelit-platform';
-import { CharacteristicEventTypes, PlatformAccessory, Service } from 'homebridge';
-import { CharacteristicSetCallback } from 'hap-nodejs';
+import { CharacteristicEventTypes, PlatformAccessory, Service, CharacteristicSetCallback } from 'homebridge';
 
 export abstract class Blind extends ComelitAccessory<BlindDeviceData> {
   static readonly OPEN = 100;

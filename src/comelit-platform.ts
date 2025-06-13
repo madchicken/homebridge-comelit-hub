@@ -13,6 +13,7 @@ import {
   BlindDeviceData,
   ComelitClient,
   DeviceData,
+  DoorDeviceData,
   HomeIndex,
   OBJECT_SUBTYPE,
   ROOT_ID,
@@ -29,8 +30,11 @@ import { Other } from './accessories/other';
 import { Irrigation } from './accessories/irrigation';
 import { EnhancedBlind } from './accessories/enhanced-blind';
 import { StandardBlind } from './accessories/standard-blind';
-import Timeout = NodeJS.Timeout;
 import { Blind } from './accessories/blind';
+import { DoorAccessory } from './accessories/door-accessory';
+import { DoorDeviceConfig } from './types';
+import { Doorbell } from './accessories/doorbell';
+import Timeout = NodeJS.Timeout;
 
 export interface HubConfig extends PlatformConfig {
   username: string;
@@ -53,6 +57,9 @@ export interface HubConfig extends PlatformConfig {
   hide_outlets?: boolean;
   hide_others?: boolean;
   hide_irrigation?: boolean;
+  hide_doors?: boolean;
+  hide_vip?: boolean;
+  door_devices?: DoorDeviceConfig[];
 }
 
 const uptime = new client.Gauge({
@@ -90,7 +97,7 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
   public readonly accessories: PlatformAccessory[] = [];
   readonly homebridge: API;
   private client: ComelitClient;
-  private readonly config: HubConfig;
+  readonly config: HubConfig;
   private keepAliveTimer: Timeout;
   private server: http.Server;
   private mappedNames: { [key: string]: boolean };
@@ -114,6 +121,7 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
     await this.login();
     this.log.info('Building accessories list...');
     const homeIndex = await this.client.fetchHomeIndex();
+    await this.client.subscribeObject(ROOT_ID);
     if (this.config.hide_lights !== true) {
       this.mapLights(homeIndex);
     }
@@ -134,6 +142,12 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
     }
     if (this.config.hide_irrigation !== true) {
       this.mapIrrigation(homeIndex);
+    }
+    if (this.config.hide_doors !== true) {
+      await this.mapDoors(homeIndex);
+    }
+    if (this.config.hide_vip !== true) {
+      await this.mapVip(homeIndex);
     }
     this.log.info(`Found ${this.mappedAccessories.size} accessories`);
     this.log.info('Subscribed to root object');
@@ -319,6 +333,38 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
     });
   }
 
+  private async mapDoors(homeIndex: HomeIndex) {
+    const doorIds = [...homeIndex.doorIndex.keys()];
+    this.log.info(`Found ${doorIds.length} doors`);
+
+    for (const id of doorIds) {
+      const deviceData: DeviceData<DoorDeviceData> = homeIndex.doorIndex.get(id);
+      if (deviceData) {
+        this.log.debug(`Door ID: ${id}, ${deviceData.descrizione}`);
+        const accessory = this.createHapAccessory(deviceData, Categories.DOOR_LOCK);
+        this.mappedAccessories.set(id, new DoorAccessory(this, accessory, this.client));
+        await this.client.subscribeObject(id);
+        this.log.info(`Subscribed to events for door ID: ${id}, ${deviceData.descrizione}`);
+      }
+    }
+  }
+
+  private async mapVip(homeIndex: HomeIndex) {
+    const vipIds = [...homeIndex.vipIndex.keys()];
+    this.log.info(`Found ${vipIds.length} vip elements`);
+
+    for (const id of vipIds) {
+      const deviceData = homeIndex.vipIndex.get(id);
+      if (deviceData) {
+        this.log.info(`VIP ID: ${id}, ${deviceData.descrizione}`);
+        const accessory = this.createHapAccessory(deviceData, Categories.VIDEO_DOORBELL);
+        this.mappedAccessories.set(id, new Doorbell(this, accessory, this.client));
+        await this.client.subscribeObject(id);
+        this.log.info(`Subscribed to events for VIP ID: ${id}, ${deviceData.descrizione}`);
+      }
+    }
+  }
+
   public createHapAccessory(deviceData: DeviceData, category: Categories, id?: string) {
     const uuid = this.homebridge.hap.uuid.generate(id || deviceData.id);
     const existingAccessory = this.accessories.find(accessory => accessory.UUID === uuid);
@@ -330,9 +376,15 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
       this.log.debug(`Reuse accessory from cache with uuid ${uuid} of type ${category}`);
     } else {
       this.log.debug(`Registering new accessory with uuid ${uuid} of type ${category}`);
-      this.homebridge.registerPlatformAccessories('homebridge-comelit-platform', 'Comelit', [
-        accessory,
-      ]);
+      if (category == Categories.VIDEO_DOORBELL) {
+        this.homebridge.publishExternalAccessories('homebridge-comelit-platform', [
+          accessory,
+        ]);
+      } else {
+        this.homebridge.registerPlatformAccessories('homebridge-comelit-platform', 'Comelit', [
+          accessory,
+        ]);
+      }
     }
     return accessory;
   }
@@ -368,7 +420,6 @@ export class ComelitPlatform implements DynamicPlatformPlugin {
 
     try {
       await this.client.login();
-      await this.client.subscribeObject(ROOT_ID);
       this.keepAlive();
       return true;
     } catch (e) {

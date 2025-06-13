@@ -55,6 +55,9 @@ const ENHANCED_BLIND_DEVICE_DATA: BlindDeviceData = {
 };
 
 jest.useFakeTimers();
+beforeEach(() => {
+  jest.spyOn(global, 'setTimeout');
+});
 
 jest.mock('comelit-client', () => {
   return {

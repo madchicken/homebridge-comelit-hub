@@ -1,0 +1,49 @@
+{
+    "platforms": [
+        {
+            "name": "Config",
+            "port": 8581,
+            "platform": "config"
+        },
+        {
+            "name": "Comelit",
+            "broker_url": "192.168.0.66",
+            "username": "admin",
+            "password": "admin",
+            "blind_opening_time": 37,
+            "blind_closing_time": 35,
+            "keep_alive": 120000,
+            "avoid_duplicates": false,
+            "use_comelit_blind_timing": false,
+            "hide_lights": false,
+            "hide_blinds": false,
+            "hide_thermostats": false,
+            "hide_power_suppliers": false,
+            "hide_outlets": false,
+            "hide_others": false,
+            "hide_irrigation": false,
+            "hide_doors": false,
+            "hide_vip": false,
+            "door_devices": [
+                {
+                    "opening_time": 20,
+                    "closing_time": 20,
+                    "opened_time": 60
+                }
+            ],
+            "_bridge": {
+                "username": "0E:26:BE:4E:02:36",
+                "port": 45646
+            },
+            "platform": "Comelit"
+        }
+    ],
+    "bridge": {
+        "name": "Homebridge D6D1",
+        "username": "0E:C2:69:97:D6:D1",
+        "port": 51270,
+        "pin": "906-22-779",
+        "advertiser": "bonjour-hap"
+    },
+    "accessories": []
+}

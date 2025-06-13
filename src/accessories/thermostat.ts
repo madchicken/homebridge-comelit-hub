@@ -342,7 +342,7 @@ export class Thermostat extends ComelitAccessory<ThermostatDeviceData> {
     this.temperatureService.updateCharacteristic(Characteristic.CurrentTemperature, temperature);
     const targetTemperature = data.soglia_attiva ? parseFloat(data.soglia_attiva) / 10 : 0;
     this.log.info(
-      `${data.objectId} - ${this.accessory.displayName}:\nThermostat status ${
+      `${data.id} - ${this.accessory.displayName}:\nThermostat status ${
         isOff ? 'OFF' : 'ON'
       }, ${isAuto ? 'auto mode' : 'manual mode'}, ${
         data.est_inv === ThermoSeason.WINTER ? 'winter' : 'summer'
